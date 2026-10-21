@@ -72,3 +72,35 @@ Meta do usuário: entregar tudo validado e publicar GitHub+Vercel inicialmente. 
 W1.2 Ajustes shipped (5a aba lobby: som/graficos/game feel/controles, persistencia no perfil, smoke 9/9 c/ reload, bateria 38/38 local+prod, commits a8f7fcd..841c1f2, deploy vercel). Incidente W1.1: agentes paralelos reverteram game.js pos-verde pre-commit; defesas adotadas: commit imediato apos verde, marcadores de milestone grepados antes de trabalhar, smokes de feature obrigatorios. Saga readiness W1.2.1-3: flag top-level roda no parse (prova nada); initLobbyNav roda ~L5521 muito apos a funcao de boot (~L1504); sinal correto = apos a ULTIMA chamada que anexa listeners. ':8080 nao e sempre local' - prod_proxy pode estar servindo. Tudo na skill nuba-development 6.7.
 
 <!-- lifeline:end -->
+
+### #0003 — 2026-10-21T16:32:42.375415+00:00 — decision
+
+- **author**: unknown
+- **agent**: human
+- **provider**: none
+- **model**: human
+- **kind**: decision
+- **summary**: PV1 touch controls: mobile jogavel end-to-end, prod validada
+- **parents**: 35e52a3f92b0c9d3b4545522c9b5c94c79ea2031e7cda7d9745315854a73ae2a
+- **id**: cee78cfb5cf02e95ee4352573d680cb9fd0fa939643a5616b24534b5bde4bf8c
+
+**Body**:
+PV1 fechado: joystick + cluster .tbtn (auto-aim, vibrate, chakra hold) adotando o DOM abandonado dos agentes paralelos (colisao de IDs resolvida por adocao em vez de duplicacao); gates PV1.4c/1.5a/1.5b; smoke Tier 5 CDP LANDSCAPE 915x412 PASS local+prod; baterias 38/38 desktop e prod zero console errors; commits e3dd1ed+d1c2354, deploy vercel. W2.2: Orochimaru 1orc extraido e validado (107 arquivos, w22_out/). Licoes na skill 6.8: colisao de IDs paralelos, patcher parcial grava, overlay landscape intercepta Tier 5, timing de roster em prod, subagent fora do working dir.
+
+<!-- lifeline:end -->
+
+### #0004 — 2026-10-21T21:47:27.216604+00:00 — decision
+
+- **author**: unknown
+- **agent**: human
+- **provider**: none
+- **model**: human
+- **kind**: decision
+- **summary**: Tsunade ja estava integrada no lugar da Temari (W2 dos agentes); W2 smoke corrigido e PASSA
+- **parents**: cee78cfb5cf02e95ee4352573d680cb9fd0fa939643a5616b24534b5bde4bf8c
+- **id**: 925cf69ca1a82b5a65d5dbab8c7a8516ce22999dbefe56bdf2cdddfc65127475
+
+**Body**:
+Usuario pediu Tsunade no lugar da Temari. Descoberta: os agentes PV0-PV1-W2 ja tinham integrado 12 herois em public (modelo 1tnd.json em public/assets/models, roster_meta.json, HERO_STATS/SKILL_VFX_MAP/SKILL_VFX_ANIM com 1tnd+1orc) — Temari (1tmr) so extraida em w21_out, nunca wireada. Subagente de re-extracao da Tsunade abortado (desnecessario). w2_smoke dos agentes falhava so no nome do probe (u.rig vs u.mesh, rig real = unit.mesh L5032) — corrigido, PASSA: kit Rakanken autentico, cast Q, rig 3D userData.heroId=1tnd.
+
+<!-- lifeline:end -->

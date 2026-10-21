@@ -11,6 +11,18 @@ __pycache__/
 public/assets/models/puppets/
 public/assets/ui/raw/
 public/assets/ui/_sheets/
+public/assets/ui/slices/
+public/assets/ui/battle/
+
+# PV-B.4 — lixo de extracao (auditado por tools/audit_runtime_refs.py: 464 refs, 0 ausentes)
+public/assets/stage/raw/          # 194 MB de stages brutos do APK
+public/assets/data/spc/           # 26 MB de tabelas de combate do APK
+public/assets/data/stage_meta/    # StageAreaInfo.bin.xfbin
+public/assets/data/so_symbols.json
+public/assets/data/so_class_index.json
+public/assets/data/so_strings.json
+public/assets/data/*.md
+public/assets/stage/*.png          # 42 MB de texturas legadas (stage_3d.json so usa arena/*)
 
 # Banks brutos de audio (runtime usa public/assets/audio/decoded/*.ogg)
 public/assets/audio/*.xfbin
@@ -19,3 +31,7 @@ public/assets/audio/*.nus3conf
 
 # Libre/Blender etc
 *.blend1
+
+# Backups de patch (.bak_*) — nunca no deploy
+public/assets/**/*.bak_*
+public/*.bak_*
