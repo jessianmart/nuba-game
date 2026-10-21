@@ -494,3 +494,25 @@ ode --check do game.js (como .mjs) -> OK.
   2 portraits; BR VIVOS/FASE visivel; 0 console errors.
 - Novos `.bak`: game.js.bak_pv4, index.html.bak_pv4, styles.css.bak_pv4,
   probe_responsive.py.bak_pv4.
+
+
+### PV3 — PERF E POLIMENTO MOBILE (governor + VFX cap + haptics + PWA) — validado 2026-10-21
+- `tools/probe_pv3_polish.py` (UA iPhone setado ANTES do load, senao o governor
+  lido no boot nao ve mobile):
+  - GOVERNOR 4/4: `__GOV.mobile=true`, `dprCap=1.25`, `renderer.getPixelRatio()=1.25`
+    (cap REALMENTE aplicado), `vfxCap=24`. Desktop segue 1.75/ilimitado.
+  - VFX CAP: injecao de 40 impactos gerou **pico natural de 273 VFX simultaneos**
+    (evidencia de que o cap mobile e necessario) → com cap 24 o array convergiu
+    para ≤24 em 2s. O cap roda no loop de update e descarta o efeito MAIS ANTIGO.
+  - HAPTICS: `haptic(18)` ao levar dano, `haptic(12)` ao acertar, `[40,60,40]` ao
+    morrer; throttle 60ms; gate `data.haptics === false`.
+  - PWA 9/9: `Page.getAppManifest` sem erros (orientation landscape, theme
+    #f97316, display fullscreen, icones 192/512) + link/meta no head + 200 nos
+    2 icones e no manifest.
+- Bateria `pv3`: verify EXIT 0 + suite 38/38 zero console errors.
+- Pitfalls encontrados: (1) hits perto da base sao bloqueados pelo SPAWN GUARD —
+  probes que injetam dano precisam zerar `target.spawnShield`; (2) o governor e
+  lido no BOOT, entao so `body.classList.add('touch')` NAO liga o caminho mobile —
+  precisa `Emulation.setUserAgentOverride` antes do `Page.navigate`.
+- Novos `.bak`: game.js.bak_pv3, index.html.bak_pv3.
+- PV3.2 (arena merge) e PV3.4 (smoke em device real) seguem pendentes.

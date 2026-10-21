@@ -1,0 +1,26 @@
+{
+  "name": "NUBA: Arena de Batalha Ninja",
+  "short_name": "NUBA",
+  "description": "MOBA ninja mobile-first: combate 3v3, classico 5v5 e Realeza na Vila.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#0b0d12",
+  "theme_color": "#f97316",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "assets/logo/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/logo/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

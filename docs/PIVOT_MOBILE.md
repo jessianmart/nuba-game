@@ -183,6 +183,16 @@ Componentes DOM aditivos:
 | PV3.3 | Hapticas (`navigator.vibrate`) + audio unlock no 1º toque + PWA manifest (orientation landscape, theme #f97316-ish do Storm) | `game.js`, `index.html`, `public/manifest.webmanifest` | instala manual no Chrome Android |
 | PV3.4 | Smoke dispositivo real (user): LAN `http://<ip>:8080` (ou tunnel) — checklist | — | evidência do usuário (screenshot) |
 
+### Fase PV3 — status de entrega (2026-10-21)
+
+| Item | Status | Evidencia |
+|---|---|---|
+| PV3.1 Quality governor (dpr cap 1.25 + VFX cap 24 em mobile) | ENTREGUE | `window.__GOV` no boot; `probe_pv3_polish` 4/4 (pixelRatio real = 1.25) |
+| PV3.1 VFX cap no loop | ENTREGUE | pico natural de **273 VFX** na injecao de 40 impactos → **≤24** apos o cap |
+| PV3.2 Arena merge (sd00a 122 meshes → ~20) | PENDENTE | pipeline Blender disponivel (`tools/vila_blender_optimize.py`) |
+| PV3.3 Haptics + audio unlock + PWA manifest | ENTREGUE (haptics + PWA) | `haptic()` throttle 60ms + gate de perfil; `manifest.webmanifest` + icones 192/512; `probe_pv3_polish` PWA 9/9 |
+| PV3.4 Smoke em device real (LAN/tunnel) | PENDENTE (depende do usuario) | checklist no probe responsivo |
+
 ### Fase PV4 — Touch HUD V2 (entregue 2026-10-21, pedido do usuario)
 
 | # | Tarefa | Implementacao | Validacao |

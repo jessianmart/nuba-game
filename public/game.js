@@ -279,6 +279,21 @@ window.SKILL_SFX_MAP = SKILL_SFX_MAP;
 const canvas = document.getElementById('game-canvas');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
+// PV3.1: quality governor automatico. Mobile tem dpr cap 1.25 e teto de 24 VFX
+// (GPU fraca, tela pequena); desktop mantem 1.75. A preferencia do perfil manda
+// ATE o cap — 'high' em mobile ainda vale 1.25, nunca 1.75.
+window.__GOV = (function () {
+  let pref = 'high';
+  try {
+    const d = loadProfileData();
+    if (d && typeof d.quality === 'string') pref = d.quality;
+  } catch (e) {}
+  const mob = !!(window.__DEVICE && window.__DEVICE.isMobile);
+  const CAPS = { low: 0.75, med: 1.25, high: 1.75 };
+  const cap = mob ? Math.min(CAPS[pref] || 1.25, 1.25) : (CAPS[pref] || 1.75);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, cap));
+  return { mobile: mob, pref: pref, dprCap: cap, vfxCap: mob ? 24 : Infinity };
+})();
 window.__renderer = renderer; // W1.2: validação E2E de qualidade
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -1661,7 +1676,11 @@ function initAjustes() {
   const QUALITY_CAPS = { low: 0.75, med: 1.25, high: 1.75 };
   const persistPatch = (patch) => { const d = loadProfileData(); Object.assign(d, patch); saveProfileData(d); };
   const applyQuality = (q) => {
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, QUALITY_CAPS[q] || 1.75));
+    // PV3.1: respeita o cap do governor (mobile nunca passa de 1.25)
+    const _mob = !!(window.__DEVICE && window.__DEVICE.isMobile);
+    const _cap = _mob ? Math.min(QUALITY_CAPS[q] || 1.25, 1.25) : (QUALITY_CAPS[q] || 1.75);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, _cap));
+    if (window.__GOV) { window.__GOV.pref = q; window.__GOV.dprCap = _cap; window.__GOV.vfxCap = _mob ? 24 : Infinity; }
     for (const k of Object.keys(pills)) if (pills[k]) pills[k].classList.toggle('active', k === q);
   };
   const data = loadProfileData();
@@ -3540,6 +3559,21 @@ function spawnSoulChakraBurst(x, y, z, colorHex = 0x38bdf8) {
   }
 }
 
+// PV3.3: haptics com throttle + gate de perfil (data.haptics === false desliga).
+// Throttle 60ms evita buzz continuo em atk rapido / dano por tick de zona.
+let _lastHaptic = 0;
+function haptic(pattern) {
+  if (!navigator.vibrate) return;
+  const now = performance.now();
+  if (now - _lastHaptic < 60) return;
+  _lastHaptic = now;
+  try {
+    const d = loadProfileData();
+    if (d && d.haptics === false) return;
+  } catch (e) {}
+  try { navigator.vibrate(pattern); } catch (err) {}
+}
+
 function dealDamage(attacker, target, amount, skillName) {
   if (!target || !attacker || !Number.isFinite(amount)) return; // P2 hardening: robustez de API
   if (target.deadTimer > 0) return;
@@ -3552,6 +3586,11 @@ function dealDamage(attacker, target, amount, skillName) {
   const dmgRaw = Math.round(amount * mult * (1 + (attacker.level - 1) * 0.08));
   const dmg = Math.max(1, Math.round(dmgRaw * HERO_DMG_SCALE * ((HERO_STATS[target.heroId] || HERO_STATS.__d).dr))); // T5 escala global + P2 dano por heroi
   target.hp = Math.max(0, target.hp - dmg);
+
+  // PV3.3: haptics — levou dano (18ms) > acertou (12ms)
+  if (window.__GOV && window.__GOV.mobile) {
+    if (target.isPlayer) haptic(18); else if (attacker.isPlayer) haptic(12);
+  }
 
   // Assists tracking
   if (!target.recentAttackers) target.recentAttackers = new Map();
@@ -3585,6 +3624,7 @@ function dealDamage(attacker, target, amount, skillName) {
   target.z = clampPush(target.z + (dz / len) * 1.4);
 
   if (target.hp <= 0) {
+    if (window.__GOV && window.__GOV.mobile && target.isPlayer) haptic([40, 60, 40]); // PV3.3: morri
     target.deadTimer = activeMatchCfg.respawn != null ? activeMatchCfg.respawn : 6.0; // respawn por modo (legacy 6s, 3v3 5s; PV2: BR = anim down normal, rebirth gate torna permanente)
     AUTH_SFX.play('down', { vol: 0.8 }); AUTH_SFX.play('ko', { vol: 0.9 }); // W1.1
     target.state = 'down'; // Authentic knockdown fall animation
@@ -5080,6 +5120,15 @@ function updateMatch(dt, elapsed) {
   }
 
   updateShadowClones(simDt); // SPP: clones 3D (congelam com o mundo no juice)
+  // PV3.1: VFX cap — acima do teto descarta o mais ANTIGO (o frescor do impacto
+  // importa; efeito velho ja entregou o feedback). So roda no mobile (cap 24).
+  if (window.__GOV && vfxList.length > window.__GOV.vfxCap) {
+    let _wi = 0;
+    for (let _k = 1; _k < vfxList.length; _k++) if (vfxList[_k].age > vfxList[_wi].age) _wi = _k;
+    const _w = vfxList[_wi];
+    if (_w && _w.mesh && _w.mesh.parent) _w.mesh.parent.remove(_w.mesh);
+    vfxList.splice(_wi, 1);
+  }
   // Update VFX
   for (let i = vfxList.length - 1; i >= 0; i--) {
     const v = vfxList[i];

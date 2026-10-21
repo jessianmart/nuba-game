@@ -120,3 +120,19 @@ Usuario pediu Tsunade no lugar da Temari. Descoberta: os agentes PV0-PV1-W2 ja t
 Pedido do usuario: minimapa no topo, HP e chakra cada um de um lado, base apenas joystick (esq) + skills (dir) com tempo de CD, banners de streak/oulti discretos no padrao do APK. Decisao de arquitetura: ZERO componente novo no DOM — reaproveitar tudo via gates body.touch em CSS (position:fixed + display:contents no footer para reposicionar minimapa e faixa de vitais) e espelhar o CD dos slots desktop (#cd-*, conic + segundos) nos botoes touch (#cdt-*) pelo updater existente, mantendo fonte unica de verdade. Motivo: 'muito css'/poluicao visual — gates + reposicionamento custam ~45 linhas de CSS aditivo sem duplicar logica. Probe_pv4_hud 13/13 (844x390), probe_responsive 5/5 landscapes (568x320 overflow resolvido, scrollW 568/568), BR OK, bateria verify 0 + suite 38/38.
 
 <!-- lifeline:end -->
+
+### #0006 — 2026-10-21T22:58:26.885295+00:00 — decision
+
+- **author**: unknown
+- **agent**: human
+- **provider**: none
+- **model**: human
+- **kind**: decision
+- **summary**: PV3.1+PV3.3 — governor mobile, VFX cap, haptics e PWA
+- **parents**: 85598630915b8e965477e2b2ae93fcf316e8f9977548fc3364a939c878de1aa1
+- **id**: d4c2ff6c89d6e4e1f6c10172053776f93be7131328c72378824f8f6b172c5720
+
+**Body**:
+Entrega do pacote de perf/polimento mobile do pivot. DECISAO: o governor (window.__GOV) e avaliado no BOOT a partir de __DEVICE.isMobile (UA/touch) — mobile recebe dpr cap 1.25 e teto de 24 VFX; desktop segue 1.75/ilimitado; applyQuality da pagina de ajustes foi ajustada para NAO furar o cap mobile. O VFX cap roda no loop de update e descarta o efeito MAIS ANTIGO acima do teto (o frescor do impacto importa). EVIDENCIA FORTE: injecao de 40 impactos gerou pico natural de 273 VFX simultaneos — sem cap, um 3v3 mobile real derrubaria o FPS; com cap 24 o array converge em <1s. Haptics: helper com throttle 60ms + gate de perfil (18ms dano recebido, 12ms acerto, [40,60,40] morte) — so em mobile. PWA: manifest.webmanifest (fullscreen/landscape/theme #f97316) + icones 192/512 quadrados gerados do logo.png via Pillow com o fundo real do body (#0b0d12). PITFALLS registrados no TEST_READY: SPAWN GUARD bloqueia injecao de dano perto da base (zerar target.spawnShield em probes) e o governor lido no boot exige setUserAgentOverride ANTES do Page.navigate. Validado probe_pv3_polish (governor 4/4 + pico 273-><=24 + haptics + PWA 9/9) + bateria verify 0 + suite 38/38.
+
+<!-- lifeline:end -->
