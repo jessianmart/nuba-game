@@ -104,3 +104,19 @@ PV1 fechado: joystick + cluster .tbtn (auto-aim, vibrate, chakra hold) adotando 
 Usuario pediu Tsunade no lugar da Temari. Descoberta: os agentes PV0-PV1-W2 ja tinham integrado 12 herois em public (modelo 1tnd.json em public/assets/models, roster_meta.json, HERO_STATS/SKILL_VFX_MAP/SKILL_VFX_ANIM com 1tnd+1orc) — Temari (1tmr) so extraida em w21_out, nunca wireada. Subagente de re-extracao da Tsunade abortado (desnecessario). w2_smoke dos agentes falhava so no nome do probe (u.rig vs u.mesh, rig real = unit.mesh L5032) — corrigido, PASSA: kit Rakanken autentico, cast Q, rig 3D userData.heroId=1tnd.
 
 <!-- lifeline:end -->
+
+### #0005 — 2026-10-21T21:56:40.028820+00:00 — decision
+
+- **author**: unknown
+- **agent**: human
+- **provider**: none
+- **model**: human
+- **kind**: decision
+- **summary**: PV4 — Touch HUD V2 (HUD mobile)
+- **parents**: 925cf69ca1a82b5a65d5dbab8c7a8516ce22999dbefe56bdf2cdddfc65127475
+- **id**: 85598630915b8e965477e2b2ae93fcf316e8f9977548fc3364a939c878de1aa1
+
+**Body**:
+Pedido do usuario: minimapa no topo, HP e chakra cada um de um lado, base apenas joystick (esq) + skills (dir) com tempo de CD, banners de streak/oulti discretos no padrao do APK. Decisao de arquitetura: ZERO componente novo no DOM — reaproveitar tudo via gates body.touch em CSS (position:fixed + display:contents no footer para reposicionar minimapa e faixa de vitais) e espelhar o CD dos slots desktop (#cd-*, conic + segundos) nos botoes touch (#cdt-*) pelo updater existente, mantendo fonte unica de verdade. Motivo: 'muito css'/poluicao visual — gates + reposicionamento custam ~45 linhas de CSS aditivo sem duplicar logica. Probe_pv4_hud 13/13 (844x390), probe_responsive 5/5 landscapes (568x320 overflow resolvido, scrollW 568/568), BR OK, bateria verify 0 + suite 38/38.
+
+<!-- lifeline:end -->

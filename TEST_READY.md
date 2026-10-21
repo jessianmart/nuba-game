@@ -477,3 +477,20 @@ ode --check do game.js (como .mjs) -> OK.
 - Bugs corrigidos no caminho: intro `[roster.slice(1)]` (array aninhado → `src=undefined` → 404); `killTarget: null` vencia o DM por coerção (`0 >= null` → `0 >= 0` → endMatch falso no 1º kill — blindado em `pv2c`); BR não forçava a arena do config.
 - Morte permanente: gate no rebirth (`deadTimer=999`, ☠️ ELIMINADO, sem overlay de respawn); timeout sem prorrogação decide por HP%.
 - Novos `.bak`: game.js.bak_pv2/.bak_pv2b/.bak_pv2c/.bak_pv2e · index.html.bak_pv2 · styles.css.bak_pv2 · suite/verify .bak_pv2d/.bak_pv2f.
+
+
+### PV4 — TOUCH HUD V2 — validado 2026-10-21
+- `tools/probe_pv4_hud.py` 13/13 checks em 844x390 landscape: minimapa no topo (`t=4`),
+  HP à esquerda (`l=142`) e chakra à direita (`r=702`) na MESMA faixa (±30px), base
+  apenas joystick (l<1/3) + cluster (r>2/3); escondidos por design no touch: brand pill,
+  team-groups, goal txt, avatar ring, abilities-ribbon desktop, sub-status KDA.
+- CD nos botoes touch: `#cdt-{q,w,e,r,atk}` espelham `#cd-*` (display + conic-gradient +
+  texto de segundos) pelo updater existente de game.js — fonte unica, sem logica duplicada.
+  Probe poe Q em CD e le `4.3s` + `conic-gradient` no botao.
+- Banners streak/ougi: `transform: scale(0.55)` + `top: 140px` — discretos (padrao APK).
+- `tools/probe_responsive.py` (pos-PV4): 5/5 landscapes OK — SE-land 568x320 (que
+  estourava pre-PV4: team-group.red em 612..759, agora escondido) scrollW 568/568 sem
+  overflow; top bar 46px (<52); tap targets 62-88px (>=44); portrait overlay ATIVO nos
+  2 portraits; BR VIVOS/FASE visivel; 0 console errors.
+- Novos `.bak`: game.js.bak_pv4, index.html.bak_pv4, styles.css.bak_pv4,
+  probe_responsive.py.bak_pv4.

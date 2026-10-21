@@ -128,13 +128,20 @@ async def main():
             overlayDisplay: overlay ? getComputedStyle(overlay).display : 'MISSING'
           };
         })()""")
+        def _in(k):
+            rr = r['rects'].get(k)
+            return rr is not None and rr.get('vis') and rr['r'] <= r['innerW'] + 1 and rr['l'] >= -1
         checks = {
             'no-h-overflow': r['scrollW'] <= r['innerW'] + 1,
             'bar<52px': r['barH'] is not None and r['barH'] < 52,
             'overlay-hidden': r['overlayDisplay'] == 'none',
-            'hud-in-bounds': all(
-                r['rects'].get(k, {}).get('vis') and r['rects'][k]['r'] <= r['innerW'] + 1 and r['rects'][k]['l'] >= -1
-                for k in ('grpB', 'grpR', 'ctr') if k in r['rects']),
+            # PV4: team-groups ficam ocultos por design no touch — escondido = OK;
+            # se visiveis, precisam estar nos bounds. Centro (timer/BR) DEVE aparecer.
+            'hud-hidden-or-bounded': all(
+                (not r['rects'].get(k, {}).get('vis')) or (
+                    r['rects'][k]['r'] <= r['innerW'] + 1 and r['rects'][k]['l'] >= -1)
+                for k in ('grpB', 'grpR') if k in r['rects']),
+            'center-timer-visible': _in('ctr'),
             'touch-in-bounds': all(
                 r['rects'].get(k, {}).get('vis') and r['rects'][k]['r'] <= r['innerW'] + 1 and r['rects'][k]['b'] <= r['innerH'] + 1
                 for k in ('joy', 'clu') if k in r['rects']),

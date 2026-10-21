@@ -183,6 +183,13 @@ Componentes DOM aditivos:
 | PV3.3 | Hapticas (`navigator.vibrate`) + audio unlock no 1º toque + PWA manifest (orientation landscape, theme #f97316-ish do Storm) | `game.js`, `index.html`, `public/manifest.webmanifest` | instala manual no Chrome Android |
 | PV3.4 | Smoke dispositivo real (user): LAN `http://<ip>:8080` (ou tunnel) — checklist | — | evidência do usuário (screenshot) |
 
+### Fase PV4 — Touch HUD V2 (entregue 2026-10-21, pedido do usuario)
+
+| # | Tarefa | Implementacao | Validacao |
+|---|---|---|---|
+| PV4.1 | HUD touch enxuto: mapa no topo, HP/chakra cada um de um lado, base so joystick+skills | Gates `body.touch #hud-screen.active` em styles.css (reposiciona via `position:fixed`/`display:contents`, esconde o que nao faz sentido) + 5 divs `.tbtn-cd` nos tbtns + espelho de CD no updater de `game.js` | probe_pv4_hud 13/13 + probe_responsive 5/5 |
+
+
 ---
 
 ## 4. Contratos preservados (regras de ouro da pivotagem)
