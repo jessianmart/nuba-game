@@ -124,3 +124,6 @@ NUBA is a 5v5 3D WebGL MOBA Deathmatch built on Three.js (v0.169.0), Web Audio A
 - `tools/verify_browser_runtime.py`: CDP headless runtime test enforcing 0 console errors and async loading.
 - `tools/test_e2e_suite.py`: 34-test opaque-box E2E testing suite.
 - `.agents/teamwork/`: Multi-agent coordination metadata only.
+36. **Deploy público validado (GitHub + Vercel)** — https://goofy-mendeleev.vercel.app;
+    bateria determinística 38/38 + zero console errors rodando CONTRA o deploy via
+    proxy reverso; repo espelhado em github.com/jessianmart/nuba-game.
