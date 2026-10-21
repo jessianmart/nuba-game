@@ -22,3 +22,6 @@ cpk_names.tsv
 *.log
 screenshots/
 artifacts/
+tools/libs/xfbin_lib/
+
+.vercel

@@ -134,12 +134,52 @@ class SoundFX {
 }
 const sfx = new SoundFX();
 
+// ==================== W1.1 ÁUDIO AUTÊNTICO (banks CRIWARE ACB do Storm) ====================
+// 48 cues extraídas com tools/extract_audio.py -> public/assets/audio/decoded/*.ogg
+const SKILL_SFX_MAP = {
+  '1nrt': { q: 'rasen', w: 'zanei_open', e: 'shunshin', r: 'oogi' },
+  '1ssk': { q: 'chidori', w: 'goukakyu', e: 'shunshin', r: 'oogi' },
+  '1skr': { q: 'senpu', w: 'sabaku', e: 'shunshin', r: 'oogi' },
+  '1kks': { q: 'raikiri', w: 'goheki', e: 'shunshin', r: 'oogi' },
+  '1roc': { q: 'reppu', w: 'senpu', e: 'shunshin', r: 'oogi' },
+  '1itc': { q: 'genjyutu', w: 'crow1', e: 'itachi_eye', r: 'oogi' },
+  '1gar': { q: 'sabaku', w: 'gaara_sandhit', e: 'sabaku', r: 'oogi' },
+  '1hnt': { q: 'housenka', w: 'byakugan', e: 'housenka', r: 'oogi' },
+  '1nej': { q: 'kaiten', w: 'hakke_hit', e: 'kaiten', r: 'oogi' },
+  '1jry': { q: 'goheki', w: 'fire_lp', e: 'shunshin', r: 'oogi' }
+};
+const AUTH_SFX = {
+  bank: {}, log: [], volume: 0.85, _last: {},
+  THROTTLE: { ko: 450, down: 250, dash: 220, hit_s: 90, punch_hit: 110, kick_hit: 110, menu_slct: 60 },
+  preload(name) {
+    if (this.bank[name]) return this.bank[name];
+    try { const a = new Audio('assets/audio/decoded/' + name + '.ogg'); a.preload = 'auto'; this.bank[name] = a; } catch (e) {}
+    return this.bank[name] || null;
+  },
+  play(name, opts) {
+    if (sfx.enabled === false) return false;
+    const now = performance.now();
+    const min = (opts && opts.min) || this.THROTTLE[name] || 70;
+    if (this._last[name] && now - this._last[name] < min) return false;
+    const a = this.preload(name);
+    if (!a) return false;
+    try { a.currentTime = 0; a.volume = this.volume * ((opts && opts.vol) || 1); const p = a.play(); if (p && p.catch) p.catch(function () {}); } catch (e) {}
+    this._last[name] = now;
+    this.log.push(name); if (this.log.length > 14) this.log.shift();
+    return true;
+  }
+};
+window.AUTH_SFX = AUTH_SFX; // W1.1: validação E2E
+window.SKILL_SFX_MAP = SKILL_SFX_MAP;
+(function () { const _cl = sfx.clink.bind(sfx); sfx.clink = function () { AUTH_SFX.play('menu_slct', { vol: 0.65 }); _cl(); }; })(); // W1.1: cliques de UI
+
 // ============================================================================
 // GLOBAL STATE & THREE.JS SCENE SETUP
 // ============================================================================
 const canvas = document.getElementById('game-canvas');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
+window.__renderer = renderer; // W1.2: validação E2E de qualidade
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 
@@ -243,13 +283,15 @@ const JUICE = {
   slowTimer: 0,    // seconds remaining of the slow-mo window
   trauma: 0,       // camera shake energy 0..1 (linear decay)
   fovPunch: 0,     // cinematic zoom-in punch (degrees, fast decay)
-  t: 0             // juice clock in real time (drives shake noise)
+  t: 0,            // juice clock in real time (drives shake noise)
+  enabled: true    // W1.2: master gate da página de Ajustes
 };
 
-function juiceHitstop(d) { JUICE.hitstop = Math.max(JUICE.hitstop, d); }
-function juiceShake(power) { JUICE.trauma = Math.min(1, JUICE.trauma + power); }
-function juiceFovPunch(deg) { JUICE.fovPunch = Math.max(JUICE.fovPunch, deg); }
+function juiceHitstop(d) { if (JUICE.enabled === false) return; JUICE.hitstop = Math.max(JUICE.hitstop, d); }
+function juiceShake(power) { if (JUICE.enabled === false) return; JUICE.trauma = Math.min(1, JUICE.trauma + power); }
+function juiceFovPunch(deg) { if (JUICE.enabled === false) return; JUICE.fovPunch = Math.max(JUICE.fovPunch, deg); }
 function juiceSlowmo(scale, dur) {
+  if (JUICE.enabled === false) return; // W1.2
   if (scale < JUICE.slowTarget || JUICE.slowTimer <= 0) JUICE.slowTarget = scale;
   JUICE.slowTimer = Math.max(JUICE.slowTimer, dur);
 }
@@ -1079,6 +1121,7 @@ function renderArenaPicker() {
     btn.addEventListener('click', async () => {
       sfx.init();
       sfx.click ? sfx.click() : sfx.hit();
+      AUTH_SFX.play('stage_change', { vol: 0.75 }); // W1.1
       await applyArena(btn.dataset.arena);
       renderArenaPicker();
       updateArenaLabels();
@@ -1091,13 +1134,13 @@ function renderArenaPicker() {
 // CLIENT NAV PAGES: JOGAR / NINJAS / ARENAS / PERFIL
 // ============================================================================
 const PROFILE_KEY = 'nuba.profile.v1';
-const LOBBY_PAGES = ['play', 'ninjas', 'arenas', 'perfil'];
+const LOBBY_PAGES = ['play', 'ninjas', 'arenas', 'perfil', 'ajustes'];
 let lobbyPage = 'play';
 let collectionFilter = 'ALL';
 let matchRecorded = false;
 
 function loadProfileData() {
-  const fallback = { matches: 0, wins: 0, losses: 0, ties: 0, kills: 0, deaths: 0, assists: 0, history: [], arenas: [], sound: true };
+  const fallback = { matches: 0, wins: 0, losses: 0, ties: 0, kills: 0, deaths: 0, assists: 0, history: [], arenas: [], sound: true, volume: 0.85, quality: 'high', juice: true };
   try {
     const raw = localStorage.getItem(PROFILE_KEY);
     if (!raw) return fallback;
@@ -1140,6 +1183,7 @@ function recordMatchResult(winner) {
 function setLobbyPage(page) {
   const target = LOBBY_PAGES.includes(page) ? page : 'play';
   lobbyPage = target;
+  AUTH_SFX.play('page_slct', { vol: 0.7 }); // W1.1
 
   document.querySelectorAll('.lobby-nav .nav-tab').forEach(tab => {
     const on = tab.dataset.page === target;
@@ -1455,6 +1499,51 @@ function initLobbyNav() {
   }
 
   sfx.enabled = loadProfileData().sound !== false;
+  initAjustes(); // W1.2: wire da página de Ajustes
+}
+
+// ==================== W1.2 AJUSTES (página de configurações) ====================
+function initAjustes() {
+  const ajSound = document.getElementById('aj-sound');
+  const prefSound = document.getElementById('pref-sound');
+  const ajVol = document.getElementById('aj-volume');
+  const ajVolLabel = document.getElementById('aj-volume-label');
+  const ajJuice = document.getElementById('aj-juice');
+  const pills = { low: document.getElementById('aj-q-low'), med: document.getElementById('aj-q-med'), high: document.getElementById('aj-q-high') };
+  if (!ajSound) return;
+  const QUALITY_CAPS = { low: 0.75, med: 1.25, high: 1.75 };
+  const persistPatch = (patch) => { const d = loadProfileData(); Object.assign(d, patch); saveProfileData(d); };
+  const applyQuality = (q) => {
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, QUALITY_CAPS[q] || 1.75));
+    for (const k of Object.keys(pills)) if (pills[k]) pills[k].classList.toggle('active', k === q);
+  };
+  const data = loadProfileData();
+  ajSound.checked = data.sound !== false;
+  const vol = typeof data.volume === 'number' ? Math.max(0, Math.min(1, data.volume)) : 0.85;
+  if (typeof AUTH_SFX !== 'undefined') AUTH_SFX.volume = vol;
+  if (ajVol) ajVol.value = Math.round(vol * 100);
+  if (ajVolLabel) ajVolLabel.textContent = Math.round(vol * 100) + '%';
+  applyQuality(QUALITY_CAPS[data.quality] ? data.quality : 'high');
+  const juiceOn = data.juice !== false;
+  JUICE.enabled = juiceOn;
+  if (ajJuice) ajJuice.checked = juiceOn;
+  ajSound.addEventListener('change', () => {
+    sfx.enabled = ajSound.checked;
+    if (prefSound) prefSound.checked = ajSound.checked;
+    persistPatch({ sound: ajSound.checked });
+    if (ajSound.checked) { sfx.init(); sfx.clink(); }
+  });
+  if (prefSound) prefSound.addEventListener('change', () => { ajSound.checked = prefSound.checked; });
+  if (ajVol) {
+    ajVol.addEventListener('input', () => {
+      const v = Math.max(0, Math.min(1, Number(ajVol.value) / 100));
+      if (typeof AUTH_SFX !== 'undefined') AUTH_SFX.volume = v;
+      if (ajVolLabel) ajVolLabel.textContent = Math.round(v * 100) + '%';
+    });
+    ajVol.addEventListener('change', () => persistPatch({ volume: Math.max(0, Math.min(1, Number(ajVol.value) / 100)) }));
+  }
+  if (ajJuice) ajJuice.addEventListener('change', () => { JUICE.enabled = ajJuice.checked; persistPatch({ juice: ajJuice.checked }); });
+  for (const k of Object.keys(pills)) if (pills[k]) pills[k].addEventListener('click', () => { applyQuality(k); persistPatch({ quality: k }); });
 }
 
 function buildMOBA3DArena() {
@@ -1549,6 +1638,7 @@ async function start5v5Match() {
   projectiles = [];
   vfxList = [];
   for (const c of shadowClones) { try { arenaGroup.remove(c.mesh); } catch (e) {} } // SPP
+  AUTH_SFX.play('battle_start', { vol: 0.9 }); // W1.1
   shadowClones = [];
   // P1 JUICE: fresh match, fresh feel state
   JUICE.hitstop = 0;
@@ -3311,6 +3401,7 @@ function dealDamage(attacker, target, amount, skillName) {
 
   // Synchronized SFX on damage impact
   sfx.hit();
+  AUTH_SFX.play('hit_s', { vol: 0.55 }); // W1.1
 
   // Cel-shaded impact hit spark burst on damage impact
   // P1 JUICE: hitstop + shake + zoom scaled by damage weight, player
@@ -3337,6 +3428,7 @@ function dealDamage(attacker, target, amount, skillName) {
 
   if (target.hp <= 0) {
     target.deadTimer = 6.0; // 6s respawn countdown total
+    AUTH_SFX.play('down', { vol: 0.8 }); AUTH_SFX.play('ko', { vol: 0.9 }); // W1.1
     target.state = 'down'; // Authentic knockdown fall animation
     target.animDuration = 2.0; // Lie on ground for 2.0s before vanishing
     target.animTimer = 2.0;
@@ -3376,6 +3468,7 @@ function dealDamage(attacker, target, amount, skillName) {
     // Attacker progression rewards
     attacker.kills++;
     attacker.level = Math.min(10, attacker.level + 1);
+    AUTH_SFX.play('level_up', { vol: 0.75 }); // W1.1
     attacker.maxHp += 80;
     attacker.hp = Math.min(attacker.maxHp, attacker.hp + 250);
 
@@ -3485,6 +3578,9 @@ function executeSkill(unit, slot) {
   if (!unit || !unit.kit || !unit.heroId) return; // P2 hardening: robustez de API
   activeSkillVfxModel = ((SKILL_VFX_MAP[unit.heroId] || {})[slot]) || null; // M7: identidade por skill
   activeSkillVfxAnim = ((SKILL_VFX_ANIM[unit.heroId] || {})[slot]) || null; // SPP: anim por skill
+  const _authSfx = ((SKILL_SFX_MAP[unit.heroId] || {})[slot]) || null; // W1.1
+  if (_authSfx) AUTH_SFX.play(_authSfx, { vol: 0.8 });
+  else if (slot === 'atk') AUTH_SFX.play('punch_swing', { vol: 0.5 });
   activeSkillVfxFaceY = unit.rotY; // SPP: VFX encara a direcao do caster
 
   if (unit.deadTimer > 0) return;
@@ -3525,6 +3621,7 @@ function executeSkill(unit, slot) {
       if (unit.isPlayer) {
         if (hitIdx === 2) sfx.kick();
         else { sfx.hit(); if (hitIdx === 3) sfx.kick(); }
+        AUTH_SFX.play(hitIdx === 2 ? 'kick_hit' : 'punch_hit', { vol: 0.6 }); // W1.1
       }
 
       const baseComboDmg = hitIdx === 1 ? 82 : (hitIdx === 2 ? 105 : 150);
@@ -4163,6 +4260,7 @@ function executeSkill(unit, slot) {
     }
   } else if (sk.type === 'kawarimi') {
     unit.state = 'dash';
+    AUTH_SFX.play('dash', { vol: 0.5 }); // W1.1
     unit.animDuration = 0.35;
     unit.animTimer = unit.animDuration;
     const extLog = buildExtractedVfxMeshGroup('common', 0x78350f, 0.055, '1efc_log01');
@@ -4193,6 +4291,7 @@ function executeSkill(unit, slot) {
     unit.animDuration = 1.15;
     unit.animTimer = unit.animDuration;
     unit.awakenedTimer = 14.0; // 14 seconds of Awakening Mode!
+    AUTH_SFX.play('awake_open', { vol: 0.9 }); AUTH_SFX.play('awake_flash', { vol: 0.8 }); // W1.1
     unit.auraMesh.visible = true;
 
     const maxReach = 9.5;
@@ -4353,6 +4452,7 @@ function showMatchResults(winner, bannerTextFallback) {
   const win = (winner === 'blue' || (!winner && b > r)) ? 'blue'
              : (winner === 'red' || (!winner && r > b)) ? 'red' : 'tie';
   if (matchActive) recordMatchResult(win);
+  AUTH_SFX.play('result', { vol: 0.9 }); // W1.1
   const CONF = {
     blue: { img: 'banner_win.png',  kanji: '勝利',      text: 'VITÓRIA DO TIME KONOHA',    cls: 'win'  },
     red:  { img: 'banner_lose.png', kanji: '敗北',      text: 'DERROTA — TIME RIVAL VENCEU', cls: 'lose' },
@@ -4561,6 +4661,7 @@ function updateMatch(dt, elapsed) {
     if (scoreBlue === scoreRed && !matchOvertime) {
       matchOvertime = true;
       matchTimeRemaining = 60; // T5: prorrogacao de 1 minuto
+      AUTH_SFX.play('time_up', { vol: 0.9 }); // W1.1
       showBanner('PRORROGAÇÃO! 1 MINUTO PARA DESEMPATAR', 2400);
       const _mt = document.getElementById('match-timer');
       if (_mt) _mt.classList.add('overtime');

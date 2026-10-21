@@ -127,3 +127,7 @@ NUBA is a 5v5 3D WebGL MOBA Deathmatch built on Three.js (v0.169.0), Web Audio A
 36. **Deploy público validado (GitHub + Vercel)** — https://goofy-mendeleev.vercel.app;
     bateria determinística 38/38 + zero console errors rodando CONTRA o deploy via
     proxy reverso; repo espelhado em github.com/jessianmart/nuba-game.
+37. **W1.2 Página de Ajustes** — 5ª aba AJUSTES: som (toggle+volume), gráficos (pixel ratio
+    low/med/high), game feel (gate JUICE.enabled nas 4 juice fns), controles (keymap real);
+    persistência no perfil local; smoke 9/9 com reload; bateria 38/38 zero console errors.
+    + recuperação do incidente W1.1 (revert paralelo) via session_search.

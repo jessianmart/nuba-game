@@ -26,3 +26,24 @@ permite rodar a bateria determinística INALTERADA, com todos os bytes vindos do
 4. `.vercelignore` enxuta o deploy (541MB → ~150MB): fora `ui/raw`, `ui/_sheets`,
    `models/puppets`, banks de áudio brutos (`.xfbin/.acf/.nus3conf`) — todos com
    zero refs em runtime (auditados em código E JSONs).
+
+## §16 — W1.2 Página de Ajustes (2026-10-21)
+
+**5ª aba do lobby (AJUSTES)**: som (toggle sincronizado com perfil + volume das cues autênticas),
+gráficos (pixel ratio low 0.75 / med 1.25 / high 1.75), game feel (master gate `JUICE.enabled`
+nas 4 funções juice), controles (keymap real: Q/E/Espaço/R, C, H, TAB). Persistência em
+`nuba.profile.v1` (campos aditivos: volume, quality, juice). Zero scroll na página.
+
+| Verificação | Resultado |
+|---|---|
+| Smoke W1.2 (9 asserts, 2 probes c/ reload) | PASS — persistência restaurada após reload |
+| verify_browser_runtime | ALL PASSED, zero console errors |
+| test_e2e_suite | 38/38, Console Errors: 0 |
+
+### Incidente W1.1 (2026-10-20 20:52): revert silencioso do working tree
+Agentes paralelos (Antigravity) reverteram o game.js pós-W1.1: AUTH_SFX/SKILL_SFX_MAP sumiram
+JUNTO com `bak_w11` e `tools/w11_*`; produção ficou sem áudio autêntico (a suite 38/38 não
+cobre AUTH_SFX — só o smoke W1.1 cobre). Recuperação: patcher reconstituído do transcript
+(session_search) + âncora level-up re-grepada (indent 4 espaços). Reaplicado, smoke 9/9,
+bateria 38/38. **Lição: commit imediato após verde; checar marcadores de milestone antes de
+qualquer trabalho novo no repo paralelo.**

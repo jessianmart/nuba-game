@@ -31,6 +31,7 @@
         <button type="button" class="nav-tab" role="tab" aria-selected="false" aria-controls="page-ninjas" data-page="ninjas">NINJAS</button>
         <button type="button" class="nav-tab" role="tab" aria-selected="false" aria-controls="page-arenas" data-page="arenas">ARENAS</button>
         <button type="button" class="nav-tab" role="tab" aria-selected="false" aria-controls="page-perfil" data-page="perfil">PERFIL</button>
+        <button type="button" class="nav-tab" role="tab" aria-selected="false" aria-controls="page-ajustes" data-page="ajustes">AJUSTES</button>
       </nav>
 
       <div class="lobby-actions-top">
@@ -279,6 +280,59 @@
             <div id="profile-achievements" class="achievement-grid"></div>
           </section>
         </div>
+      </div>
+    </section>
+
+    <!-- W1.2 AJUSTES: som, graficos, game feel e controles -->
+    <section id="page-ajustes" class="lobby-page" data-page="ajustes" role="tabpanel" aria-hidden="true">
+      <div class="ajustes-grid">
+        <section class="profile-section">
+          <header><h4>SOM</h4><span>áudio do combate</span></header>
+          <div class="pref-row">
+            <div><strong>Efeitos sonoros</strong><span>jutsus, impactos e ougi do Storm</span></div>
+            <label class="pref-switch"><input type="checkbox" id="aj-sound" checked /><span></span></label>
+          </div>
+          <div class="pref-row">
+            <div><strong>Volume das cues</strong><span id="aj-volume-label">85%</span></div>
+            <input type="range" id="aj-volume" class="aj-slider" min="0" max="100" step="5" value="85" aria-label="Volume" />
+          </div>
+        </section>
+
+        <section class="profile-section">
+          <header><h4>GRÁFICOS</h4><span>resolução de render</span></header>
+          <div class="pref-row">
+            <div><strong>Qualidade</strong><span>pixel ratio do WebGL</span></div>
+            <div class="aj-pills">
+              <button type="button" id="aj-q-low" class="pill-btn">BAIXA</button>
+              <button type="button" id="aj-q-med" class="pill-btn">MÉDIA</button>
+              <button type="button" id="aj-q-high" class="pill-btn active">ALTA</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="profile-section">
+          <header><h4>GAME FEEL</h4><span>impacto cinematográfico</span></header>
+          <div class="pref-row">
+            <div><strong>Screen shake & hitstop</strong><span>tremor de câmera e slow-mo de abate</span></div>
+            <label class="pref-switch"><input type="checkbox" id="aj-juice" checked /><span></span></label>
+          </div>
+        </section>
+
+        <section class="profile-section">
+          <header><h4>CONTROLES</h4><span>teclado e mouse</span></header>
+          <div class="aj-keys">
+            <div><kbd>W A S D</kbd><span>mover</span></div>
+            <div><kbd>← ↑ ↓ →</kbd><span>mover (setas)</span></div>
+            <div><kbd>MOUSE</kbd><span>combo de taijutsu</span></div>
+            <div><kbd>Q / 1</kbd><span>jutsu 1</span></div>
+            <div><kbd>E / 2</kbd><span>jutsu 2</span></div>
+            <div><kbd>ESPAÇO / 3</kbd><span>kawarimi</span></div>
+            <div><kbd>R / 4</kbd><span>ultimate</span></div>
+            <div><kbd>C</kbd><span>câmera livre</span></div>
+            <div><kbd>H</kbd><span>ajudas</span></div>
+            <div><kbd>TAB</kbd><span>placar</span></div>
+          </div>
+        </section>
       </div>
     </section>
   </div>

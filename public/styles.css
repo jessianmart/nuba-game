@@ -4807,3 +4807,14 @@ kbd {
 .ability-cost, .skill-slot .skill-cost { font-size: 7.5px; padding: 0 2px; }
 .cd-radial-overlay, .cd-overlay { font-size: 15px; }
 
+/* ==================== W1.2 AJUSTES ==================== */
+#page-ajustes .ajustes-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; width: 100%; align-content: start; }
+#page-ajustes .profile-section { margin: 0; }
+#page-ajustes .pref-row { padding: 10px 0; }
+.aj-slider { accent-color: rgba(201, 162, 39, 0.95); width: 170px; height: 22px; cursor: pointer; }
+.aj-pills { display: inline-flex; gap: 8px; }
+.aj-pills .pill-btn.active { background: rgba(139, 26, 26, 0.55); }
+.aj-keys { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 18px; }
+.aj-keys > div { display: flex; align-items: center; gap: 10px; font-size: 11px; color: #cbd5e1; }
+.aj-keys kbd { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; letter-spacing: 1px; color: #fbbf24; background: rgba(201, 162, 39, 0.08); border: 1px solid rgba(201, 162, 39, 0.3); border-radius: 4px; padding: 3px 7px; min-width: 52px; text-align: center; }
+
