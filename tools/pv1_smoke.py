@@ -48,9 +48,10 @@ async def main(port):
         }))()""")
         # (2) partida 3v3 pelo botao JOGAR (default dm_3v3)
         await ev("document.getElementById('btn-start-match').click()")
-        for _ in range(30):
+        # robustez de timing prod (proxy): esperar roster COMPLETO + player spawnado
+        for _ in range(40):
             await asyncio.sleep(1.5)
-            if await ev("window.matchActive === true"): break
+            if await ev("window.matchActive === true && window.units && window.units.length >= 6 && !!window.units.find(u => u.isPlayer)"): break
         out['match'] = await ev("""(() => ({
           active: window.matchActive === true,
           teamCount: window.units ? window.units.length : -1,
