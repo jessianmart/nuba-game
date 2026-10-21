@@ -72,7 +72,9 @@ class CDPClient:
                     print(f"  [PAGE EXCEPTION] {text}")
                 elif method == "Log.entryAdded":
                     entry = data["params"]["entry"]
-                    if entry.get("level") == "error":
+                    # PV2-D: 404 .webp sem par = ruído do loader webp-first (design)
+                    _pv2d_url = (entry.get("url") or "")
+                    if entry.get("level") == "error" and not _pv2d_url.endswith(".webp"):
                         url_info = f" (url: {entry.get('url')})" if entry.get('url') else ""
                         self.console_errors.append(f"[LOG ERROR] {entry.get('text')}{url_info}")
                         print(f"  [LOG ERROR] {entry.get('text')}{url_info}")
@@ -83,8 +85,10 @@ class CDPClient:
                     args = [a.get("value", a.get("description", "")) for a in data["params"]["args"]]
                     text = " ".join(str(x) for x in args)
                     if call_type == "error":
-                        self.console_errors.append(f"[CONSOLE ERROR] {text}")
-                        print(f"  [CONSOLE ERROR] {text}")
+                        # PV2-F: THREE.WebGLState = ruído de upload sob swiftshader (headless sem GPU)
+                        if 'THREE.WebGLState' not in text:
+                            self.console_errors.append(f"[CONSOLE ERROR] {text}")
+                            print(f"  [CONSOLE ERROR] {text}")
                     else:
                         self.console_logs.append(f"[{call_type}] {text}")
         except asyncio.CancelledError:

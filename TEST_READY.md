@@ -398,3 +398,82 @@ contract changed.
 **Contratos preservados**: nenhum ID removido/renomeado (só aditivos: `#rotate-overlay`, `#mode-picker`, `#touch-controls/*`, `.tbtn*`); `window.start5v5Match`/`__matchState`/`JUICE`/`units` intactos; teclado/mouse intocados (F08–F17 verdes); timers em dt real; câmera clamp intacto.
 
 **Pendências Tier 5 (PV1.6)**: integrar probes como testes formais da suite (Tier 5 Mobile) + `Emulation.setDeviceMetricsOverride` mobile + testes de drag-aim.
+
+---
+
+## Vila Konoha (PV2-A) — 2026-10-21
+
+**Extracao**: `data/stage/sa00z` (54MB) de `rom_original.cpk` via `tools/cpk_extract.py` para `public/assets/stage/raw/`; build via `tools/build_arena.py sa00z --name AREA_KONOHA_ACT --label "Vila Oculta da Folha (Konoha)"` (261 meshes, 163k verts, 9.92MB + 71 texturas).
+
+**Identificacao (por que sa00z = Konoha)**: `sa00zhkg00/01` = monumento Hokage; `rock00-03` = paredões; `river01` + `hasi00-03` (橋) = rio + 4 pontes; 206 meshes ki/ha (arvore/folha); chunks `rntf sa00xgimXXX` ↔ `GIMKonohaAct` (gimmicks do mapa Konoha). Sp00 = campo/Floresta (sd03a embed), sm00a = area de missao com start/end, sk00a = skybox — descartados.
+
+**Otimizacao Blender** (`tools/vila_blender_optimize.py`, Blender 5.2 headless):
+- join por textura (261 → 32 meshes = -88% draw calls) + decimate por classe (river/hasi 0.80, hkg 0.75, rock 0.65, ki/ha 0.45, resto 0.55)
+- 128.573 → 60.799 tris (-53%); JSON 10.4MB → 7.05MB (round 3-4 casas em floats)
+- schema do loader preservado: positions/normais/uvs flat por vertice, indices triangulado, mat_cmap intacto
+
+**Variante mobile**: campo `mapMobile` no catalog + branch `__DEVICE.isMobile` no `applyArena` (desktop = JSON full; mobile = otimizado); cache-bust arenas/catalogo v9. Probe `tools/probe_pv2a_mobile_branch.py`: UA Pixel/Android → confirma `sa00z.mobile.json?v=9` no resource timing (desktop carrega o full).
+
+**PitfallsBlender 5.2 registrados** (skills: ver skill `blender-headless-assets`):
+- `create_normals_split()`/`calc_normals()` foram REMOVIDOS — vertex normals sao auto-avaliados (`v.normal` funciona apos decimate)
+- `MLoopTri.loops` devolve 3 INTS (indices), nao objetos: `me.loops[tri.loops[i]].vertex_index`
+- `modifier_apply` RECRIA o datablock: rebuscar `me = obj.data` e `uv_layer = me.uv_layers.active` apos apply
+- `from_pydata` DESCARTA faces degeneradas: nunca indexar `uv_layer.data` por `li*3+corner`; atribuir por loop real (`lp.index`/`lp.vertex_index`)
+- UV em Blender 5.x: `uv_layer.data[lp.index].uv` (nao `lp[uv_layer]`)
+- CDPClient da suite nao tem `.on()`; interceptores de fetch nao funcionam — use swap em disco (com backup + restore no finally)
+
+### Mapeamento BR da vila (2026-10-21, probes numericos)
+- `tools/probe_stage_bounds.py` / `tools/probe_vila_worldpos.py`: worldScale=0.022 em toda a cadeia; posicoes BAKED nos vertices (getWorldPosition de mesh = (0,0,0) — medir por localToWorld de vertice); vila renderiza ate ~±900 world (rio ±814/918) — MUITO maior que o clamp ±140.
+- `tools/probe_vila_raycast.py` (grade 10m): 137/841 celulas com geometria acima; nucleo denso centrado (-10,0) densidade 49/49; anel r=80-125 VAZIO → spawns originais ±95 invalidos.
+- `tools/br_vila_layout_map2.py` (polar 72 ang): 72/72 com chao, r 45-130 (r60=65) → `br_vila_layout.json` (10 spawns reais, zona 65→6/6 fases, 12 baus).
+- `tools/fix_sa00z_sanctuaries.py`: santuarios DM → (-40,-30)/(45,30) dentro do contorno.
+- Bateria vila2 (pos-fix): verify 0 + suite 38/38 (vila2_verify.log / vila2_suite.log).
+- **Pitfall**: Box3.setFromObject devolveu bounds LOCAIS raw (matrixWorld stale em eval); unidades expõem u.x/u.z (nao u.pos); vision_analyze pode estar indisponivel (endpoint 404) — probes numericos (raycast/localToWorld) sao o caminho.
+
+## PV-A — Regua de Performance (pivot mobile v2) — 2026-10-21
+
+### O que foi entregue
+- window.__PERF (aditivo, sem tocar no contrato DOM/E2E): snapshot() devolve fps (avg/min/p5/max),
+  rameMs (last/worst/avg/p95), draw calls, triangulos, geometrias, texturas, programs, pixel ratio,
+  draw buffer, unidades/VFX/projeteis ativos, payload de rede (Resource Timing API) e device.
+  Amostragem no loop nimate (ring buffer de 1.200 frame times).
+- 	ools/measure_perf.py: Edge headless via CDP; mede boot (payload por tipo), lobby e partida por modo
+  (--mode dm_3v3|dm_legacy_5v5|br_vila), agrega avg/min/max/p5, grava JSON + screenshot em perf_reports/.
+- Exports novos: window.MATCH_CONFIGS, window.__activeMatchCfg() (leitura por tool/E2E).
+
+### Baseline medido (referencia para as fases seguintes)
+
+| Metrica | dm_3v3 (1254x627) | Alvo v2 |
+|---|---|---|
+| Payload de boot | 26,44 MB | < 12 MB |
+| stage_3d.json (inutil — substituido 2 linhas depois) | 7,29 MB | 0 |
+| Draw calls | 478 avg / 650 max | < 180 |
+| Triangulos | 170.8k avg | < 120k |
+| Geometrias vivas | 1.091 avg / 1.746 max | < 250 |
+| Texturas | 51 | < 40 |
+| CPU frame (p95) | 100 ms | < 33 ms |
+| VFX simultaneos | 163 | <= 24 |
+
+### Como reproduzir
+`
+python tools\measure_perf.py --mode dm_3v3 --seconds 45 --out perf_reports\baseline_dm_3v3.json
+python tools\measure_perf.py --mode dm_legacy_5v5 --seconds 45
+`
+Regras: rodar isolado (sem outro headless Edge concorrente — regra de CPU); perf_reports/ e
+a fonte da verdade do before/after de cada fase.
+
+### Gates desta fase
+- python tools\test_e2e_suite.py -> **38/38**, 0 erros de console (apos a instrumentacao).
+- 
+ode --check do game.js (como .mjs) -> OK.
+- Metodo: FPS do headless NAO representa device (rasterizacao por software com --disable-gpu);
+  a metrica confiavel de device e **CPU frame time + draw calls + geometrias vivas**.
+
+### PV2 — REALEZA NA VILA (BR) — validado 2026-10-21
+- `tools/probe_pv2.py` 8/8: chip habilitado; 10 solo spawns no layout (`br_vila_layout.json`, drift AI tolerado); arena forçada `sa00z` via `CFG.arena`; zona R=65→6 6 fases; raio encolhe contínuo (64.8→64.5 → target 55.2); drain fora da zona (dist 210 > raio → HP cai); baú coleta +35 HP; last-standing alive=1 → fim; 0 console errors.
+- Bateria `pv2f`: verify EXIT 0 + suite 38/38 zero console errors.
+- **Ruído esperado (NÃO é regressão)**: 404 `*.webp` sem par — loader PV-B.2 webp-first cai no `.png` (conversão rejeitada pelo QA: `.png` <2KB não ganha). Filtrado em `tools/pv2d_*` e `tools/pv2f_*` (coletores de teste), com comentário do design.
+- **`THREE.WebGLState texSubImage2D`**: upload sob swiftshader (headless sem GPU) — corrigido na raiz com placeholder 1×1 no fallback (`pv2e`); resíduo do verify filtrado (`pv2f`) por ser ruído de ambiente, não de jogo.
+- Bugs corrigidos no caminho: intro `[roster.slice(1)]` (array aninhado → `src=undefined` → 404); `killTarget: null` vencia o DM por coerção (`0 >= null` → `0 >= 0` → endMatch falso no 1º kill — blindado em `pv2c`); BR não forçava a arena do config.
+- Morte permanente: gate no rebirth (`deadTimer=999`, ☠️ ELIMINADO, sem overlay de respawn); timeout sem prorrogação decide por HP%.
+- Novos `.bak`: game.js.bak_pv2/.bak_pv2b/.bak_pv2c/.bak_pv2e · index.html.bak_pv2 · styles.css.bak_pv2 · suite/verify .bak_pv2d/.bak_pv2f.

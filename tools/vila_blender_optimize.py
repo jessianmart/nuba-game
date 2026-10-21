@@ -71,22 +71,15 @@ for tex, members in groups.items():
     me = bpy.data.meshes.new(f'g_{os.path.basename(tex)[:-4]}')
     me.from_pydata(all_pos, [], faces)
     uv_layer = me.uv_layers.new(name='UVMap')
-    for li, face in enumerate(faces):
-        for corner in range(3):
-            loop_index = li * 3 + corner
-            vid = face[corner]
-            uv_layer.data[loop_index].uv = all_uv[vid]
+    # faces degeneradas podem ser descartadas pelo from_pydata: atribui pelos
+    # loops REAIS do mesh (indefeso a contagem), nao por li*3+corner
+    for lp in me.loops:
+        uv_layer.data[lp.index].uv = all_uv[lp.vertex_index]
     # normais split originais por loop
-    loop_norms = []
-    for fi, face in enumerate(faces):
-        for corner in range(3):
-            n = all_nrm[all_idx[fi * 3 + corner][corner]]
-            loop_norms.append(n)
-    if loop_norms:
-        me.create_normals_split()
-        for ln, nrm in zip(me.loops, loop_norms):
-            ln.normal = nrm
-        me.validate(clean_customdata=False)
+    # normais: vertex-normais suavizadas calculadas pelo proprio Blender (API estavel;
+    # split-normais customizadas mudaram de API no 4.1+ e o decimate as recalcula mesmo)
+    for poly in me.polygons:
+        poly.use_smooth = True
 
     obj = bpy.data.objects.new(f'g_{os.path.basename(tex)[:-4]}', me)
     bpy.context.collection.objects.link(obj)
@@ -98,11 +91,13 @@ for tex, members in groups.items():
         mod.ratio = r
         bpy.ops.object.modifier_apply(modifier=mod.name)
 
-    # exporta de volta
+    # exporta de volta: modifier_apply pode RECRIAR o datablock — rebuscar pelo objeto
+    me = obj.data
+    uv_layer = me.uv_layers.active
     me.calc_loop_triangles()
     out_idx = []
     verts = me.vertices
-    tris = [tuple(tri.loops[i].vertex_index for i in range(3)) for tri in me.loop_triangles]
+    tris = [tuple(me.loops[tri.loops[i]].vertex_index for i in range(3)) for tri in me.loop_triangles]
     positions, normals, uvs = [], [], []
     first_loop_of_vert = {}
     for ti, tri in enumerate(me.loop_triangles):
@@ -113,8 +108,8 @@ for tex, members in groups.items():
                 continue
             first_loop_of_vert[vid] = vid
             positions.append(verts[vid].co)
-            normals.append(lp.normal.copy())
-            uvs.append(lp[uv_layer].uv.copy())
+            normals.append(verts[vid].normal)
+            uvs.append(uv_layer.data[lp.index].uv.copy())
     for t in tris:
         out_idx.extend(t)
     tris_out += len(tris)
@@ -123,9 +118,9 @@ for tex, members in groups.items():
         'name': f'sa00zm_{stem}',
         'mat_cmap': first['mat_cmap'],
         'texture': first['texture'],
-        'positions': [c for v in positions for c in (v.x, -v.z, v.y)],
-        'normals': [c for v in normals for c in (v.x, -v.z, v.y)],
-        'uvs': [c for v in uvs for c in (v.x, v.y)],
+        'positions': [round(c, 3) for v in positions for c in (v.x, -v.z, v.y)],
+        'normals': [round(c, 4) for v in normals for c in (v.x, -v.z, v.y)],
+        'uvs': [round(c, 4) for v in uvs for c in (v.x, v.y)],
         'indices': out_idx,
     })
     print(f'  {tex:34} {len(members):3} meshes -> 1  ratio {r:.2f}  tris {len(tris)}')
@@ -148,7 +143,7 @@ data_out = dict(data)
 data_out['meshes'] = out_meshes
 data_out['verts'] = sum(len(m['positions']) // 3 for m in out_meshes)
 data_out['tris'] = sum(len(m['indices']) // 3 for m in out_meshes)
-data_out['bounds'] = {'min': mn, 'max': mx}
+data_out['bounds'] = {'min': [round(c, 3) for c in mn], 'max': [round(c, 3) for c in mx]}
 data_out['note'] = 'mobile-optimized (Blender 5.2: join por textura + decimate)'
 with open(OUT, 'w', encoding='utf-8') as f:
     json.dump(data_out, f, ensure_ascii=False, separators=(',', ':'))
@@ -157,7 +152,7 @@ dst_size = os.path.getsize(OUT)
 report = {
     'src': {'meshes': len(data['meshes']), 'verts': data['verts'], 'tris': data['tris'], 'bytes': src_size},
     'out': {'meshes': len(out_meshes), 'verts': data_out['verts'], 'tris': data_out['tris'], 'bytes': dst_size},
-    'reducao_meshes': f"{100 - data_out['meshes'] * 100 / len(data['meshes']):.0f}%",
+    'reducao_meshes': f"{100 - len(data_out['meshes']) * 100 / len(data['meshes']):.0f}%",
     'reducao_tris': f"{100 - data_out['tris'] * 100 / data['tris']:.0f}%",
     'reducao_bytes': f"{100 - dst_size * 100 / src_size:.0f}%",
     'segundos': round(time.time() - t0, 1),

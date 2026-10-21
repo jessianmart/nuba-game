@@ -1,0 +1,125 @@
+{
+ "id": "br_vila",
+ "arena": "sa00z",
+ "source": "contorno polar raycast 72 angulos (tools/br_vila_layout_map2.py)",
+ "zoneCenter": {
+  "x": -10,
+  "z": 0
+ },
+ "zoneRadiusStart": 65,
+ "zoneRadiusMin": 6,
+ "zonePhases": 6,
+ "spawnRing": [
+  {
+   "x": 55,
+   "z": 0,
+   "angle": 0,
+   "r": 55
+  },
+  {
+   "x": 44,
+   "z": 32,
+   "angle": 36,
+   "r": 55
+  },
+  {
+   "x": 15,
+   "z": 48,
+   "angle": 72,
+   "r": 50
+  },
+  {
+   "x": -17,
+   "z": 52,
+   "angle": 108,
+   "r": 55
+  },
+  {
+   "x": -44,
+   "z": 32,
+   "angle": 144,
+   "r": 55
+  },
+  {
+   "x": -55,
+   "z": 0,
+   "angle": 180,
+   "r": 55
+  },
+  {
+   "x": -44,
+   "z": -32,
+   "angle": 216,
+   "r": 55
+  },
+  {
+   "x": -17,
+   "z": -52,
+   "angle": 252,
+   "r": 55
+  },
+  {
+   "x": 14,
+   "z": -43,
+   "angle": 288,
+   "r": 45
+  },
+  {
+   "x": 44,
+   "z": -32,
+   "angle": 324,
+   "r": 55
+  }
+ ],
+ "chests": [
+  {
+   "x": -10,
+   "z": 10
+  },
+  {
+   "x": 10,
+   "z": 0
+  },
+  {
+   "x": 0,
+   "z": -20
+  },
+  {
+   "x": -30,
+   "z": 0
+  },
+  {
+   "x": 10,
+   "z": 20
+  },
+  {
+   "x": 20,
+   "z": -20
+  },
+  {
+   "x": 30,
+   "z": 0
+  },
+  {
+   "x": -30,
+   "z": 20
+  },
+  {
+   "x": -20,
+   "z": -20
+  },
+  {
+   "x": 30,
+   "z": 20
+  },
+  {
+   "x": -10,
+   "z": 30
+  },
+  {
+   "x": 40,
+   "z": -20
+  }
+ ],
+ "notes": "vila solida e um nucleo compacto (~r60); spawns dentro do contorno real"
+}

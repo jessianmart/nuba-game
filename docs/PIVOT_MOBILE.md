@@ -151,7 +151,19 @@ Componentes DOM aditivos:
 | PV1.5 | Câmera mobile: thirdperson auto + look-ahead joystick; pan off touch; clamp invariante | `game.js` §camera | F11 clamp + T5 snap-behind |
 | PV1.6 | **Tier 5 E2E Mobile**: CDP `Input.dispatchTouchEvent` (joystick/ATK/Q/kawarimi/chakra) + `Emulation.setDeviceMetricsOverride(412×915)`; updates `PROJECT.md`/`TEST_READY.md` §Tier 5 | `tools/test_e2e_suite.py`, docs | 38/38 + novos testes verdes |
 
-### Fase PV2 — Realeza na Vila (BR)
+### Fase PV2 — Realeza na Vila — **STATUS: MODO BR JOGÁVEL (probe 8/8 + bateria 38/38)**
+- `MATCH_CONFIGS.br_vila`: solo 10, sem respawn, zona 65→6 em 6 fases, 180s, layout real via `br_vila_layout.json`
+- `startBRMatch` (game.js): spawn solo no anel real, zona 結界 (cilindro roxo translúcido escala=raio), 12 baús âmbar (+35 HP/+50 chakra), `playMatchIntro([playerHero], roster.slice(1))`
+- `updateBR(dt)` no `updateMatch`: fases a cada 25s, raio contínuo entre fases, drain `2+fase` HP/s fora do raio (+1.5 tolerância), coleta por proximidade (2.6u), last-standing → `brEndMatch` reusa `endMatch` (scoreBlue/Red 1/0)
+- Morte permanente no rebirth (PV2) + timeout sem prorrogação decide por HP (PV2); `killTarget != null` blindado (PV2-C)
+- Loader webp-first com placeholder 1×1 no fallback (PV2-E) + filtros de ruído nos coletores (PV2-D/F)
+- Pendente fino: squad 2v2 quando W2.1 (roster 20) chegar; chest loot variado
+
+**Mapa (evidência, não estimativa)**: contorno polar raycast 72 ângulos (tools/br_vila_layout_map2.py) — núcleo contíguo r45-80 + braço leste até r130; `zoneRadiusStart=65`. Layout gravado em `public/assets/data/br_vila_layout.json`:
+- `spawnRing`: 10 spawns solo no anel REAL da vila (r 35-55): (55,0) (44,32) (15,48) (-17,52) (-44,32) (-55,0) (-44,-32) (-17,-52) (14,-43) (44,-32)
+- `zoneCenter (-10,0)`, zona 結界 65 → 6 em 6 fases
+- `chests`: 12 baús no núcleo denso (±40)
+- Santuários DM corrigidos para DENTRO da vila: blue (-40,-30) / red (45,30) (±95 originais caíam no vazio — player spawnava fora do visual) (BR)
 
 | # | Task | Arquivos | Verificação |
 |---|---|---|---|
@@ -223,3 +235,69 @@ Componentes DOM aditivos:
 | PV3 | Perf + polish + device smoke | 4 | PV1/PV2 | 1× |
 
 **MVP jogável no celular = PV0 + PV1** (deathmatch 3v3 tocável, sem quebrar o desktop). BR é a camada seguinte que reusa tudo.
+
+---
+
+## 8. Plano v2 (PV-A..PV-F) — 2026-10-21 — contrato vigente
+
+> Este apendice substitui as estimativas de §2.6 e §PV3 (que a medição refutou) e
+> incorpora as decisões do usuário: **Brawl Stars puro (arena 3v3 + Realeza na Vila,
+> sem lane/torre/minion)**, **netcode mobile entra no roadmap (3v3 online + ranking)**,
+> **piso de dispositivo moderno (Android 8+/iOS 15+) com WebP**, **assets atuais mantidos**.
+
+### 8.0 Estado real no início do v2 (medido, não estimado)
+
+| Item | Estado | Evidência |
+|---|---|---|
+| PV0.1/0.2 viewport + __DEVICE | ✅ | game.js:5-14 |
+| PV0.3 InputState | ✅ | window.INPUT (game.js:16), consumo em 5068/5090/5091/5163 |
+| PV1.1/1.2 MATCH_CONFIGS + startMatch | ✅ | game.js:282-291, 5815 |
+| PV1.3-1.5 joystick + cluster + câmera mobile | ✅ | index.html:534-535, styles.css:4878-4899, game.js:5851+ |
+| PV1.6 Tier 5 E2E mobile | ✅ | commits e3dd1ed, d1c2354 |
+| PV2 (BR) | 🟡 mapa pronto, modo pendente | r_vila_layout.json, sa00z.mobile.json |
+| **Instrumentação de perf** | ❌ (agora entregue no PV-A) | window.__PERF, 	ools/measure_perf.py |
+| **Higiene de payload** | ❌ | 0 arquivos .webp; stage_3d.json (7,29 MB) baixado no boot (game.js:5528); 	extureCache (:225) nunca purgado; ssets/arena é Junction com .gitignore inconsistente |
+| **Perf mobile** | ❌ | ver baseline abaixo |
+| **Netcode / release mobile** | ❌ | nada de ws; sem dist/ |
+
+### 8.1 Baseline medido (PV-A) — Edge headless 1254x627, modo dm_3v3
+
+| Métrica | Valor medido | Alvo v2 | Gap |
+|---|---|---|---|
+| Payload de boot | **26,44 MB** | < 12 MB (3v3) | -14 MB |
+| stage_3d.json (inútil, substituído 2 linhas depois) | 7,29 MB | 0 | -7,29 MB |
+| Draw calls (partida 3v3) | **478 avg / 650 max** | < 180 | -300 |
+| Triângulos | 170,8k avg | < 120k | -50k |
+| **Geometrias vivas** | **1.091 avg / 1.746 max** | < 250 | -840 (churn de spawnVFX) |
+| Texturas | 51 | < 40 | -11 |
+| CPU frame (p95) | 100 ms | < 33 ms (30 fps) | -67 ms |
+| **VFX simultâneos** | **163** | ≤ 24 | -139 |
+| Unidades | 6 (3v3 ✅) | 6 | ok |
+
+> Nota de método: o headless usa rasterização por software (--disable-gpu), então **FPS
+> não representa device real**. A métrica confiável de device é **CPU frame time** +
+> draw calls + geometrias vivas. 	ools/measure_perf.py reporta ambos.
+
+### 8.2 Fases restantes (execução fase a fase, 38/38 + verify 0 erros ao fim de cada)
+
+| Fase | Tasks | Conteúdo | Aceite |
+|---|---|---|---|
+| **PV-A** | 2 | window.__PERF (fps/cpuFrame/drawCalls/triangles/geometries/textures/programs/payload) + 	ools/measure_perf.py (lobby + partida, JSON + screenshot) + baseline | ✅ 38/38, 0 erros, baseline em perf_reports/ |
+| **PV-B** | 5 | (1) matar o fetch de stage_3d.json; (2) WebP: arena q80, UI/VFX q90, com QA visual por diff; (3) purge de 	extureCache na troca de arena; (4) canonicalizar ssets/arena (Junction → 1 caminho, repo+server+deploy coerentes); (5) dist/ build com gzip/brotli | payload boot < 14 MB; nenhum 404; 38/38 |
+| **PV-C** | 6 | quality governor (dpr 1,0-1,25, sem MSAA, FrontSide onde validado, cap de VFX 24) + merge de arena por textura + InstancedMesh (folhas/grama) + reuso de geometria de herói (SkeletonUtils.clone) + skin quantizada (Uint8) + throttles de CPU (labels/minimap/scoreboard) | draw calls < 180, geometrias < 250, cpuFrame p95 < 33 ms |
+| **PV-D** | 5 | modo BR: zona 結界 (6 fases, 65→6), dano fora da zona, 12 baús/pergaminhos (+8% HP / +5% dano, máx 6, drop 50%), placement 1º-10º, HUD de vivos/fase | Tier 5 BR verde; 38/38 |
+| **PV-E** | 7 | online 3v3 + ranking: server/ (Node+ws+sqlite), host-authoritative com **placar/kill/MMR no servidor**, snapshot binário delta 15-20 Hz, predição+interpolação 100 ms, reconexão, contas/MMR/temporada, Tier 5 online (2 browsers) | 2 contas → fila → sala → partida → MMR atualizado |
+| **PV-F** | 5 | release mobile: PWA landscape + offline do shell, TLS/VPS, QA multi-device, observabilidade, docs de operação | instalável, 30+ fps em device, 38/38 + Tier 5 no CI |
+
+### 8.3 Fora de escopo (decisão do usuário)
+
+Lane, torre, minions, itens/loja, monetização, skins, wrapper nativo, novos heróis.
+**Tema, skin Storm, VFX, áudio, kanji e juice permanecem exatamente como estão.**
+
+### 8.4 Regras de execução
+
+1. Docs antes de código: cada fase atualiza PROJECT.md (feature row) + TEST_READY.md + LIFELINE.md.
+2. window.start5v5Match/window.units/window.JUICE/contrato DOM preservados; regressão no legado = rollback da task.
+3. Patchers re-ancorados (dev paralelo mexe nos mesmos arquivos): .bak_pv* + re-leitura antes de cada patch.
+4. Telas 5e2 offline: nunca rodar a suite com outro headless Edge concorrente (regra de CPU).
+

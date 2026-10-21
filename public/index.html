@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>NUBA: Arena de Batalha Ninja (5v5 MOBA Combate Mortal)</title>
-  <link rel="icon" href="assets/logo/logo.png" />
+  <link rel="icon" href="assets/logo/logo.webp" />
   <link rel="stylesheet" href="styles.css?v=35" />
   <script type="importmap">
     {
@@ -29,7 +29,7 @@
     <!-- MOBA CLIENT TOP BAR: logo, navegacao, identidade e moeda -->
     <header class="lobby-header">
       <div class="brand-row-flex">
-        <img src="assets/logo/logo.png" alt="Logo NUBA" class="nuba-logo-banner" />
+        <img src="assets/logo/logo.webp" alt="Logo NUBA" class="nuba-logo-banner" />
       </div>
 
       <nav class="lobby-nav" role="tablist" aria-label="Navegação do cliente">
@@ -105,7 +105,7 @@
         <div id="mode-picker" role="tablist" aria-label="Modo de jogo">
           <button type="button" class="mode-chip selected" data-mode="dm_3v3">COMBATE 3v3<small>15 abates · 3 min</small></button>
           <button type="button" class="mode-chip" data-mode="dm_legacy_5v5">CLÁSSICO 5v5<small>30 abates · 5 min</small></button>
-          <button type="button" class="mode-chip" data-mode="br_vila" disabled>REALEZA NA VILA<small>em breve · PV2</small></button>
+          <button type="button" class="mode-chip" data-mode="br_vila">REALEZA NA VILA<small>10 ninjas · zona 結界 · solo</small></button>
         </div>
 
         <div class="hero-stage-cta">
@@ -355,7 +355,7 @@
     <!-- Top Bar: 5v5 MOBA Scoreboard & Timer Strip -->
     <header class="hud-top-bar">
       <div class="hud-brand-pill">
-        <img class="hud-storm-logo" src="assets/logo/logo.png" alt="Logo NUBA" aria-hidden="true" />
+        <img class="hud-storm-logo" src="assets/logo/logo.webp" alt="Logo NUBA" aria-hidden="true" />
         <span class="nuba-logo-txt">NUBA</span>
         <span class="nuba-sub-tag">5v5 MOBA</span>
         <span class="hud-live-ping"><span class="ping-dot"></span></span>
@@ -374,6 +374,7 @@
           <img class="storm-vs-crest" src="assets/ui/xcmn_vs.png" alt="VS" />
           <div id="match-timer" class="match-clock">05:00</div>
           <span class="match-goal-txt">META: 30 ABATES</span>
+          <div id="br-hud"><span class="br-alive-label">VIVOS</span> <span id="br-alive" data-digits="true">10</span> <span class="br-phase" id="br-phase">FASE 0/6</span></div>
         </div>
 
         <!-- Red Team (Rivais) -->

@@ -66,7 +66,9 @@ async def test_page(port=9333):
                     errors.append(f"{text} ({url}:{line})")
                 elif m == "Log.entryAdded":
                     entry = data["params"]["entry"]
-                    if entry.get("level") == "error":
+                    # PV2-D: 404 .webp sem par = ruído do loader webp-first (design)
+                    _pv2d_url = (entry.get("url") or "")
+                    if entry.get("level") == "error" and not _pv2d_url.endswith(".webp"):
                         print(f"[LOG ERROR] {json.dumps(entry)}")
                         errors.append(entry.get("text"))
                     else:
@@ -75,8 +77,11 @@ async def test_page(port=9333):
                     call_type = data["params"]["type"]
                     args = [a.get("value", a.get("description", "")) for a in data["params"]["args"]]
                     if call_type == "error":
-                        print(f"[CONSOLE ERROR] {' '.join(str(x) for x in args)}")
-                        errors.append(" ".join(str(x) for x in args))
+                        _t = " ".join(str(x) for x in args)
+                        # PV2-F: THREE.WebGLState = ruído de upload sob swiftshader (headless sem GPU)
+                        if "THREE.WebGLState" not in _t:
+                            print(f"[CONSOLE ERROR] {_t}")
+                            errors.append(_t)
                     else:
                         logs.append(f"[{call_type}] {' '.join(str(x) for x in args)}")
 

@@ -42,12 +42,12 @@
    "cameraLimit": 146,
    "playerLimit": 148,
    "sanctuaryBlue": {
-    "x": -95,
-    "z": -95
+    "x": -40,
+    "z": -30
    },
    "sanctuaryRed": {
-    "x": 95,
-    "z": 95
+    "x": 45,
+    "z": 30
    },
    "bounds": {
     "minX": -140,
@@ -63,7 +63,8 @@
     "hemiIntensity": 1.4
    },
    "built": true,
-   "map": "stage/arena/sa00z.json",
+      "mapMobile": "stage/arena/sa00z.mobile.json",
+"map": "stage/arena/sa00z.json",
    "mesh": "assets/stage/arena/sa00z.json",
    "verts": 162992,
    "tris": 128573,

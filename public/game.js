@@ -21,6 +21,68 @@ window.INPUT = {
 };
 
 // ============================================================================
+// PV-A PERF INSTRUMENTATION (docs/PIVOT_MOBILE.md v2 §PV-A) — régua de perf
+// Aditivo: nao altera DOM, nao altera combate, nao toca no contrato E2E.
+// Uso: window.__PERF.snapshot() -> { fps:{avg,min,p5,frames}, drawCalls, ... }
+// ============================================================================
+const PERF = {
+  frames: 0, fpsWindow: [], lastSample: performance.now(),
+  worstFrameMs: 0, lastFrameMs: 0, frameRing: [],
+  payloadBytes: 0, payloadEntries: 0
+};
+window.__PERF = {
+  enabled: true,
+  get fps() { return PERF.fpsWindow.length ? PERF.fpsWindow[PERF.fpsWindow.length - 1] : 0; },
+  snapshot() {
+    const w = PERF.fpsWindow.slice().sort((a, b) => a - b);
+    const info = (typeof renderer !== 'undefined' && renderer.info) ? renderer.info : null;
+    const mem = info ? info.memory : null;
+    const rend = info ? info.render : null;
+    return {
+      ts: Date.now(),
+      matchActive: (typeof matchActive !== 'undefined') ? matchActive : false,
+      fps: {
+        samples: w.length,
+        avg: w.length ? +(w.reduce((s, v) => s + v, 0) / w.length).toFixed(1) : 0,
+        min: w.length ? w[0] : 0,
+        p5: w.length ? w[Math.max(0, Math.floor(w.length * 0.05))] : 0,
+        max: w.length ? w[w.length - 1] : 0
+      },
+      frameMs: (() => {
+        const r = PERF.frameRing.slice().sort((a, b) => a - b);
+        return {
+          worst: +PERF.worstFrameMs.toFixed(2),
+          last: +PERF.lastFrameMs.toFixed(2),
+          avg: r.length ? +(r.reduce((s, v) => s + v, 0) / r.length).toFixed(2) : 0,
+          p95: r.length ? +r[Math.min(r.length - 1, Math.floor(r.length * 0.95))].toFixed(2) : 0,
+          samples: r.length
+        };
+      })(),
+      drawCalls: rend ? rend.calls : null,
+      triangles: rend ? rend.triangles : null,
+      geometries: mem ? mem.geometries : null,
+      textures: mem ? mem.textures : null,
+      programs: (info && info.programs) ? info.programs.length : null,
+      pixelRatio: (typeof renderer !== 'undefined') ? renderer.getPixelRatio() : null,
+      drawBuffer: (typeof renderer !== 'undefined') ? [renderer.domElement.width, renderer.domElement.height] : null,
+      units: (typeof units !== 'undefined' && Array.isArray(units)) ? units.length : 0,
+      vfx: (typeof vfxList !== 'undefined' && Array.isArray(vfxList)) ? vfxList.length : 0,
+      projectiles: (typeof projectiles !== 'undefined' && Array.isArray(projectiles)) ? projectiles.length : 0,
+      payload: { bytes: PERF.payloadBytes, entries: PERF.payloadEntries, mb: +(PERF.payloadBytes / 1048576).toFixed(2) },
+      device: window.__DEVICE || null,
+      viewport: { w: window.innerWidth, h: window.innerHeight }
+    };
+  },
+  reset() { PERF.fpsWindow.length = 0; PERF.worstFrameMs = 0; PERF.frames = 0; }
+};
+// payload de rede (bytes transferidos) — medido pelo Resource Timing API
+try {
+  const res = performance.getEntriesByType('resource');
+  PERF.payloadEntries = res.length;
+  PERF.payloadBytes = res.reduce((s, r) => s + (r.transferSize || r.encodedBodySize || 0), 0);
+} catch (err) { /* Resource Timing indisponivel */ }
+
+// ============================================================================
 // PV1.3/PV1.4 TOUCH CONTROLS (docs/PIVOT_MOBILE.md §2.4) — joystick + cluster
 // ============================================================================
 window.__cameraMode = () => cameraMode; // PV1.5a: leitura E2E do modo de câmera
@@ -96,6 +158,20 @@ const HERO_KITS = {
     w:   { name: 'Hari Jizo (Escudo de Espinhos)', desc: 'Cabelo endurecido envolve Jiraiya e perfura quem encostar', cd: 9.0, cost: 25, dmg: 150, color: 0xf43f5e, type: 'spin_aoe' },
     e:   { name: 'Kawarimi do Sapo', desc: 'Substituição ninja deixando um sapo invocador', cd: 9.0, cost: 15, dmg: 0, color: 0x4ade80, type: 'kawarimi' },
     r:   { name: 'Chou Oodama Rasengan + Modo Sennin', desc: 'Esfera colossal de Rasengan Eremita que varre a arena', cd: 23.0, cost: 50, dmg: 490, color: 0xef4444, type: 'ultimate' }
+  },
+  '1tnd': {
+    atk: { name: 'Taijutsu com Selo de Chakra', desc: 'Socos devastadores que canalizam chakra concentrado no ponto de impacto', cd: 0.40, cost: 0 },
+    q:   { name: 'Rakanken (Punho Sismico)', desc: 'Punho de chakra que racha o chao e arremessa inimigos na area', cd: 5.5, cost: 25, dmg: 240, color: 0x22c55e, type: 'dash_aoe' },
+    w:   { name: 'Shosen Jutsu (Chakra Medico)', desc: 'Espirais de chakra verde ferem inimigos e recompõem o vigor da Hokage', cd: 8.0, cost: 20, dmg: 120, color: 0x14b8a6, type: 'spin_aoe' },
+    e:   { name: 'Kawarimi da Quinta', desc: 'Substituicao ninja deixando um tronco selado', cd: 9.0, cost: 15, dmg: 0, color: 0x4ade80, type: 'kawarimi' },
+    r:   { name: 'Byakugo: Sozo Saisei (Renascimento da Criacao)', desc: 'O Selo da Centopeia libera forca sobre-humana e regeneracao total', cd: 24.0, cost: 50, dmg: 460, color: 0x10b981, type: 'ultimate' }
+  },
+  '1orc': {
+    atk: { name: 'Kusanagi: Lamina Serpente', desc: 'Estocadas rapidas da espada amaldicoada com alcance serpenteante', cd: 0.42, cost: 0 },
+    q:   { name: "Sen'nejashu (Cobras Ocultas)", desc: 'Multiplicas cobras explode dos bracos e cacam o inimigo mais proximo', cd: 5.0, cost: 25, dmg: 200, color: 0x84cc16, type: 'fireball' },
+    w:   { name: 'Kusanagi no Tsurugi (Estocada Longa)', desc: 'Avanco perfurante da lamina que atravessa a defesa', cd: 7.5, cost: 20, dmg: 180, color: 0xa3e635, type: 'dash_aoe' },
+    e:   { name: 'Kawarimi de Cobra', desc: 'Substituicao deixando uma cobra de cobertura', cd: 9.0, cost: 15, dmg: 0, color: 0x4ade80, type: 'kawarimi' },
+    r:   { name: 'Yamata no Jutsu (Hydra de Oito Cabecas)', desc: 'A serpente de oito cabecas domina a arena com presas venenosas', cd: 25.0, cost: 50, dmg: 470, color: 0x65a30d, type: 'ultimate' }
   }
 };
 
@@ -168,7 +244,9 @@ const SKILL_SFX_MAP = {
   '1gar': { q: 'sabaku', w: 'gaara_sandhit', e: 'sabaku', r: 'oogi' },
   '1hnt': { q: 'housenka', w: 'byakugan', e: 'housenka', r: 'oogi' },
   '1nej': { q: 'kaiten', w: 'hakke_hit', e: 'kaiten', r: 'oogi' },
-  '1jry': { q: 'goheki', w: 'fire_lp', e: 'shunshin', r: 'oogi' }
+  '1jry': { q: 'goheki', w: 'fire_lp', e: 'shunshin', r: 'oogi' },
+  '1tnd': { q: 'punch_hit', w: 'chakura_use', e: 'shunshin', r: 'oogi' },
+  '1orc': { q: 'genjyutu', w: 'sword_hit', e: 'shunshin', r: 'oogi' }
 };
 const AUTH_SFX = {
   bank: {}, log: [], volume: 0.85, _last: {},
@@ -284,11 +362,12 @@ const TARGET_KILLS = 30;
 const MATCH_CONFIGS = {
   dm_3v3:        { label: 'COMBATE 3v3', teamSize: 3, killTarget: 15, time: 180, respawn: 5,  overtime: 30, mode: 'dm' },
   dm_legacy_5v5: { label: 'COMBATE 5v5', teamSize: 5, killTarget: 30, time: 300, respawn: 6,  overtime: 60, mode: 'dm' },
-  br_vila:       { label: 'REALEZA NA VILA', mode: 'br', arena: 'sd00a', players: 10, squad: 1 } // PV2 (§2.3)
+  br_vila:       { label: 'REALEZA NA VILA', mode: 'br', arena: 'sa00z', players: 10, squad: 1, teamSize: 5, killTarget: null, time: 180, respawn: null, overtime: 0, zoneStart: 65, zoneMin: 6, zonePhases: 6, phaseTime: 25 }, // PV2 (§2.3) — layout real via br_vila_layout.json
 };
 let activeMatchCfg = MATCH_CONFIGS.dm_legacy_5v5;   // modo atual (global — playMatchIntro/tick leem)
 let lastMatchConfigId = 'dm_legacy_5v5';           // revanche reusa o modo da partida anterior
 let selectedModeId = 'dm_3v3';                      // default do lobby (decisao #1 do plano)
+let brState = null;                                 // PV2: estado do BR (zona 結界/baús/vivos) — null fora do modo
 let scoreBlue = 0;
 let scoreRed = 0;
 let matchTimeRemaining = 300; // 5:00
@@ -387,14 +466,26 @@ let mouseDown = false;
 // ============================================================================
 // LOAD TEXTURE & 3D MODEL WITH GPU SKELETAL SKINNING
 // ============================================================================
+// PV-B.2: WebP first, PNG fallback. O .webp e gerado por tools/convert_webp.py
+// (escada adaptativa com QA de delta). Se o .webp nao existir/errar, o MESMO objeto
+// Texture recebe a imagem do .png original — nenhum material fica com textura quebrada.
 function loadTex(url) {
   if (!url) return null;
   if (textureCache.has(url)) return textureCache.get(url);
-  const t = texLoader.load(url);
+  const webp = url.replace(/\.png$/i, '.webp');
+  const t = (webp !== url)
+    ? texLoader.load(webp, undefined, undefined, () => {
+        // PV2-E: placeholder 1x1 enquanto o .png carrega — evita upload de imagem invalida
+        const _ph = document.createElement('canvas'); _ph.width = 1; _ph.height = 1;
+        t.image = _ph; t.needsUpdate = true;
+        texLoader.load(url, (img) => { t.image = img; t.needsUpdate = true; });
+      })
+    : texLoader.load(url);
   t.colorSpace = THREE.SRGBColorSpace;
   t.flipY = false; // NUCC NTP3 UV coordinates are top-left origin
   t.wrapS = THREE.RepeatWrapping;
   t.wrapT = THREE.RepeatWrapping;
+  t.userData.__url = url; // PV-B.3: permite liberar a textura ao trocar de arena
   textureCache.set(url, t);
   return t;
 }
@@ -1025,12 +1116,23 @@ function buildExtractedStageGroup() {
 // by tools/build_arena.py) plus a playable radius in arenas.json. Radius drives
 // the unit / camera / spawn clamps, so switching arenas rescales the whole fight.
 // ============================================================================
-function disposeStageGroup(grp) {
+function disposeStageGroup(grp, keepTextureUrls) {
+  const keep = keepTextureUrls || null;
   grp.traverse(o => {
     if (o.geometry) o.geometry.dispose();
     if (o.material) {
       const mats = Array.isArray(o.material) ? o.material : [o.material];
-      for (const m of mats) if (m && m.dispose) m.dispose();
+      for (const m of mats) {
+        if (!m) continue;
+        // PV-B.3: libera a textura do palco (o cache nunca era purgado -> VRAM crescia
+        // a cada troca de arena). Texturas ainda em uso pela arena nova sao preservadas.
+        const url = m.map && m.map.userData ? m.map.userData.__url : null;
+        if (url && (!keep || !keep.has(url))) {
+          try { m.map.dispose(); } catch (e) {}
+          textureCache.delete(url);
+        }
+        if (m.dispose) m.dispose();
+      }
     }
   });
 }
@@ -1077,17 +1179,28 @@ async function applyArena(arenaId, opts = {}) {
     hemiLight.intensity = 1.35;
   }
 
-  // Load the arena map from assets/${entry.map}
-  if (entry.map) {
+  // Load the arena map (mobile carrega a variante otimizada do Blender)
+  const mapAsset = (entry.mapMobile && window.__DEVICE && window.__DEVICE.isMobile) ? entry.mapMobile : entry.map;
+  if (mapAsset) {
     try {
-      const res = await fetch(`assets/${entry.map}?v=8`).then(r => r.json());
+      const res = await fetch(`assets/${mapAsset}?v=9`).then(r => r.json());
       if (res && res.meshes) {
-        if (cachedStageGroup) disposeStageGroup(cachedStageGroup);
+        // PV-B.3: texturas da arena nova sao preservadas ao descartar o palco antigo
+        const keepUrls = new Set();
+        for (const sm of res.meshes) if (sm.texture) keepUrls.add(`assets/${sm.texture}`);
+        if (cachedStageGroup) disposeStageGroup(cachedStageGroup, keepUrls);
         cachedStageGroup = null;
         stage3DData = res;
       }
     } catch (e) {
       console.warn('falha ao carregar o mapa da arena; mantendo o palco anterior', entry.id, e);
+      // PV-B.1: o palco legado (7,29 MB) NAO e mais baixado no boot — so em ultimo recurso
+      if (!stage3DData) {
+        try {
+          const legacy = await fetch('assets/stage/stage_3d.json?v=8').then(r => r.json());
+          if (legacy && legacy.meshes) stage3DData = legacy;
+        } catch (err2) { console.warn('palco legado indisponivel; usando o ground plane de fallback', err2); }
+      }
     }
   }
 
@@ -1638,8 +1751,10 @@ function buildMOBA3DArena() {
     ring.position.set(x, 0.48, z);
     arenaGroup.add(ring);
   };
-  createBaseSanctuary(basePos('blue').x, basePos('blue').z, 0x3b82f6);
-  createBaseSanctuary(basePos('red').x, basePos('red').z, 0xef4444);
+  if (activeMatchCfg.mode !== 'br') { // PV2: BR nao tem bases — a vila e' o mapa
+    createBaseSanctuary(basePos('blue').x, basePos('blue').z, 0x3b82f6);
+    createBaseSanctuary(basePos('red').x, basePos('red').z, 0xef4444);
+  }
   updateArenaLabels();
 }
 
@@ -1672,7 +1787,7 @@ async function startMatch(configId) {
   matchOvertime = false; // T5
   matchSuddenDeath = false; // T5
   const _goalEl = document.querySelector('.match-goal-txt');
-  if (_goalEl) _goalEl.textContent = `META: ${CFG.killTarget} ABATES`;
+  if (_goalEl) _goalEl.textContent = CFG.killTarget != null ? `META: ${CFG.killTarget} ABATES` : 'SOBREVIVA · ÚLTIMO DE PÉ'; // PV2: BR nao tem meta de abates
   const _mtReset = document.getElementById('match-timer');
   if (_mtReset) _mtReset.classList.remove('overtime', 'sudden');
   projectiles = [];
@@ -1704,6 +1819,9 @@ async function startMatch(configId) {
 
   const playerHero = rosterMeta.find(h => h.id === selectedHeroId) || rosterMeta[0];
   const others = rosterMeta.filter(h => h.id !== playerHero.id);
+  document.body.classList.toggle('br-mode', CFG.mode === 'br'); // PV2: gate CSS do HUD BR
+  if (CFG.mode === 'br') { if (CFG.arena) { await applyArena(CFG.arena); } await startBRMatch(CFG, playerHero, others); return; } // PV2: branch total — forca a arena do config e spawna solo na vila
+  cleanupBRVisuals(); // PV2: partida DM nova — remove zona/baús de um BR anterior
   const blueRoster = [playerHero, ...others.slice(0, CFG.teamSize - 1)];
   const redRoster = others.slice(CFG.teamSize - 1, 2 * CFG.teamSize - 1);
 
@@ -1842,10 +1960,10 @@ function playMatchIntro(blueRoster, redRoster) {
   const countDigit = document.getElementById('intro-count-digit');
   const finishIntro = () => {
     if (introEl) { introEl.classList.remove('show'); introEl.classList.add('hidden'); }
-    showBanner(`${activeMatchCfg.label} EM ${ARENA.label.toUpperCase()} INICIADO! META: ${activeMatchCfg.killTarget} ABATES`);
+    showBanner(activeMatchCfg.mode === 'br' ? 'REALEZA NA VILA INICIADO! SOBREVIVA — ÚLTIMO DE PÉ VENCE' : `${activeMatchCfg.label} EM ${ARENA.label.toUpperCase()} INICIADO! META: ${activeMatchCfg.killTarget} ABATES`);
   };
   if (!introEl || !blueSlots || !redSlots) {
-    showBanner(`${activeMatchCfg.label} EM ${ARENA.label.toUpperCase()} INICIADO! META: ${activeMatchCfg.killTarget} ABATES`);
+    showBanner(activeMatchCfg.mode === 'br' ? 'REALEZA NA VILA INICIADO! SOBREVIVA — ÚLTIMO DE PÉ VENCE' : `${activeMatchCfg.label} EM ${ARENA.label.toUpperCase()} INICIADO! META: ${activeMatchCfg.killTarget} ABATES`);
     return;
   }
   const fillSlots = (container, roster) => {
@@ -3467,7 +3585,7 @@ function dealDamage(attacker, target, amount, skillName) {
   target.z = clampPush(target.z + (dz / len) * 1.4);
 
   if (target.hp <= 0) {
-    target.deadTimer = activeMatchCfg.respawn; // respawn por modo (legacy 6s, 3v3 5s)
+    target.deadTimer = activeMatchCfg.respawn != null ? activeMatchCfg.respawn : 6.0; // respawn por modo (legacy 6s, 3v3 5s; PV2: BR = anim down normal, rebirth gate torna permanente)
     AUTH_SFX.play('down', { vol: 0.8 }); AUTH_SFX.play('ko', { vol: 0.9 }); // W1.1
     target.state = 'down'; // Authentic knockdown fall animation
     target.animDuration = 2.0; // Lie on ground for 2.0s before vanishing
@@ -3479,8 +3597,7 @@ function dealDamage(attacker, target, amount, skillName) {
       target.labelEl.style.display = 'flex';
       target.labelEl.classList.add('dead');
       target.labelEl.innerHTML = `
-        <div class="ko-label-world">☠️ K.O.</div>
-        <div class="respawn-timer-world">蘇生 ${Math.ceil(target.deadTimer)}s</div>
+        ${activeMatchCfg.respawn == null ? '<div class="ko-label-world">☠️ ELIMINADO</div>' : `<div class="ko-label-world">☠️ K.O.</div><div class="respawn-timer-world">蘇生 ${Math.ceil(target.deadTimer)}s</div>`}
       `;
     }
 
@@ -3556,7 +3673,7 @@ function dealDamage(attacker, target, amount, skillName) {
 
     if (matchSuddenDeath) {
       endMatch(scoreBlue > scoreRed ? 'MORTE SÚBITA — VITÓRIA TIME AZUL!' : 'MORTE SÚBITA — VITÓRIA TIME VERMELHO!'); // T5
-    } else if (scoreBlue >= activeMatchCfg.killTarget || scoreRed >= activeMatchCfg.killTarget) {
+    } else if (activeMatchCfg.killTarget != null && (scoreBlue >= activeMatchCfg.killTarget || scoreRed >= activeMatchCfg.killTarget)) { // PV2: blindagem vs null (BR decide por last-standing)
       endMatch(scoreBlue >= activeMatchCfg.killTarget ? 'VITÓRIA DO TIME KONOHA AZUL!' : 'VITÓRIA DO TIME RIVAL VERMELHO!');
     }
   }
@@ -3575,7 +3692,9 @@ const SKILL_VFX_MAP = {
   '1gar': { q: '1gareff1_bd_snd02',   w: '1gareff1_hnd01_body', e: 'sand_dust',          r: '1gareff1_snd15' },
   '1hnt': { q: 'palms_rotation',      w: 'lion_chakra',       e: 'palms_rotation',       r: 'lion_chakra' },
   '1nej': { q: 'kaiten_dome',         w: 'air_palm',          e: 'kaiten_dome',         r: 'kaiten_dome' },
-  '1jry': { q: 'toad_fire',           w: '1jryeff01',         e: '1efc_log01',          r: 'chou_rasengan' }
+  '1jry': { q: 'toad_fire',           w: '1jryeff01',         e: '1efc_log01',          r: 'chou_rasengan' },
+  '1tnd': { q: '1efc_chakra04', w: '1efc_chakra00', e: '1efc_log01', r: '1efc_nor_dst01' },
+  '1orc': { q: '1orc_1orceff1_01', w: '1efc_strk01', e: '1efc_log01', r: '1efc_nor_rpl02' }
 };
 let activeSkillVfxModel = null; // M7: modelo extraido do cast atual (spawnVFX le daqui)
 let activeSkillVfxAnim = null; // SPP: anim procedural do cast atual
@@ -3593,7 +3712,9 @@ const SKILL_VFX_ANIM = {
   '1gar': { q: 'pulse', w: 'pulse',  e: 'pulse', r: 'pulse' },
   '1hnt': { q: 'spin',  w: 'spin',   e: 'spin',  r: 'spin' },
   '1nej': { q: 'spin',  w: 'thrust', e: 'spin',  r: 'spin' },
-  '1jry': { q: 'thrust', w: 'pulse', e: 'rise',  r: 'spin' }
+  '1jry': { q: 'thrust', w: 'pulse', e: 'rise',  r: 'spin' },
+  '1tnd': { q: 'thrust', w: 'pulse', e: 'rise',  r: 'spin' },
+  '1orc': { q: 'rise',   w: 'thrust', e: 'rise', r: 'pulse' }
 };
 
 // ==================== P2: STATS POR HEROI (identidade de combate) ====================
@@ -3610,7 +3731,9 @@ const HERO_STATS = {
   '1gar': { hp: 1250, spd: 0.90, dr: 0.82, reg: 1.00 }, // Tanque absoluto
   '1hnt': { hp: 920,  spd: 1.06, dr: 1.05, reg: 1.05 }, // DPS sustentado
   '1nej': { hp: 940,  spd: 1.05, dr: 1.02, reg: 1.05 }, // DPS controle
-  '1jry': { hp: 1150, spd: 0.94, dr: 0.90, reg: 1.10 }, // Bruiser pesado
+  '1jry': { hp: 1150, spd: 0.94, dr: 0.90, reg: 1.10 }, // Bruiser pesado,
+  '1tnd': { hp: 1150, spd: 0.98, dr: 1.05, reg: 1.45 }, // Hokage medica: sustain maximo
+  '1orc': { hp: 1000, spd: 1.02, dr: 1.00, reg: 1.10 }, // Sannin versatil
   __d:    { hp: 1000, spd: 1.00, dr: 1.00, reg: 1.00 }  // fallback
 };
 
@@ -4698,6 +4821,15 @@ function updateMatch(dt, elapsed) {
   if (matchSuddenDeath) {
     // T5 MORTE SUBITA: timer congelado — o proximo abate decide
   } else if (matchTimeRemaining <= 0) {
+    if (activeMatchCfg.mode === 'br') { // PV2: BR nao tem prorrogacao — decide por vivos/HP
+      const _alive = units.filter(u => u.deadTimer <= 0);
+      if (_alive.length === 1) brEndMatch(_alive[0].isPlayer, 'ÚLTIMO DE PÉ');
+      else {
+        const _best = _alive.slice().sort((a, b) => (b.hp / b.maxHp) - (a.hp / a.maxHp))[0];
+        brEndMatch(!!(_best && _best.isPlayer), 'TEMPO ESGOTADO');
+      }
+      return;
+    }
     if (scoreBlue === scoreRed && !matchOvertime) {
       matchOvertime = true;
       matchTimeRemaining = activeMatchCfg.overtime; // T5: prorrogacao por modo (legacy 60s, 3v3 30s)
@@ -4717,6 +4849,9 @@ function updateMatch(dt, elapsed) {
     endMatch(scoreBlue > scoreRed ? 'FIM DE TEMPO — VITÓRIA TIME AZUL!' : 'FIM DE TEMPO — VITÓRIA TIME VERMELHO!');
     return;
   }
+
+  // PV2: tick do modo Realeza na Vila (zona/baús/last-standing)
+  if (activeMatchCfg && activeMatchCfg.mode === 'br' && brState && matchActive && !matchEnding) updateBR(dt);
 
   // Central Scroll Shrine Buff Orb
   if (shrineOrb) {
@@ -4784,8 +4919,7 @@ function updateMatch(dt, elapsed) {
         u.labelEl.style.display = 'flex';
         u.labelEl.classList.add('dead');
         u.labelEl.innerHTML = `
-          <div class="ko-label-world">☠️ K.O.</div>
-          <div class="respawn-timer-world">蘇生 ${Math.ceil(u.deadTimer)}s</div>
+          ${activeMatchCfg.respawn == null ? '<div class="ko-label-world">☠️ ELIMINADO</div>' : `<div class="ko-label-world">☠️ K.O.</div><div class="respawn-timer-world">蘇生 ${Math.ceil(u.deadTimer)}s</div>`}
         `;
       }
 
@@ -4806,6 +4940,11 @@ function updateMatch(dt, elapsed) {
 
       // Rebirth at Sanctuary when deadTimer reaches 0
       if (u.deadTimer <= 0) {
+        if (activeMatchCfg.respawn == null) { // PV2: BR — morte permanente (nao renasce)
+          u.deadTimer = 999;
+          u.mesh.visible = false;
+          if (u.labelEl) { u.labelEl.style.display = 'flex'; u.labelEl.classList.add('dead'); u.labelEl.innerHTML = '<div class="ko-label-world">☠️ ELIMINADO</div>'; }
+        } else {
         u.spawnShield = 4.0; // SPAWN GUARD
         spawnVFX(u.x, 1.0, u.z, 0xfbbf24, 3.4, 0.55, 'ring', u.heroId);
         u.hp = u.maxHp;
@@ -4841,6 +4980,7 @@ function updateMatch(dt, elapsed) {
 
         renderTopTeamPortraits();
         updateScoreboardTables();
+        } // PV2: fim do else (respawn normal)
       }
       continue;
     }
@@ -5487,8 +5627,24 @@ function drawMinimap() {
 function animate(now) {
   requestAnimationFrame(animate);
   const dt = Math.min(0.05, (now - lastTime) / 1000);
+  const frameMs = now - lastTime;
   lastTime = now;
   const elapsed = now / 1000;
+
+  // PV-A: amostragem de perf (barata: 1 subtracao + 1 comparacao por frame)
+  if (window.__PERF && window.__PERF.enabled) {
+    PERF.frames++;
+    PERF.lastFrameMs = frameMs;
+    if (frameMs > PERF.worstFrameMs) PERF.worstFrameMs = frameMs;
+    PERF.frameRing.push(frameMs);
+    if (PERF.frameRing.length > 1200) PERF.frameRing.shift();
+    if (now - PERF.lastSample >= 500 && PERF.frames > 0) {
+      PERF.fpsWindow.push(+(1000 / Math.max(1, (now - PERF.lastSample) / PERF.frames)).toFixed(1));
+      if (PERF.fpsWindow.length > 600) PERF.fpsWindow.shift();
+      PERF.frames = 0;
+      PERF.lastSample = now;
+    }
+  }
 
   if (!matchActive) {
     // Lobby 3D Character Pedestal Camera
@@ -5520,18 +5676,18 @@ async function init() {
   loadSkinManifest();
   buildLobbyPedestal();
 
-  const [metaRes, anmRes, vfxRes, stgRes, arenasRes] = await Promise.all([
+  const [metaRes, anmRes, vfxRes, arenasRes] = await Promise.all([
     fetch('assets/data/roster_meta.json?v=8').then(r => r.json()).catch(() => ({})), // P0 hardening
     fetch('assets/data/animations.json?v=8').then(r => r.json()).catch(() => ({})),
     fetch('assets/skills/skill_vfx.json?v=8').then(r => r.json()).catch(() => ({})),
-    fetch('assets/stage/stage_3d.json?v=8').then(r => r.json()).catch(() => null),
-    fetch('assets/data/arenas.json?v=8').then(r => r.json()).catch(() => null)
+    // PV-B.1: stage_3d.json (7,29 MB) saiu do boot — o mapa da arena e a fonte da verdade
+    fetch('assets/data/arenas.json?v=9').then(r => r.json()).catch(() => null)
   ]);
 
   rosterMeta = (metaRes && metaRes.roster) || []; // P0: boot nunca morre por roster falho
   animationsData = anmRes || {};
   skillVfxData = vfxRes || {};
-  stage3DData = stgRes || null;
+  stage3DData = null; // preenchido por applyArena() (ou fallback legado em caso de falha)
   arenasCatalog = (arenasRes && arenasRes.arenas) || [];
 
   if (arenasRes && arenasRes.default) selectedArenaId = arenasRes.default;
@@ -5745,6 +5901,8 @@ async function init() {
 
 // Expose runtime hooks for inspection & testing
 window.startMatch = startMatch;                           // PV1.1: API por modo
+window.MATCH_CONFIGS = MATCH_CONFIGS;                     // PV-A: leitura por tool/E2E
+window.__activeMatchCfg = () => activeMatchCfg;           // PV-A: config da partida em curso
 window.start5v5Match = () => startMatch('dm_legacy_5v5'); // alias legacy — contrato E2E (F02/F04)
 window.setLobbyPage = setLobbyPage;
 window.__lobbyPage = () => lobbyPage;
@@ -5763,6 +5921,7 @@ window.__shadowClones = () => shadowClones; // SPP (validacao E2E)
 window.HERO_STATS = HERO_STATS; // P2 (validacao)
 window.__matchState = {
   get time() { return matchTimeRemaining; },
+  get br() { return brState; }, // PV2: estado BR p/ E2E
   set time(v) { matchTimeRemaining = Math.max(0, v); },
   get overtime() { return matchOvertime; },
   get suddenDeath() { return matchSuddenDeath; },
@@ -5950,3 +6109,184 @@ init().catch(err => { console.error('[NUBA] BOOT FALHOU:', err); }); // P0 harde
     btnC.addEventListener('pointerleave', upc);
   }
 })();
+
+
+// ============================================================================
+// PV2: REALEZA NA VILA — modo battle royale solo na Vila Konoha (sa00z)
+// Layout real de spawns/baús/zona via assets/data/br_vila_layout.json (raycast)
+// ============================================================================
+
+function cleanupBRVisuals() {
+  if (brState) {
+    if (brState.zoneMesh) { try { arenaGroup.remove(brState.zoneMesh); } catch (e) {} }
+    for (const ch of (brState.chests || [])) { try { arenaGroup.remove(ch.mesh); } catch (e) {} }
+  }
+  brState = null;
+}
+
+async function startBRMatch(CFG, playerHero, others) {
+  let layout = null;
+  try {
+    layout = await fetch('assets/data/br_vila_layout.json?v=9').then(r => r.json());
+  } catch (e) { console.warn('[PV2] layout BR indisponivel — usando anel geometrico', e); }
+  const ring = (layout && Array.isArray(layout.spawnRing) && layout.spawnRing.length >= CFG.players)
+    ? layout.spawnRing : null;
+  const roster = [playerHero, ...others.slice(0, CFG.players - 1)];
+  const meshes = await Promise.all(roster.map(h2 => loadCharacter3DModel(h2.id)));
+  const zoneStart = (layout && layout.zoneRadiusStart) || CFG.zoneStart || 65;
+  brState = {
+    phase: 0,
+    zoneTimer: CFG.phaseTime || 25,
+    zoneR: zoneStart,
+    zoneTargetR: zoneStart,
+    zoneStart,
+    zoneMin: (layout && layout.zoneRadiusMin) || CFG.zoneMin || 6,
+    zonePhases: CFG.zonePhases || 6,
+    center: (layout && layout.zoneCenter) || { x: 0, z: 0 },
+    damageTick: 1.0,
+    chests: [],
+    zoneMesh: null,
+    alive: roster.length
+  };
+  for (let i = 0; i < roster.length; i++) {
+    const h2 = roster[i];
+    const isPlayer = i === 0;
+    const mesh = meshes[i];
+    const ringGeo = new THREE.RingGeometry(1.45, 1.85, 32);
+    const ringColor = isPlayer ? 0x22c55e : 0xa855f7;
+    const ringMesh = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({ color: ringColor, side: THREE.DoubleSide }));
+    ringMesh.rotation.x = -Math.PI / 2;
+    ringMesh.position.y = 0.08;
+    mesh.add(ringMesh);
+    const auraMesh = createHeroAwakeningAuraMesh(h2.id, h2.color || 0xff7b00);
+    auraMesh.visible = false;
+    mesh.add(auraMesh);
+    const sp = ring ? ring[i] : { x: Math.cos(i / roster.length * Math.PI * 2) * (zoneStart * 0.8), z: Math.sin(i / roster.length * Math.PI * 2) * (zoneStart * 0.8) };
+    mesh.position.set(sp.x, 0, sp.z);
+    arenaGroup.add(mesh);
+    const labelEl = document.createElement('div');
+    labelEl.className = `unit-label ${isPlayer ? 'player' : 'red'}`;
+    labelEl.innerHTML = `
+      <span class="u-name">${isPlayer ? '★ ' + h2.name : h2.name.split(' ')[0]} <small class="u-lvl">Lv.1</small></span>
+      <div class="u-hp-bg"><div class="u-hp-fill" style="width:100%"></div></div>
+      <div class="u-ck-bg"><div class="u-ck-fill" style="width:100%"></div></div>
+    `;
+    document.getElementById('world-labels').appendChild(labelEl);
+    const kit = HERO_KITS[h2.id] || HERO_KITS['1nrt'];
+    const hs = HERO_STATS[h2.id] || HERO_STATS.__d;
+    units.push({
+      id: `solo_${i}`,
+      heroId: h2.id,
+      name: h2.name,
+      portrait: h2.portrait,
+      team: `solo_${i}`,
+      isPlayer,
+      mesh, auraMesh, labelEl, kit,
+      x: sp.x, z: sp.z, spawnX: sp.x, spawnZ: sp.z,
+      rotY: Math.atan2(brState.center.z - sp.z, brState.center.x - sp.x),
+      hp: Math.round(hs.hp * HERO_HP_SCALE),
+      maxHp: Math.round(hs.hp * HERO_HP_SCALE),
+      chakra: 100, maxChakra: 100,
+      level: 1, kills: 0, deaths: 0, assists: 0, killStreak: 0, lastKillAt: 0,
+      speed: (isPlayer ? 21.5 : 19.5) * hs.spd,
+      state: 'idle', animTimer: 0, animDuration: 0,
+      comboStep: 0, comboResetTimer: 0, awakenedTimer: 0, deadTimer: 0, spawnShield: 3.0,
+      cds: { atk: 0, q: 0, w: 0, e: 0, r: 0 },
+      aiTarget: null, aiStrafeDir: Math.random() < 0.5 ? 1 : -1
+    });
+  }
+  const player = units.find(u => u.isPlayer);
+  if (player) { tpCamYaw = player.rotY; tpCamPitch = 0.32; }
+  setupHUDPlayerInfo(playerHero);
+  renderTopTeamPortraits();
+  // Zona 結界 — cilindro translúcido (roxo chakra), escala = raio atual
+  const zoneGeo = new THREE.CylinderGeometry(1, 1, 40, 64, 1, true);
+  const zoneMat = new THREE.MeshBasicMaterial({ color: 0xa855f7, transparent: true, opacity: 0.22, side: THREE.DoubleSide, depthWrite: false });
+  brState.zoneMesh = new THREE.Mesh(zoneGeo, zoneMat);
+  brState.zoneMesh.scale.set(brState.zoneR, 1, brState.zoneR);
+  brState.zoneMesh.position.set(brState.center.x, 18, brState.center.z);
+  arenaGroup.add(brState.zoneMesh);
+  // Baús de chakra nas posições reais do layout
+  const chestGeo = new THREE.BoxGeometry(1.6, 1.2, 1.2);
+  const chestMat = new THREE.MeshBasicMaterial({ color: 0xf59e0b });
+  const chestPos = (layout && Array.isArray(layout.chests)) ? layout.chests : [];
+  for (const cp of chestPos) {
+    const cm = new THREE.Mesh(chestGeo, chestMat);
+    cm.position.set(cp.x, 0.9, cp.z);
+    arenaGroup.add(cm);
+    brState.chests.push({ x: cp.x, z: cp.z, mesh: cm, taken: false, bob: Math.random() * Math.PI * 2 });
+  }
+  const _goalEl = document.querySelector('.match-goal-txt');
+  if (_goalEl) _goalEl.textContent = 'SOBREVIVA · ÚLTIMO DE PÉ';
+  updateBRHUD();
+  playMatchIntro([playerHero], roster.slice(1)); // PV2: intro 1 vs todos (arrays planos de heroes)
+}
+
+function updateBRHUD() {
+  const el = document.getElementById('br-alive');
+  const ph = document.getElementById('br-phase');
+  if (el) renderSkinDigits(el, String(brState ? brState.alive : 0));
+  if (ph) ph.textContent = brState ? `FASE ${Math.min(brState.phase, brState.zonePhases)}/${brState.zonePhases}` : '';
+}
+
+function brEndMatch(playerWon, reason) {
+  if (matchEnding) return;
+  scoreBlue = playerWon ? 1 : 0;
+  scoreRed = playerWon ? 0 : 1;
+  endMatch(playerWon ? `REALEZA NA VILA — ${reason}! VITÓRIA!` : `REALEZA NA VILA — ${reason}... DERROTA`);
+}
+
+function updateBR(dt) {
+  const alive = units.filter(u => u.deadTimer <= 0);
+  brState.alive = alive.length;
+  updateBRHUD();
+  // ---- Zona 結界: fases + encolhimento contínuo ----
+  if (brState.phase < brState.zonePhases) {
+    brState.zoneTimer -= dt;
+    if (brState.zoneTimer <= 0) {
+      brState.phase++;
+      brState.zoneTimer = 25;
+      const span = brState.zoneStart - brState.zoneMin;
+      brState.zoneTargetR = Math.max(brState.zoneMin, brState.zoneStart - brState.phase * span / brState.zonePhases);
+      showBanner(brState.phase >= brState.zonePhases
+        ? '結界 FINAL! NENHUM ESCONDERIJO!'
+        : `結界 ESTÁ ENCOLHENDO — FASE ${brState.phase}/${brState.zonePhases}`, 2000);
+    }
+    const shrinkSpeed = (brState.zoneStart - brState.zoneMin) / (25 * brState.zonePhases);
+    brState.zoneR = Math.max(brState.zoneTargetR, brState.zoneR - dt * shrinkSpeed);
+    if (brState.zoneMesh) brState.zoneMesh.scale.set(brState.zoneR, 1, brState.zoneR);
+  }
+  // ---- Dano fora da zona (chakra drain 結界) ----
+  brState.damageTick -= dt;
+  if (brState.damageTick <= 0) {
+    brState.damageTick = 1.0;
+    for (const u of alive) {
+      const d = Math.hypot(u.x - brState.center.x, u.z - brState.center.z);
+      if (d > brState.zoneR + 1.5) dealDamage(u, u, 2 + brState.phase, '結界');
+    }
+  }
+  // ---- Baús: bob visual + coleta por proximidade ----
+  for (const ch of brState.chests) {
+    if (ch.taken) continue;
+    ch.bob += dt * 2.4;
+    ch.mesh.position.y = 0.9 + Math.sin(ch.bob) * 0.18;
+    ch.mesh.rotation.y += dt * 1.2;
+    for (const u of alive) {
+      if (Math.hypot(u.x - ch.x, u.z - ch.z) < 2.6) {
+        ch.taken = true;
+        ch.mesh.visible = false;
+        spawnSmokePuff(ch.x, 1.2, ch.z, 2.5);
+        u.hp = Math.min(u.maxHp, u.hp + 35);
+        u.chakra = Math.min(u.maxChakra, u.chakra + 50);
+        if (u.isPlayer) showBanner('BAÚ DE CHAKRA! +35 HP · +50 CHAKRA', 1400);
+        break;
+      }
+    }
+  }
+  // ---- Last standing ----
+  if (alive.length <= 1 && !matchEnding) {
+    const winner = alive[0];
+    if (winner && winner.isPlayer) brEndMatch(true, 'ÚLTIMO DE PÉ');
+    else brEndMatch(false, winner ? `${winner.name} VENCEU` : 'TODOS CAÍRAM');
+  }
+}

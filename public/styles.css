@@ -2440,7 +2440,7 @@ kbd {
   position: absolute;
   inset: 0;
   z-index: -1;
-  background: url("assets/ui/lobby/lobby_bg.png") center / cover no-repeat;
+  background: url("assets/ui/lobby/lobby_bg.webp") center / cover no-repeat;
   filter: brightness(0.72) saturate(0.92);
   -webkit-mask-image: radial-gradient(ellipse 27% 50% at 50% 54%, transparent 0 52%, #000 82%);
   mask-image: radial-gradient(ellipse 27% 50% at 50% 54%, transparent 0 52%, #000 82%);
@@ -4921,3 +4921,16 @@ body.touch #hud-screen.active #touch-controls { display: block; }
 
 /* em modo touch o badge de tecla nao faz sentido (§2.4: esconder, nao remover) */
 body.touch .ability-key { display: none; }
+
+/* ==== PV2: REALEZA NA VILA (docs/PIVOT_MOBILE.md §PV2) ==== */
+#br-hud { display: none; }
+body.br-mode #hud-screen.active #br-hud {
+  display: inline-flex; align-items: center; gap: 10px;
+  font-family: 'Storm Title', 'Poppins', sans-serif; font-size: 13px;
+  color: #e9d5ff; letter-spacing: 1px; text-shadow: 0 0 8px rgba(168, 85, 247, 0.6);
+}
+body.br-mode #hud-screen.active #br-hud .br-alive-label { opacity: 0.8; font-size: 11px; }
+body.br-mode #hud-screen.active #br-hud .br-phase { color: #c4b5fd; font-size: 11px; opacity: 0.9; }
+body.br-mode #hud-screen.active .team-group.blue,
+body.br-mode #hud-screen.active .team-group.red { display: none; } /* BR e solo — sem placar de times */
+body.br-mode #player-death-overlay { display: none !important; } /* BR: sem overlay de respawn */
