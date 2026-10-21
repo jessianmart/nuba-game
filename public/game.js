@@ -1545,7 +1545,6 @@ function initAjustes() {
   if (ajJuice) ajJuice.addEventListener('change', () => { JUICE.enabled = ajJuice.checked; persistPatch({ juice: ajJuice.checked }); });
   for (const k of Object.keys(pills)) if (pills[k]) pills[k].addEventListener('click', () => { applyQuality(k); persistPatch({ quality: k }); });
 }
-window.__ajustesReady = true; // W1.2.1: sinal determinístico de boot p/ E2E (listeners attached)
 
 function buildMOBA3DArena() {
   arenaGroup.clear();
@@ -5519,6 +5518,7 @@ async function init() {
   await selectLobbyHero('1nrt');
 
   initLobbyNav();
+  window.__ajustesReady = true; // W1.2.3: TODOS os listeners do lobby attached — sinal E2E determinístico
   renderCollectionPage();
   renderArenaPage();
   renderProfilePage();

@@ -195,12 +195,13 @@ Componentes DOM aditivos:
 | Portrait usabilidade ruim | Retenção | Overlay "gire"; manifest lock landscape |
 | Skill stack (Q/W/E/R/c + ATK + joystick + kawarimi) em dedo | Erro de input | Cluster direito espelhado do HUD (contagem igual ao teclado); sem slots novos no mobile; ATK em zona de polegar confortável |
 
-## 6. Open questions (respostas mudam tasks)
+## 6. Decisões (2026-10-21 — aprovadas pelo usuário, viram contrato)
 
-1. **3v3 substitui 5v5 como padrão também em desktop?** Recomendo sim (gameplay + custo de manutenção): `dm_3v3` fica default do lobby, `dm_legacy_5v5` vira card "Clássico 5v5" no seletor de modo — é puro config. Se quiser manter 5v5 como principal, tarefa = 1 linha no lobby.
-2. **BR com 10 agora ou esperar roster 20 (W2.1)?** Recomendo 10 agora (roster = 10, custo já é budget do 5v5); config sobe para 20 quando W2.1 entregar.
-3. **Squad/duo BR?** Recomendo solo puro no MVP (Brawl Showdown solo); duo entra como variação de config em fase futura.
-4. **Landscape-only?** Recomendo sim no MVP (T3/Brawl são landscape) — overlay "gire" cobre o portrait.
+1. **3v3 substitui 5v5 como padrão TAMBÉM em desktop.** `dm_3v3` é o default do lobby em qualquer dispositivo; `dm_legacy_5v5` permanece como card "CLÁSSICO 5v5" no seletor de modo (config pura, mantém caminho dos testes legados).
+2. **BR = solo puro, 10 ninjas padrão** (player + 9 bots, 1 por herói). Sem duo no MVP; quando W2.1 entregar roster 20, `players` sobe por config.
+3. **Landscape-only**: manifest lock + overlay "gire o dispositivo" em portrait.
+4. **Execução autorizada desta rodada: PV0 + PV1** (MVP mobile jogável). PV2 (BR) na sequência.
+5. **Escopo adicional autorizado — Mapeamento da vila para o BR**: inventariar os 9 stages do APK (8 extraídos, falta `sd05b`), mapear sd00a (spawn ring, baús, cover) e **investigar/extrair a Konoha real do modo aventura** (`KonohaAct`: chunks `data_stage_MAP/CAM/DMY/FLY/GIMKonohaAct` + 10 `GIMKonohaActPerson_XX` encontrados no APK) — se a geometria da vila real for extraível, ela vira o mapa do BR em vez do campo de treinamento.
 
 ## 7. Fora de escopo (explícito)
 
