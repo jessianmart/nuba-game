@@ -8,7 +8,6 @@ __pycache__/
 .hermes/
 
 # Extracoes nao usadas em runtime (verificado: 0 refs em game.js/styles.css/arenas.json)
-public/assets/arena/
 public/assets/models/puppets/
 public/assets/ui/raw/
 public/assets/ui/_sheets/
