@@ -1,0 +1,401 @@
+{
+  "aura_ring": {
+    "file": "aura_ring.png",
+    "h": 249,
+    "src": "core/xbattle_pad07_00.png",
+    "use": "anel de chakra",
+    "w": 250
+  },
+  "badge_1p": {
+    "file": "badge_1p.png",
+    "h": 67,
+    "src": "battle/battle_xcmn_playere_fd_00.png",
+    "use": "selo \"1P\" (voce)",
+    "w": 42
+  },
+  "banner_combat": {
+    "file": "banner_combat.png",
+    "h": 94,
+    "src": "core/xbattle_win00_03.png",
+    "use": "faixa de abertura de combate",
+    "w": 497
+  },
+  "banner_lose": {
+    "file": "banner_lose.png",
+    "h": 100,
+    "src": "core/xcmn_result_fd00_02.png",
+    "use": "faixa de derrota \"VERSAGT\"",
+    "w": 408
+  },
+  "banner_tie": {
+    "file": "banner_tie.png",
+    "h": 41,
+    "src": "core/xbattle_signal_fd00_05.png",
+    "use": "faixa \"EGALITE\"",
+    "w": 155
+  },
+  "banner_win": {
+    "file": "banner_win.png",
+    "h": 128,
+    "src": "core/xbattle_win01_00.png",
+    "use": "faixa de vitoria \"GANADOR\"",
+    "w": 512
+  },
+  "bar_fill_hp": {
+    "file": "bar_fill_hp.png",
+    "h": 70,
+    "src": "core/xadv_gauge00_07.png",
+    "use": "preenchimento de barra",
+    "w": 300
+  },
+  "bar_frame": {
+    "file": "bar_frame.png",
+    "h": 55,
+    "src": "core/xbattle_newgauge_03.png",
+    "use": "moldura da barra de vitais",
+    "w": 242
+  },
+  "bar_thin": {
+    "file": "bar_thin.png",
+    "h": 31,
+    "src": "core/xbattle_newgauge_02.png",
+    "use": "barra compacta (secundaria)",
+    "w": 63
+  },
+  "btn_face_a": {
+    "file": "btn_face_a.png",
+    "h": 71,
+    "src": "battle/battle_cmn_button00_01.png",
+    "use": "badge de botao A",
+    "w": 71
+  },
+  "btn_face_b": {
+    "file": "btn_face_b.png",
+    "h": 71,
+    "src": "battle/battle_cmn_button00_00.png",
+    "use": "badge de botao B",
+    "w": 71
+  },
+  "btn_face_x": {
+    "file": "btn_face_x.png",
+    "h": 71,
+    "src": "battle/battle_cmn_button00_03.png",
+    "use": "badge de botao X",
+    "w": 71
+  },
+  "btn_face_y": {
+    "file": "btn_face_y.png",
+    "h": 71,
+    "src": "battle/battle_cmn_button00_02.png",
+    "use": "badge de botao Y",
+    "w": 71
+  },
+  "btn_pause": {
+    "file": "btn_pause.png",
+    "h": 108,
+    "src": "core/xbattle_pad05_00.png",
+    "use": "botao de pausa",
+    "w": 200
+  },
+  "combo_digit_0": {
+    "file": "combo_digit_0.png",
+    "h": 103,
+    "src": "battle/battle_xbattle_combo00_08.png",
+    "use": "combo: algarismo 0",
+    "w": 72
+  },
+  "combo_digit_1": {
+    "file": "combo_digit_1.png",
+    "h": 107,
+    "src": "battle/battle_xbattle_combo00_01.png",
+    "use": "combo: algarismo 1",
+    "w": 68
+  },
+  "combo_digit_2": {
+    "file": "combo_digit_2.png",
+    "h": 105,
+    "src": "battle/battle_xbattle_combo00_02.png",
+    "use": "combo: algarismo 2",
+    "w": 80
+  },
+  "combo_digit_3": {
+    "file": "combo_digit_3.png",
+    "h": 104,
+    "src": "battle/battle_xbattle_combo00_03.png",
+    "use": "combo: algarismo 3",
+    "w": 76
+  },
+  "combo_digit_4": {
+    "file": "combo_digit_4.png",
+    "h": 104,
+    "src": "battle/battle_xbattle_combo00_04.png",
+    "use": "combo: algarismo 4",
+    "w": 78
+  },
+  "cursor": {
+    "file": "cursor.png",
+    "h": 44,
+    "src": "core/xbattle_cursor_00.png",
+    "use": "cursor de alvo",
+    "w": 44
+  },
+  "digit_0": {
+    "file": "digit_0.png",
+    "h": 80,
+    "src": "core/xbattle_count_01.png",
+    "use": "algarismo 0",
+    "w": 64
+  },
+  "digit_1": {
+    "file": "digit_1.png",
+    "h": 79,
+    "src": "core/xbattle_count_02.png",
+    "use": "algarismo 1",
+    "w": 47
+  },
+  "digit_2": {
+    "file": "digit_2.png",
+    "h": 79,
+    "src": "core/xbattle_count_03.png",
+    "use": "algarismo 2",
+    "w": 62
+  },
+  "digit_3": {
+    "file": "digit_3.png",
+    "h": 78,
+    "src": "core/xbattle_count_04.png",
+    "use": "algarismo 3",
+    "w": 63
+  },
+  "digit_4": {
+    "file": "digit_4.png",
+    "h": 82,
+    "src": "core/xbattle_count_00.png",
+    "use": "algarismo 4",
+    "w": 65
+  },
+  "digit_5": {
+    "file": "digit_5.png",
+    "h": 80,
+    "src": "core/xbattle_count_08.png",
+    "use": "algarismo 5",
+    "w": 62
+  },
+  "digit_6": {
+    "file": "digit_6.png",
+    "h": 80,
+    "src": "core/xbattle_count_05.png",
+    "use": "algarismo 6",
+    "w": 61
+  },
+  "digit_7": {
+    "file": "digit_7.png",
+    "h": 80,
+    "src": "core/xbattle_count_09.png",
+    "use": "algarismo 7",
+    "w": 63
+  },
+  "digit_8": {
+    "file": "digit_8.png",
+    "h": 82,
+    "src": "core/xbattle_count_06.png",
+    "use": "algarismo 8",
+    "w": 61
+  },
+  "digit_9": {
+    "file": "digit_9.png",
+    "h": 84,
+    "src": "core/xbattle_count_07.png",
+    "use": "algarismo 9",
+    "w": 62
+  },
+  "digit_inf": {
+    "file": "digit_inf.png",
+    "h": 77,
+    "src": "core/xbattle_count_10.png",
+    "use": "simbolo infinito",
+    "w": 125
+  },
+  "flame_aura": {
+    "file": "flame_aura.png",
+    "h": 107,
+    "src": "core/xbattle_newgauge_06.png",
+    "use": "aura de despertar",
+    "w": 249
+  },
+  "icon_atk": {
+    "file": "icon_atk.png",
+    "h": 97,
+    "src": "core/xbattle_pad01_00.png",
+    "use": "Taijutsu (soco)",
+    "w": 97
+  },
+  "icon_c": {
+    "file": "icon_c.png",
+    "h": 83,
+    "src": "core/xbattle_pad01_05.png",
+    "use": "Concentracao de chakra (selo hexagonal)",
+    "w": 93
+  },
+  "icon_e": {
+    "file": "icon_e.png",
+    "h": 77,
+    "src": "core/xbattle_pad01_06.png",
+    "use": "Kawarimi (rolo/kunai scroll)",
+    "w": 77
+  },
+  "icon_q": {
+    "file": "icon_q.png",
+    "h": 77,
+    "src": "core/xbattle_pad01_07.png",
+    "use": "Ninjutsu primario (selo de mao)",
+    "w": 76
+  },
+  "icon_r": {
+    "file": "icon_r.png",
+    "h": 192,
+    "src": "core/xbattle_pad01_k_01.png",
+    "use": "Ougi ultimate (soco vermelho)",
+    "w": 192
+  },
+  "icon_rune": {
+    "file": "icon_rune.png",
+    "h": 148,
+    "src": "core/xbattle_pad01_g_00.png",
+    "use": "runa de despertar / desabilitado",
+    "w": 148
+  },
+  "icon_w": {
+    "file": "icon_w.png",
+    "h": 77,
+    "src": "core/xbattle_pad01_03.png",
+    "use": "Ninjutsu secundario (chama)",
+    "w": 77
+  },
+  "nameplate": {
+    "file": "nameplate.png",
+    "h": 50,
+    "src": "core/xbattle_namebase_01.png",
+    "use": "barra de nome dos mini-indices",
+    "w": 255
+  },
+  "nameplate_alt": {
+    "file": "nameplate_alt.png",
+    "h": 49,
+    "src": "core/xbattle_namebase_00.png",
+    "use": "variante de nome",
+    "w": 255
+  },
+  "orb_dark": {
+    "file": "orb_dark.png",
+    "h": 53,
+    "src": "core/xbattle_newgauge_09.png",
+    "use": "orbe de chakra",
+    "w": 54
+  },
+  "ougi_bar": {
+    "file": "ougi_bar.png",
+    "h": 60,
+    "src": "battle/battle_xbattle_ougi00_01.png",
+    "use": "faixa de Ougi",
+    "w": 159
+  },
+  "ougi_flare": {
+    "file": "ougi_flare.png",
+    "h": 72,
+    "src": "battle/battle_xbattle_ougi00_05.png",
+    "use": "clarao de Ougi",
+    "w": 240
+  },
+  "panel_blue": {
+    "file": "panel_blue.png",
+    "h": 74,
+    "src": "core/xcmn_base_02.png",
+    "use": "painel de time azul / moldura 9-slice",
+    "w": 64
+  },
+  "panel_orange": {
+    "file": "panel_orange.png",
+    "h": 74,
+    "src": "core/xcmn_base_05.png",
+    "use": "destaque / awakening",
+    "w": 64
+  },
+  "panel_red": {
+    "file": "panel_red.png",
+    "h": 74,
+    "src": "core/xcmn_base_01.png",
+    "use": "painel de time vermelho",
+    "w": 64
+  },
+  "panel_silver": {
+    "file": "panel_silver.png",
+    "h": 74,
+    "src": "core/xcmn_base_04.png",
+    "use": "painel neutro do deck",
+    "w": 64
+  },
+  "panel_white": {
+    "file": "panel_white.png",
+    "h": 74,
+    "src": "core/xcmn_base_06.png",
+    "use": "painel de modal (placar, morte)",
+    "w": 64
+  },
+  "result_btn_red": {
+    "file": "result_btn_red.png",
+    "h": 68,
+    "src": "battle/battle_cmn_button00_08.png",
+    "use": "botao vermelho de resultado",
+    "w": 69
+  },
+  "result_frame": {
+    "file": "result_frame.png",
+    "h": 100,
+    "src": "core/xcmn_result_fd00_00.png",
+    "use": "painel de resultado",
+    "w": 504
+  },
+  "ring_avatar": {
+    "file": "ring_avatar.png",
+    "h": 74,
+    "src": "core/xbattle_newgauge_08.png",
+    "use": "anel do avatar do jogador",
+    "w": 74
+  },
+  "status_boost": {
+    "file": "status_boost.png",
+    "h": 36,
+    "src": "core/xbattle_sicon00_04.png",
+    "use": "status: seta de buff",
+    "w": 48
+  },
+  "status_fist": {
+    "file": "status_fist.png",
+    "h": 41,
+    "src": "core/xbattle_sicon00_03.png",
+    "use": "status: soco",
+    "w": 49
+  },
+  "status_flame": {
+    "file": "status_flame.png",
+    "h": 48,
+    "src": "core/xbattle_sicon00_01.png",
+    "use": "status: fogo",
+    "w": 48
+  },
+  "status_stun": {
+    "file": "status_stun.png",
+    "h": 48,
+    "src": "core/xbattle_sicon00_00.png",
+    "use": "status: atordoado",
+    "w": 48
+  },
+  "swirl": {
+    "file": "swirl.png",
+    "h": 36,
+    "src": "core/xbattle_newgauge_05.png",
+    "use": "voluta ornamental",
+    "w": 47
+  }
+}

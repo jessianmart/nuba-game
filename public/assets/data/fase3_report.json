@@ -1,0 +1,17 @@
+{
+  "puppets": {
+    "files": 63,
+    "mb": 114.3,
+    "skipped": 0
+  },
+  "ui_extra": {
+    "files": 342,
+    "mb": 149.7,
+    "skipped": 48
+  },
+  "stages": {
+    "files": 171,
+    "mb": 898.9,
+    "skipped": 12
+  }
+}

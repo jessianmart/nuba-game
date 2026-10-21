@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>NUBA: Naruto Ultimate Battle Arena (5v5 MOBA Deathmatch)</title>
+  <link rel="icon" href="assets/portraits/1nrt.png" />
+  <link rel="stylesheet" href="styles.css?v=16" />
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js"
+      }
+    }
+  </script>
+</head>
+<body>
+  <!-- 3D WebGL Canvas -->
+  <canvas id="game-canvas"></canvas>
+
+  <!-- ==================== MAIN LOBBY / HERO SELECT OVERLAY ==================== -->
+  <div id="lobby-screen" class="screen active" data-skin="lobby">
+    <!-- Top Header Bar -->
+    <header class="lobby-header">
+      <div class="brand-row-flex">
+        <img src="assets/ui/title_bg_0.png" alt="Naruto Storm Logo" class="nuba-logo-banner" />
+        <div class="brand-block">
+          <div class="brand-tags-row">
+            <span class="apk-badge">APK REVERSE-ENGINEERED • CC2 STORM</span>
+            <span class="kanji-badge">ナルト・究極闘技場</span>
+          </div>
+          <h1><span class="nuba-title">NUBA</span> <span class="moba-badge">NARUTO ULTIMATE BATTLE ARENA</span></h1>
+          <p class="subtitle">10 Ninjas 3D Originais (<code>NDP3</code>) • Golpes &amp; Movimentos Fiéis (<code>nuccChunkAnm</code>) • Alturas Databook</p>
+        </div>
+      </div>
+      <div class="lobby-actions-top">
+        <button id="btn-open-studio" class="btn-secondary">Inspecionar Arquivos APK (.xfbin)</button>
+        <div class="mode-pill">MODO: <strong>5v5 SHINOBI DEATHMATCH</strong></div>
+      </div>
+    </header>
+
+    <!-- Main 3-Column Lobby -->
+    <main class="lobby-main">
+      <!-- Left: Roster Grid & Team Lineups -->
+      <section class="roster-panel">
+        <div class="panel-title">SELEÇÃO DE NINJAS (ELENCO ORIGINAL STORM)</div>
+        <div id="roster-grid" class="roster-grid"></div>
+
+        <div class="team-preview-box">
+          <div class="team-col blue-team">
+            <span class="team-label">KONOHA AZUL (SEU TIME)</span>
+            <div id="lobby-blue-team" class="team-slots"></div>
+          </div>
+          <img src="assets/ui/xcmn_vs.png" alt="VS" class="vs-storm-badge" />
+          <div class="team-col red-team">
+            <span class="team-label">RIVAIS VERMELHO (BOTS IA)</span>
+            <div id="lobby-red-team" class="team-slots"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Center: 3D Character Preview Pedestal -->
+      <section class="hero-stage-center">
+        <div class="pedestal-hint">Arraste para girar em 360° • Modelo 3D com SkinnedMesh e FK nativa</div>
+        <div class="model-Inspector-pills">
+          <button id="btn-toggle-wireframe" class="pill-btn">Wireframe: OFF</button>
+          <button id="btn-toggle-pose" class="pill-btn">Animar Pose (IDLE)</button>
+        </div>
+      </section>
+
+      <!-- Right: Selected Hero Dossier & MOBA Kit -->
+      <aside class="hero-details-panel">
+        <div class="hero-header-card">
+          <img id="detail-portrait" src="assets/portraits/1nrt.png" alt="Hero Portrait" />
+          <div>
+            <div id="detail-role" class="role-tag">Fighter / Burst</div>
+            <h2 id="detail-name">Naruto Uzumaki</h2>
+            <div id="detail-title" class="hero-sub">Uzumaki Clan • Jinchuriki da Kyuubi</div>
+            <div id="detail-apk-meta" class="apk-meta-line">1nrtbod1.xfbin • 14,277 vértices • 147.5 cm (Databook)</div>
+          </div>
+        </div>
+
+        <!-- Hero Stat Meters -->
+        <div class="hero-stats-deck" id="detail-stats-deck">
+          <div class="stat-item">
+            <div class="stat-header-flex"><span>Ataque / Dano</span><span id="stat-val-atk">4.5 / 5</span></div>
+            <div class="stat-track"><div id="stat-bar-atk" class="stat-bar red" style="width: 90%"></div></div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-header-flex"><span>Defesa / Resistência</span><span id="stat-val-def">4.0 / 5</span></div>
+            <div class="stat-track"><div id="stat-bar-def" class="stat-bar green" style="width: 80%"></div></div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-header-flex"><span>Velocidade / Corrida</span><span id="stat-val-spd">4.0 / 5</span></div>
+            <div class="stat-track"><div id="stat-bar-spd" class="stat-bar cyan" style="width: 80%"></div></div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-header-flex"><span>Reserva de Chakra</span><span id="stat-val-ck">5.0 / 5</span></div>
+            <div class="stat-track"><div id="stat-bar-ck" class="stat-bar" style="width: 100%"></div></div>
+          </div>
+        </div>
+
+        <div class="panel-title skin-title-rule"><img class="rule-ornament" src="assets/ui/skin/swirl.png" alt=""><span>HABILIDADES MOBA (KIT AUTÊNTICO STORM)</span></div>
+        <div id="detail-skills" class="skills-list"></div>
+
+        <div class="panel-title">ANIMAÇÕES DE GOLPES &amp; CORRIDA (<code>bod1c / bod1l</code>)</div>
+        <div id="detail-anms" class="anm-tags"></div>
+
+        <div class="panel-title skin-title-rule"><img class="rule-ornament" src="assets/ui/skin/swirl.png" alt=""><span>ARENA: <span id="arena-name" style="color:var(--accent-orange, #f59e0b);">Coliseu (Exame Chūnin)</span></span></div>
+        <div id="arena-picker" class="arena-picker"></div>
+
+        <button id="btn-start-match" class="btn-start-match">
+          <span>INICIAR BATALHA 5v5 DEATHMATCH</span>
+          <small>10 Ninjas 3D em Combate Real • Arena Exame Chūnin (sd03b)</small>
+        </button>
+      </aside>
+    </main>
+  </div>
+
+  <!-- ==================== IN-GAME MOBA 5v5 HUD ==================== -->
+  <div id="hud-screen" class="screen">
+    <!-- Top Bar: 5v5 MOBA Scoreboard & Timer Strip -->
+    <header class="hud-top-bar">
+      <div class="hud-brand-pill">
+        <img class="hud-storm-logo" src="assets/ui/logo_0.png" alt="Naruto Storm Logo" aria-hidden="true" />
+        <span class="nuba-logo-txt">NUBA</span>
+        <span class="nuba-sub-tag">5v5 MOBA</span>
+        <span class="hud-live-ping"><span class="ping-dot"></span></span>
+      </div>
+
+      <div class="moba-scoreboard-strip">
+        <!-- Blue Team (Konoha) -->
+        <div class="team-group blue">
+          <span class="team-tag">木ノ葉</span>
+          <span id="score-blue" class="score-display blue" data-digits="true">0</span>
+          <div id="hud-blue-icons" class="team-avatars-row"></div>
+        </div>
+
+        <!-- Center Match Clock & Storm VS Emblem -->
+        <div class="match-center-cluster">
+          <img class="storm-vs-crest" src="assets/ui/xcmn_vs.png" alt="VS" />
+          <img class="player-badge" src="assets/ui/skin/badge_1p.png" alt="Jogador 1P" aria-hidden="true" />
+          <div id="match-timer" class="match-clock">05:00</div>
+          <span class="match-goal-txt">META: 30 ABATES</span>
+        </div>
+
+        <!-- Red Team (Rivais) -->
+        <div class="team-group red">
+          <div id="hud-red-icons" class="team-avatars-row"></div>
+          <span id="score-red" class="score-display red" data-digits="true">0</span>
+          <span class="team-tag">敵</span>
+        </div>
+      </div>
+
+      <div class="hud-actions-pill">
+        <button id="btn-cam-mode" class="hud-top-btn" title="Alternar Câmera (C)">CAM</button>
+        <button id="btn-toggle-scoreboard" class="hud-top-btn" title="Placar de Estatísticas K/D/A (Tab)">TAB</button>
+        <button id="btn-help-controls" class="hud-top-btn" title="Guia de Teclas (H)">TECLAS</button>
+        <button id="btn-back-lobby" class="hud-top-btn danger" title="Voltar ao Menu">✕ Sair</button>
+      </div>
+    </header>
+
+    <!-- Kill Feed (Top Right, Clean & Non-Obstructive) -->
+    <div id="kill-feed" class="kill-feed"></div>
+
+    <!-- Center Announcement Banner -->
+    <div id="center-banner" class="center-banner hidden" data-skin-banner="true"></div>
+
+    <!-- Ougi Ultimate Banner & Kawarimi Flash Overlays (skin engine hooks) -->
+    <div id="ougi-banner" class="ougi-banner hidden" aria-hidden="true"></div>
+    <div id="kawarimi-flash" class="kawarimi-flash hidden" aria-hidden="true"></div>
+
+    <!-- Floating 3D World Labels (HP/Chakra above ninjas) -->
+    <div id="world-labels" class="world-labels"></div>
+
+    <!-- Bottom HUD: MOBA Command Deck (Minimap + Centered Abilities Ribbon) -->
+    <footer class="hud-bottom-moba">
+      <!-- Left: Arena Minimap -->
+      <div class="minimap-bezel">
+        <div class="minimap-title-bar"><span id="minimap-arena-name">ARENA sd00a</span> <code>5v5</code></div>
+        <canvas id="minimap-canvas" width="140" height="140"></canvas>
+      </div>
+
+      <!-- Center: Sculpted Player Command Deck -->
+      <div class="player-command-deck">
+        <!-- Vitals Strip: Avatar + HP / Chakra + Level + KDA -->
+        <div class="vitals-strip">
+          <div class="player-avatar-ring">
+            <img class="avatar-ring-skin" src="assets/ui/skin/ring_avatar.png" alt="" aria-hidden="true" />
+            <img id="hud-player-portrait" src="assets/portraits/1nrt.png" alt="Player" />
+            <span id="hud-player-lvl" class="lvl-chip">Lv.1</span>
+          </div>
+
+          <div class="vital-gauges-col">
+            <div class="moba-gauge hp-gauge">
+              <div id="hud-hp-fill" class="gauge-bar-fill" style="width: 100%"></div>
+              <span id="hud-hp-text" class="gauge-num">HP 1000 / 1000</span>
+            </div>
+            <div class="moba-gauge chakra-gauge">
+              <div id="hud-ck-fill" class="gauge-bar-fill" style="width: 100%"></div>
+              <span id="hud-ck-text" class="gauge-num">CHAKRA 100 / 100</span>
+            </div>
+            <div class="sub-status-line">
+              <span id="hud-kda" class="kda-txt">ABATES: 0 | MORTES: 0</span>
+              <span id="hud-awakening-state" class="awake-badge hidden">覚醒 MODO DESPERTAR</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- MOBA Skill Buttons Ribbon (NO 'W' SKILL! W is strictly for movement) -->
+        <div class="abilities-ribbon">
+          <!-- Basic Taijutsu Combo (Mouse Click) -->
+          <button class="moba-ability-btn" data-slot="atk" id="slot-atk" title="Ataque Básico (Click Esquerdo)">
+            <span class="ability-key">CLICK</span>
+            <img class="ability-icon" src="assets/ui/skin/icon_atk.png" alt="" />
+            <div class="ability-body">
+              <span class="ability-name" id="sk-name-atk">Combo Taijutsu</span>
+              <span class="ability-sub">3-Hit Combo</span>
+            </div>
+            <div class="cd-radial-overlay" id="cd-atk"></div>
+          </button>
+
+          <!-- Skill 1: Primary Jutsu (Q / 1) -->
+          <button class="moba-ability-btn" data-slot="q" id="slot-q" title="Ninjutsu Primário (Tecla Q ou 1)">
+            <span class="ability-key">Q</span>
+            <img class="ability-icon" src="assets/ui/skin/icon_q.png" alt="" />
+            <div class="ability-body">
+              <span class="ability-name" id="sk-name-q">Rasengan</span>
+              <span class="ability-cost">25 CK</span>
+            </div>
+            <div class="cd-radial-overlay" id="cd-q"></div>
+          </button>
+
+          <!-- Skill 2: Secondary Jutsu (E / 2) -->
+          <button class="moba-ability-btn" data-slot="w" id="slot-w" title="Ninjutsu Secundário (Tecla E ou 2)">
+            <span class="ability-key">E</span>
+            <img class="ability-icon" src="assets/ui/skin/icon_w.png" alt="" />
+            <div class="ability-body">
+              <span class="ability-name" id="sk-name-w">Kage Bunshin</span>
+              <span class="ability-cost">20 CK</span>
+            </div>
+            <div class="cd-radial-overlay" id="cd-w"></div>
+          </button>
+
+          <!-- Skill 3: Kawarimi / Substitution (Spacebar / 3) -->
+          <button class="moba-ability-btn utility" data-slot="e" id="slot-e" title="Kawarimi / Substituição Ninja (Tecla ESPAÇO ou 3)">
+            <span class="ability-key">ESPAÇO</span>
+            <img class="ability-icon" src="assets/ui/skin/icon_e.png" alt="" />
+            <div class="ability-body">
+              <span class="ability-name" id="sk-name-e">Kawarimi</span>
+              <span class="ability-cost">15 CK</span>
+            </div>
+            <div class="cd-radial-overlay" id="cd-e"></div>
+          </button>
+
+          <!-- Ultimate / Awakening Ougi (R / 4) -->
+          <button class="moba-ability-btn ultimate" data-slot="r" id="slot-r" title="Ultimate Ougi Secreto (Tecla R ou 4)">
+            <span class="ability-key">R</span>
+            <img class="ability-icon" src="assets/ui/skin/icon_r.png" alt="" />
+            <div class="ability-body">
+              <span class="ability-name" id="sk-name-r">Ultimate Ougi</span>
+              <span class="ability-cost">50 CK</span>
+            </div>
+            <div class="cd-radial-overlay" id="cd-r"></div>
+          </button>
+
+          <!-- Chakra Concentration (F / Shift) -->
+          <button class="moba-ability-btn chakra-charge" data-slot="c" id="slot-c" title="Concentrar Chakra (Tecla F ou SHIFT)">
+            <span class="ability-key">F</span>
+            <img class="ability-icon" src="assets/ui/skin/icon_c.png" alt="" />
+            <div class="ability-body">
+              <span class="ability-name">Chakra</span>
+              <span class="ability-cost">+32 CK/s</span>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Right: Discreet Controls Drawer Toggle / Helper -->
+      <div id="controls-drawer" class="controls-cheat-sheet hidden">
+        <div class="cheat-header">
+          <span>GUIA DE TECLAS DO NINJA</span>
+          <button id="btn-close-controls" class="btn-close-sheet">✕</button>
+        </div>
+        <ul class="cheat-list">
+          <li><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> <span>Movimentação (W = Frente)</span></li>
+          <li><kbd>Click M1</kbd> <span>Combo Taijutsu (Golpes 1-2-3)</span></li>
+          <li><kbd>Q</kbd> / <kbd>1</kbd> <span>Ninjutsu Primário</span></li>
+          <li><kbd>E</kbd> / <kbd>2</kbd> <span>Ninjutsu Secundário</span></li>
+          <li><kbd>Espaço</kbd> / <kbd>3</kbd> <span>Kawarimi (Substituição)</span></li>
+          <li><kbd>R</kbd> / <kbd>4</kbd> <span>Ultimate + Despertar (Ougi)</span></li>
+          <li><kbd>F</kbd> / <kbd>Shift</kbd> <span>Concentrar Chakra (+CK)</span></li>
+          <li><kbd>C</kbd> <span>Alternar Câmera MOBA / 3ª Pessoa</span></li>
+          <li><kbd>Tab</kbd> <span>Placar de Estatísticas (K / D / A)</span></li>
+          <li><kbd>H</kbd> <span>Fechar / Abrir este Guia</span></li>
+        </ul>
+      </div>
+    </footer>
+
+    <!-- Player Death & Respawn Overlay -->
+    <div id="player-death-overlay" class="death-overlay hidden">
+      <div class="death-card">
+        <img class="death-flame" src="assets/ui/skin/flame_aura.png" alt="" aria-hidden="true" />
+        <div class="death-icon-pulse">倒</div>
+        <h2 class="death-title">VOCÊ FOI ELIMINADO</h2>
+        <div class="respawn-countdown-ring">
+          <span id="death-timer-num">6</span><small class="sec-unit">s</small>
+        </div>
+        <div class="death-progress-bar">
+          <div id="death-progress-fill" style="width: 100%;"></div>
+        </div>
+        <p class="death-hint">Renascendo com Chakra total no Santuário de Konoha...</p>
+      </div>
+    </div>
+
+    <!-- TAB MOBA Scoreboard (K / D / A Statistics) -->
+    <div id="scoreboard-tab-overlay" class="scoreboard-modal hidden">
+      <div class="scoreboard-card" data-skin-frame="result">
+        <div class="scoreboard-header">
+          <div class="sb-title-group">
+            <span class="sb-badge">PLACAR 5v5 SHINOBI</span>
+            <h2 class="sb-title">ESTATÍSTICAS DA PARTIDA <small class="sb-key-pill">TAB</small></h2>
+          </div>
+          <div class="sb-match-meta">
+            <div class="sb-score blue"><span id="sb-score-blue">0</span> KONOHA</div>
+            <div class="sb-vs"><img src="assets/ui/xcmn_vs.png" alt="VS" /></div>
+            <div class="sb-score red">RIVAIS <span id="sb-score-red">0</span></div>
+            <span class="sb-clock" id="sb-clock">05:00</span>
+          </div>
+          <button id="btn-close-scoreboard" class="btn-close-sheet">✕</button>
+        </div>
+
+        <div class="scoreboard-tables-wrap">
+          <!-- Blue Team Table -->
+          <div class="team-table-block blue-side">
+            <div class="team-table-title blue">
+              <span>木ノ葉 TIME KONOHA (AZUL)</span>
+              <span class="team-subtotal" id="blue-subtotal-kda">KDA: 0 / 0 / 0</span>
+            </div>
+            <table class="moba-stats-table">
+              <thead>
+                <tr>
+                  <th>NINJA</th>
+                  <th>LVL</th>
+                  <th>K</th>
+                  <th>D</th>
+                  <th>A</th>
+                  <th>KDA</th>
+                  <th>STATUS</th>
+                </tr>
+              </thead>
+              <tbody id="sb-tbody-blue"></tbody>
+            </table>
+          </div>
+
+          <!-- Red Team Table -->
+          <div class="team-table-block red-side">
+            <div class="team-table-title red">
+              <span>敵 TIME RIVAL (VERMELHO)</span>
+              <span class="team-subtotal" id="red-subtotal-kda">KDA: 0 / 0 / 0</span>
+            </div>
+            <table class="moba-stats-table">
+              <thead>
+                <tr>
+                  <th>NINJA</th>
+                  <th>LVL</th>
+                  <th>K</th>
+                  <th>D</th>
+                  <th>A</th>
+                  <th>KDA</th>
+                  <th>STATUS</th>
+                </tr>
+              </thead>
+              <tbody id="sb-tbody-red"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="scoreboard-footer-tip">Segure ou pressione <strong>[TAB]</strong> para alternar este placar em tempo real.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== M5 MATCH RESULTS: VITORIA + QUADRO FINAL + MVP ==================== -->
+    <div id="match-results-overlay" class="match-results-overlay hidden" aria-hidden="true">
+      <div class="mr-backdrop"></div>
+      <div class="mr-stage">
+        <div class="mr-banner-row">
+          <img id="mr-banner-img" class="mr-banner-img" src="assets/ui/skin/banner_win.png" alt="" />
+          <span id="mr-banner-kanji" class="mr-banner-kanji">勝利</span>
+        </div>
+        <span id="mr-banner-text" class="mr-banner-text">VITÓRIA DO TIME KONOHA</span>
+
+        <div class="mr-score-row">
+          <div class="mr-score blue"><span id="mr-score-blue">0</span><small>木ノ葉 KONOHA</small></div>
+          <img src="assets/ui/xcmn_vs.png" class="mr-vs" alt="VS" />
+          <div class="mr-score red"><span id="mr-score-red">0</span><small>敵 RIVAIS</small></div>
+        </div>
+
+        <div id="mr-mvp-card" class="mr-mvp-card">
+          <span class="mr-mvp-seal">最優秀選手 · MVP</span>
+          <div class="mr-mvp-ringwrap">
+            <img class="avatar-ring-skin mr-mvp-ring" src="assets/ui/skin/ring_avatar.png" alt="" aria-hidden="true" />
+            <img id="mr-mvp-portrait" class="mr-mvp-portrait" src="assets/portraits/1nrt.png" alt="MVP" />
+          </div>
+          <div class="mr-mvp-data">
+            <span id="mr-mvp-name" class="mr-mvp-name">Naruto Uzumaki</span>
+            <span id="mr-mvp-kda" class="mr-mvp-kda">K 0 · D 0 · A 0 · Lv.1</span>
+            <span id="mr-mvp-team" class="mr-mvp-team">MVP · KONOHA 木ノ葉</span>
+          </div>
+        </div>
+
+        <div class="mr-tables">
+          <div class="team-table-block blue-side">
+            <div class="team-table-title blue">
+              <span>木ノ葉 TIME KONOHA (AZUL)</span>
+              <span class="team-subtotal" id="mr-sub-blue">KDA: 0 / 0 / 0</span>
+            </div>
+            <table class="moba-stats-table">
+              <thead>
+                <tr><th>NINJA</th><th>LVL</th><th>K</th><th>D</th><th>A</th><th>KDA</th><th>DESTAQUE</th></tr>
+              </thead>
+              <tbody id="mr-tbody-blue"></tbody>
+            </table>
+          </div>
+          <div class="team-table-block red-side">
+            <div class="team-table-title red">
+              <span>敵 TIME RIVAL (VERMELHO)</span>
+              <span class="team-subtotal" id="mr-sub-red">KDA: 0 / 0 / 0</span>
+            </div>
+            <table class="moba-stats-table">
+              <thead>
+                <tr><th>NINJA</th><th>LVL</th><th>K</th><th>D</th><th>A</th><th>KDA</th><th>DESTAQUE</th></tr>
+              </thead>
+              <tbody id="mr-tbody-red"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="mr-buttons">
+          <button id="btn-rematch" class="mr-btn primary">再戦 · REVANCHE</button>
+          <button id="btn-results-lobby" class="mr-btn">ロビー · LOBBY</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== 3D ASSET STUDIO MODAL ==================== -->
+
+
+  <div id="studio-modal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>INSPEÇÃO DE ENGENHARIA REVERSA DO APK (<code>data.awb</code> / <code>stage1.awb</code> / <code>installTimeDisc.awb</code>)</h3>
+        <button id="btn-close-studio" class="btn-close">✕</button>
+      </div>
+      <div class="modal-body" id="studio-body"></div>
+    </div>
+  </div>
+
+  <script type="module" src="game.js?v=22"></script>
+</body>
+</html>

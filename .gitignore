@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Bulk assets extracted from the Storm APK.
+# These are large binary artifacts (CPK/NUCC containers, CRI audio banks,
+# LOD stage meshes). They are reproducible with the scripts in tools/ --
+# see APK_REVERSE.md -- so they are not tracked in git.
+public/assets/stage/raw/
+public/assets/stage/arena/
+public/assets/ui/raw/
+public/assets/models/puppets/
+public/assets/data/spc/
+public/assets/audio/
+
+# Generated extraction manifests
+cpk_names.tsv
+
+# Test / scratch output
+*.log
+screenshots/
+artifacts/

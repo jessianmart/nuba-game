@@ -1,0 +1,4880 @@
+{
+ "1akm": {
+  "subtables": [],
+  "files": [
+   "data_spc_1akmprm.bin.xfbin"
+  ],
+  "asset_ids": [],
+  "anim_groups": {},
+  "anim_total": 0
+ },
+ "1anb": {
+  "subtables": [],
+  "files": [
+   "data_spc_1anbkami1.xfbin",
+   "data_spc_1anbkami2.xfbin",
+   "data_spc_1anbkami3.xfbin",
+   "data_spc_1anbktn.xfbin",
+   "data_spc_1anbktn2.xfbin",
+   "data_spc_1anbmsk1.xfbin",
+   "data_spc_1anbmsk2.xfbin",
+   "data_spc_1anbmsk3.xfbin"
+  ],
+  "asset_ids": [
+   "1anbkami",
+   "1anbkami1"
+  ],
+  "anim_groups": {},
+  "anim_total": 0
+ },
+ "1ank": {
+  "subtables": [
+   "etc",
+   "mot",
+   "skl",
+   "spl"
+  ],
+  "files": [
+   "data_spc_1ankeff1.xfbin",
+   "data_spc_1ankprm.bin.xfbin",
+   "data_spc_1ankskl1.xfbin"
+  ],
+  "asset_ids": [
+   "1ankcat10",
+   "1ankcha10",
+   "1ankcha12",
+   "1ankcha13",
+   "1ankcha14",
+   "1ankcha15",
+   "1ankcha16",
+   "1ankcha1cut",
+   "1ankdmg0f",
+   "1ankdow1",
+   "1ankdsc00",
+   "1ankent0",
+   "1anklan0",
+   "1anknut0",
+   "1anknut0f",
+   "1ankout0",
+   "1ankpur10",
+   "1ankpur11",
+   "1ankwin10",
+   "1ankwin11"
+  ],
+  "anim_groups": {
+   "airborne": [
+    "FALL1"
+   ],
+   "entrance": [
+    "ENTRY"
+   ],
+   "exit": [
+    "EXIT"
+   ],
+   "landing": [
+    "LAN"
+   ],
+   "nutada": [
+    "NUT"
+   ]
+  },
+  "anim_total": 5
+ },
+ "1asm": {
+  "subtables": [
+   "etc",
+   "mot",
+   "skl",
+   "spl"
+  ],
+  "files": [
+   "data_spc_1asmeff1.xfbin",
+   "data_spc_1asmprm.bin.xfbin",
+   "data_spc_1asmskl1.xfbin"
+  ],
+  "asset_ids": [
+   "1asmcat10",
+   "1asmcha10",
+   "1asmcha12",
+   "1asmcha13",
+   "1asmcha14",
+   "1asmcha15",
+   "1asmcha16",
+   "1asmcha1cut",
+   "1asmdmg0f",
+   "1asmdow1",
+   "1asmdsc00",
+   "1asment0",
+   "1asmlan0",
+   "1asmnut0",
+   "1asmnut0f",
+   "1asmout0",
+   "1asmpur10",
+   "1asmpur11",
+   "1asmwin10",
+   "1asmwin11"
+  ],
+  "anim_groups": {
+   "airborne": [
+    "FALL1"
+   ],
+   "entrance": [
+    "ENTRY"
+   ],
+   "exit": [
+    "EXIT"
+   ],
+   "landing": [
+    "LAN"
+   ],
+   "nutada": [
+    "NUT"
+   ]
+  },
+  "anim_total": 5
+ },
+ "1cmn": {
+  "subtables": [
+   "mot"
+  ],
+  "files": [
+   "data_spc_1cmnprm.bin.xfbin"
+  ],
+  "asset_ids": [
+   "1cmn00t0",
+   "1cmncat00",
+   "1cmncat01",
+   "1cmncat10",
+   "1cmncol0",
+   "1cmncol1",
+   "1cmncol3",
+   "1cmncol4",
+   "1cmnddg0",
+   "1cmndga0",
+   "1cmndga1",
+   "1cmndga2",
+   "1cmndga3",
+   "1cmndma0",
+   "1cmndmb0",
+   "1cmndmb1",
+   "1cmndmd0",
+   "1cmndmf0",
+   "1cmndmg0",
+   "1cmndmg1",
+   "1cmndml0",
+   "1cmndmr0",
+   "1cmndsh0s",
+   "1cmndwn0",
+   "1cmndwn1",
+   "1cmndxn0",
+   "1cmndxn1",
+   "1cmnfal0",
+   "1cmnfal1",
+   "1cmngbr0",
+   "1cmnkno0",
+   "1cmnpin0",
+   "1cmnpiy0",
+   "1cmnpur00",
+   "1cmnret0",
+   "1cmnsdg0",
+   "1cmnsdg2"
+  ],
+  "anim_groups": {
+   "catch": [
+    "CATCHED0",
+    "CATCHED1"
+   ],
+   "other": [
+    "DWN2NUT",
+    "DWNLP"
+   ]
+  },
+  "anim_total": 4
+ },
+ "1dea": {
+  "subtables": [],
+  "files": [
+   "data_spc_1deaLhand.xfbin",
+   "data_spc_1deawep1.xfbin",
+   "data_spc_1deawep2.xfbin"
+  ],
+  "asset_ids": [
+   "1dealhand"
+  ],
+  "anim_groups": {},
+  "anim_total": 0
+ },
+ "1fir": {
+  "subtables": [
+   "etc",
+   "mot",
+   "skl",
+   "spl"
+  ],
+  "files": [
+   "data_spc_1fireff1.xfbin",
+   "data_spc_1firprm.bin.xfbin",
+   "data_spc_1firskl1.xfbin"
+  ],
+  "asset_ids": [
+   "1fircat10",
+   "1fircha10",
+   "1fircha14",
+   "1fircha15",
+   "1fircha16",
+   "1fircha1cut",
+   "1firdmg0f",
+   "1firdow1",
+   "1firdsc00",
+   "1firent0",
+   "1firlan0",
+   "1firnut0",
+   "1firnut0f",
+   "1firout0",
+   "1firpur10",
+   "1firpur11",
+   "1firwin10",
+   "1firwin11"
+  ],
+  "anim_groups": {
+   "airborne": [
+    "FALL1"
+   ],
+   "entrance": [
+    "ENTRY"
+   ],
+   "exit": [
+    "EXIT"
+   ],
+   "landing": [
+    "LAN"
+   ],
+   "nutada": [
+    "NUT"
+   ]
+  },
+  "anim_total": 5
+ },
+ "1for": {
+  "subtables": [],
+  "files": [
+   "data_spc_1foreff1.xfbin",
+   "data_spc_1forprm.bin.xfbin"
+  ],
+  "asset_ids": [],
+  "anim_groups": {},
+  "anim_total": 0
+ },
+ "1gar": {
+  "subtables": [
+   "etc",
+   "mot",
+   "skl",
+   "spl"
+  ],
+  "files": [
+   "data_spc_1gareff1.xfbin",
+   "data_spc_1garprm.bin.xfbin",
+   "data_spc_1garskl1.xfbin",
+   "data_spc_1garskl2.xfbin"
+  ],
+  "asset_ids": [
+   "1garhola1"
+  ],
+  "anim_groups": {
+   "airborne": [
+    "FALL0",
+    "FALL1"
+   ],
+   "combo": [
+    "CMB00",
+    "CMB01",
+    "CMB02",
+    "CMB03",
+    "CMB04",
+    "CMB05",
+    "CMB06",
+    "CMB07",
+    "CMB08",
+    "CMB09",
+    "CMB10",
+    "CMB11",
+    "CMB12",
+    "CMB13",
+    "CMB14",
+    "CMB15",
+    "CMB16",
+    "CMB17"
+   ],
+   "entrance": [
+    "ENTRY"
+   ],
+   "exit": [
+    "EXIT"
+   ],
+   "in": [
+    "INN0"
+   ],
+   "jump": [
+    "JMP0",
+    "JMP1"
+   ],
+   "landing": [
+    "LAN"
+   ],
+   "next_jump": [
+    "NXJ0"
+   ],
+   "nutada": [
+    "NUT"
+   ],
+   "out": [
+    "IXN0"
+   ],
+   "reaction": [
+    "RXN0"
+   ],
+   "run": [
+    "RUN0",
+    "RUN1"
+   ],
+   "turn": [
+    "TRN1"
+   ]
+  },
+  "anim_total": 33
+ },
+ "1guv": {
+  "subtables": [
+   "etc",
+   "mot",
+   "skl",
+   "spl"
+  ],
+  "files": [
+   "data_spc_1guveff1.xfbin",
+   "data_spc_1guvprm.bin.xfbin",
+   "data_spc_1guvskl1.xfbin"
+  ],
+  "asset_ids": [
+   "1guv00t0",
+   "1guvawa00",
+   "1guvawa02",
+   "1guvbre00",
+   "1guvcat10",
+   "1guvcat11",
+   "1guvcha10",
+   "1guvcha12",
+   "1guvcha13",
+   "1guvcha14",
+   "1guvcha16",
+   "1guvcha1cut",
+   "1guvchd10",
+   "1guvchd11",
+   "1guvcma00",
+   "1guvdmg0f",
+   "1guvdow0",
+   "1guvdow1",
+   "1guvdsf0",
+   "1guvdwa00",
+   "1guvent0",
+   "1guvgat0",
+   "1guvgda0",
+   "1guvghf0",
+   "1guvghl0",
+   "1guvghr0",
+   "1guvght1",
+   "1guvgit0",
+   "1guvgit1",
+   "1guvgit2",
+   "1guvgit3",
+   "1guvhola0",
+   "1guvhold0",
+   "1guvinn0",
+   "1guvitl0",
+   "1guvitma0",
+   "1guvitmg0",
+   "1guvixn0",
+   "1guvjmp0",
+   "1guvjmp1",
+   "1guvlan0",
+   "1guvlos10",
+   "1guvlos11",
+   "1guvnut0",
+   "1guvnut0f",
+   "1guvnut1f",
+   "1guvnxi0",
+   "1guvout0",
+   "1guvpur10",
+   "1guvpur11",
+   "1guvrun0",
+   "1guvrun1",
+   "1guvspk0f",
+   "1guvstr10",
+   "1guvtrn1",
+   "1guvwin10",
+   "1guvwin11"
+  ],
+  "anim_groups": {
+   "airborne": [
+    "FALL0",
+    "FALL1"
+   ],
+   "combo": [
+    "CMB00",
+    "CMB01",
+    "CMB02",
+    "CMB03",
+    "CMB04",
+    "CMB05",
+    "CMB06",
+    "CMB07",
+    "CMB08",
+    "CMB09",
+    "CMB10",
+    "CMB11",
+    "CMB12",
+    "CMB13",
+    "CMB14",
+    "CMB15",
+    "CMB16",
+    "CMB17",
+    "CMB18",
+    "CMB19",
+    "CMB20",
+    "CMB21",
+    "CMB22",
+    "CMB23",
+    "CMB24",
+    "CMB25",
+    "CMB26",
+    "CMB27",
+    "CMB28",
+    "CMB29",
+    "CMB30",
+    "CMB31"
+   ],
+   "entrance": [
+    "ENTRY"
+   ],
+   "exit": [
+    "EXIT"
+   ],
+   "in": [
+    "INN0"
+   ],
+   "jump": [
+    "JMP0",
+    "JMP1"
+   ],
+   "landing": [
+    "LAN"
+   ],
+   "next_jump": [
+    "NXJ0"
+   ],
+   "nutada": [
+    "NUT"
+   ],
+   "out": [
+    "IXN0"
+   ],
+   "plea": [
+    "PLEASED"
+   ],
+   "reaction": [
+    "RXN0"
+   ],
+   "run": [
+    "RUN0",
+    "RUN1"
+   ],
+   "turn": [
+    "TRN1"
+   ]
+  },
+  "anim_total": 48
+ },
+ "1guy": {
+  "subtables": [
+   "etc",
+   "mot",
+   "skl",
+   "spl"
+  ],
+  "files": [
+   "data_spc_1guyeff1.xfbin",
+   "data_spc_1guyprm.bin.xfbin",
+   "data_spc_1guyskl1.xfbin",
+   "data_spc_1guyskl2.xfbin"
+  ],
+  "asset_ids": [
+   "1guy00t0",
+   "1guyawa00",
+   "1guyawa02",
+   "1guybre00",
+   "1guycat10",
+   "1guycha10",
+   "1guycha20",
+   "1guycha21",
+   "1guycha27",
+   "1guycha2cut1",
+   "1guychd20",
+   "1guycma00",
+   "1guydmg0f",
+   "1guydow0",
+   "1guydow1",
+   "1guydsc00",
+   "1guydsf0",
+   "1guydwa00",
+   "1guyent0",
+   "1guygat0",
+   "1guygda0",
+   "1guyghf0",
+   "1guyghl0",
+   "1guyghr0",
+   "1guyght1",
+   "1guygit0",
+   "1guygit1",
+   "1guygit2",
+   "1guygit3",
+   "1guyhola0",
+   "1guyhold0",
+   "1guyinn0",
+   "1guyitl0",
+   "1guyitma0",
+   "1guyitmg0",
+   "1guyixn0",
+   "1guyjmp0",
+   "1guyjmp1",
+   "1guylan0",
+   "1guylos10",
+   "1guylos11",
+   "1guynut0",
+   "1guynut0f",
+   "1guynut1f",
+   "1guynxi0",
+   "1guyout0",
+   "1guypur10",
+   "1guypur11",
+   "1guyrun0",
+   "1guyrun1",
+   "1guyspk0f",
+   "1guystr10",
+   "1guystr11",
+   "1guytra0e",
+   "1guytra0l",
+   "1guytrn1",
+   "1guywin10",
+   "1guywin11"
+  ],
+  "anim_groups": {
+   "airborne": [
+    "FALL0",
+    "FALL1"
+   ],
+   "combo": [
+    "CMB00",
+    "CMB01",
+    "CMB02",
+    "CMB03",
+    "CMB04",
+    "CMB05",
+    "CMB06",
+    "CMB07",
+    "CMB08",
+    "CMB09",
+    "CMB10",
+    "CMB11",
+    "CMB12",
+    "CMB13",
+    "CMB14",
+    "CMB15",
+    "CMB16",
+    "CMB17",
+    "CMB18",
+    "CMB19",
+    "CMB20"
+   ],
+   "entrance": [
+    "ENTRY"
+   ],
+   "exit": [
+    "EXIT"
+   ],
+   "in": [
+    "INN0"
+   ],
+   "jump": [
+    "JMP0",
+    "JMP1"
+   ],
+   "landing": [
+    "LAN"
+   ],
+   "next_jump": [
+    "NXJ0"
+   ],
+   "nutada": [
+    "NUT"
+   ],
+   "out": [
+    "IXN0"
+   ],
+   "plea": [
+    "PLEASED"
+   ],
+   "reaction": [
+    "RXN0"
+   ],
+   "run": [
+    "RUN0",
+    "RUN1"
+   ],
+   "turn": [
+    "TRN1"
+   ]
+  },
+  "anim_total": 37
+ },
+ "1hkg": {
+  "subtables": [
+   "etc",
+   "mot",
+   "skl",
+   "spl"
+  ],
+  "files": [
+   "data_spc_1hkgeff1.xfbin",
+   "data_spc_1hkgprm.bin.xfbin",
+   "data_spc_1hkgskl1.xfbin",
+   "data_spc_1hkgskl2.xfbin"
+  ],
+  "asset_ids": [
+   "1enm00t0",
+   "1hkg00t0",
+   "1hkgbre00",
+   "1hkgcat10",
+   "1hkgcha12",
+   "1hkgcha13",
+   "1hkgcha14",
+   "1hkgcha15",
+   "1hkgcha16",
+   "1hkgcha1cut",
+   "1hkgcha22",
+   "1hkgcha23",
+   "1hkgcha24",
+   "1hkgcha25",
+   "1hkgchd10",
+   "1hkgchd11",
+   "1hkgcma00",
+   "1hkgdmg0f",
+   "1hkgdow0",
+   "1hkgdow1",
+   "1hkgdsc00",
+   "1hkgdsf0",
+   "1hkgdwa00",
+   "1hkgent0",
+   "1hkggda0",
+   "1hkgghf0",
+   "1hkgghl0",
+   "1hkgghr0",
+   "1hkgght1",
+   "1hkggit0",
+   "1hkggit1",
+   "1hkggit2",
+   "1hkggit3",
+   "1hkghola0",
+   "1hkghold0",
+   "1hkginn0",
+   "1hkgitl0",
+   "1hkgitma0",
+   "1hkgitmg0",
+   "1hkgixn0",
+   "1hkgjmp0",
+   "1hkgjmp1",
+   "1hkglan0",
+   "1hkglos10",
+   "1hkglos11",
+   "1hkgnut0",
+   "1hkgnut0f",
+   "1hkgnut1f",
+   "1hkgnxi0",
+   "1hkgout0",
+   "1hkgpur10",
+   "1hkgpur11",
+   "1hkgrun0",
+   "1hkgrun1",
+   "1hkgskl10",
+   "1hkgskl20",
+   "1hkgspk0f",
+   "1hkgstr10",
+   "1hkgstr11",
+   "1hkgtra0e",
+   "1hkgtra0l",
+   "1hkgtrn1",
+   "1hkgwin10",
+   "1hkgwin11"
+  ],
+  "anim_groups": {
+   "airborne": [
+    "FALL0",
+    "FALL1"
+   ],
+   "combo": [
+    "CMB00",
+    "CMB01",
+    "CMB02",
+    "CMB03",
+    "CMB04",
+    "CMB05",
+    "CMB06",
+    "CMB07",
+    "CMB08",
+    "CMB09",
+    "CMB10",
+    "CMB11",
+    "CMB12",
+    "CMB13",
+    "CMB14",
+    "CMB15",
+    "CMB16",
+    "CMB17",
+    "CMB18",
+    "CMB19",
+    "CMB20",
+    "CMB21",
+    "CMB22",
+    "CMB23"
+   ],
+   "entrance": [
+    "ENTRY"
+   ],
+   "exit": [
+    "EXIT"
+   ],
+   "in": [
+    "INN0"
+   ],
+   "jump": [
+    "JMP0",
+    "JMP1"
+   ],
+   "landing": [
+    "LAN"
+   ],
+   "next_jump": [
+    "NXJ0"
+   ],
+   "nutada": [
+    "NUT"
+   ],
+   "out": [
+    "IXN0"
+   ],
+   "reaction": [
+    "RXN0"
+   ],
+   "run": [
+    "RUN0",
+    "RUN1"
+   ],
+   "turn": [
+    "TRN1"
+   ]
+  },
+  "anim_total": 39
+ },
+ "1hnt": {
+  "subtables": [
+   "etc",
+   "mot",
+   "skl",
+   "spl"
+  ],
+  "files": [
+   "data_spc_1hnteff1.xfbin",
+   "data_spc_1hntprm.bin.xfbin",
+   "data_spc_1hntskl1.xfbin",
+   "data_spc_1hntskl2.xfbin"
+  ],
+  "asset_ids": [
+   "1hnt00t0",
+   "1hntbre00",
+   "1hntcat10",
+   "1hntcha10",
+   "1hntcha12",
+   "1hntcha13",
+   "1hntcha14",
+   "1hntcha15",
+   "1hntcha16",
+   "1hntcha1cut",
+   "1hntcha20",
+   "1hntcha21",
+   "1hntchd10",
+   "1hntchd11",
+   "1hntchd20",
+   "1hntcma00",
+   "1hntdmg0f",
+   "1hntdow0",
+   "1hntdow1",
+   "1hntdsc00",
+   "1hntdsf0",
+   "1hntent0",
+   "1hntgda0",
+   "1hntghf0",
+   "1hntghl0",
+   "1hntghr0",
+   "1hntght1",
+   "1hntgit0",
+   "1hntgit1",
+   "1hntgit2",
+   "1hntgit3",
+   "1hnthola0",
+   "1hnthold0",
+   "1hntinn0",
+   "1hntitl0",
+   "1hntitma0",
+   "1hntitmg0",
+   "1hntixn0",
+   "1hntjmp0",
+   "1hntjmp1",
+   "1hntlan0",
+   "1hntlos10",
+   "1hntlos11",
+   "1hntnut0",
+   "1hntnut0f",
+   "1hntnut1f",
+   "1hntnxi0",
+   "1hntout0",
+   "1hntpur10",
+   "1hntpur11",
+   "1hntrun0",
+   "1hntrun1",
+   "1hntspk0f",
+   "1hntstr10",
+   "1hntstr11",
+   "1hnttra0e",
+   "1hnttra0l",
+   "1hnttrn1",
+   "1hntwin10",
+   "1hntwin11"
+  ],
+  "anim_groups": {
+   "airborne": [
+    "FALL0",
+    "FALL1"
+   ],
+   "combo": [
+    "CMB00",
+    "CMB01",
+    "CMB02",
+    "CMB03",
+    "CMB04",
+    "CMB05",
+    "CMB06",
+    "CMB07",
+    "CMB08",
+    "CMB09",
+    "CMB10",
+    "CMB11",
+    "CMB12",
+    "CMB13",
+    "CMB14",
+    "CMB15",
+    "CMB16",
+    "CMB17",
+    "CMB18",
+    "CMB19",
+    "CMB20",
+    "CMB21",
+    "CMB22"
+   ],
+   "entrance": [
+    "ENTRY"
+   ],
+   "exit": [
+    "EXIT"
+   ],
+   "in": [
+    "INN0"
+   ],
+   "jump": [
+    "JMP0",
+    "JMP1"
+   ],
+   "landing": [
+    "LAN"
+   ],
+   "next_jump": [
+    "NXJ0"
+   ],
+   "nutada": [
+    "NUT"
+   ],
+   "out": [
+    "IXN0"
+   ],
+   "reaction": [
+    "RXN0"
+   ],
+   "run": [
+    "RUN0",
+    "RUN1"
+   ],
+   "turn": [
+    "TRN1"
+   ]
+  },
+  "anim_total": 38
+ },
+ "1ino": {
+  "subtables": [
+   "etc",
+   "mot",
+   "skl",
+   "spl"
+  ],
+  "files": [
+   "data_spc_1inoeff1.xfbin",
+   "data_spc_1inoflower.xfbin",
+   "data_spc_1inoflower1.xfbin",
+   "data_spc_1inoprm.bin.xfbin",
+   "data_spc_1inoskl1.xfbin",
+   "data_spc_1inoskl2.xfbin"
+  ],
+  "asset_ids": [
+   "1inoflower"
+  ],
+  "anim_groups": {
+   "airborne": [
+    "FALL0",
+    "FALL1"
+   ],
+   "combo": [
+    "CMB00",
+    "CMB01",
+    "CMB02",
+    "CMB03",
+    "CMB04",
+    "CMB05",
+    "CMB06",
+    "CMB07",
+    "CMB08",
+    "CMB09",
+    "CMB10",
+    "CMB11",
+    "CMB12",
+    "CMB13",
+    "CMB14",
+    "CMB15",
+    "CMB16",
+    "CMB17",
+    "CMB18"
+   ],
+   "entrance": [
+    "ENTRY"
+   ],
+   "exit": [
+    "EXIT"
+   ],
+   "in": [
+    "INN0"
+   ],
+   "jump": [
+    "JMP0",
+    "JMP1"
+   ],
+   "landing": [
+    "LAN"
+   ],
+   "next_jump": [
+    "NXJ0"
+   ],
+   "nutada": [
+    "NUT"
+   ],
+   "out": [
+    "IXN0"
+   ],
+   "reaction": [
+    "RXN0"
+   ],
+   "run": [
+    "RUN0",
+    "RUN1"
+   ],
+   "turn": [
+    "TRN1"
+   ]
+  },
+  "anim_total": 34
+ },
+ "1itc": {
+  "subtables": [
+   "etc",
+   "mot",
+   "skl",
+   "spl"
+  ],
+  "files": [
+   "data_spc_1itceff1.xfbin",
+   "data_spc_1itcprm.bin.xfbin",
+   "data_spc_1itcskl1.xfbin",
+   "data_spc_1itcskl2.xfbin"
+  ],
+  "asset_ids": [
+   "1itc00t0",
+   "1itcbre00",
+   "1itccat10",
+   "1itccha10",
+   "1itccha20",
+   "1itccha30",
+   "1itccha32",
+   "1itccha33",
+   "1itccha34",
+   "1itccha35",
+   "1itccha36",
+   "1itccha3cut",
+   "1itcchd30",
+   "1itccma00",
+   "1itcdmg0f",
+   "1itcdow0",
+   "1itcdow1",
+   "1itcdsc00",
+   "1itcdsf0",
+   "1itcdwa00",
+   "1itcent0",
+   "1itcgat0",
+   "1itcgda0",
+   "1itcghf0",
+   "1itcghl0",
+   "1itcghr0",
+   "1itcght1",
+   "1itcgit0",
+   "1itcgit1",
+   "1itcgit2",
+   "1itcgit3",
+   "1itchola0",
+   "1itchold0",
+   "1itcinn0",
+   "1itcitl0",
+   "1itcitma0",
+   "1itcitmg0",
+   "1itcixn0",
+   "1itcjmp0",
+   "1itcjmp1",
+   "1itclan0",
+   "1itclos10",
+   "1itclos11",
+   "1itcnut0",
+   "1itcnut0f",
+   "1itcnut1f",
+   "1itcnxi0",
+   "1itcout0",
+   "1itcpur10",
+   "1itcpur11",
+   "1itcrun0",
+   "1itcrun1",
+   "1itcspk0f",
+   "1itcstr10",
+   "1itcstr11",
+   "1itctra0e",
+   "1itctra0l",
+   "1itctrn1",
+   "1itcwin10",
+   "1itcwin11"
+  ],
+  "anim_groups": {
+   "airborne": [
+    "FALL0",
+    "FALL1"
+   ],
+   "combo": [
+    "CMB00",
+    "CMB01",
+    "CMB02",
+    "CMB03",
+    "CMB04",
+    "CMB05",
+    "CMB06",
+    "CMB07",
+    "CMB08",
+    "CMB09",
+    "CMB10",
+    "CMB11",
+    "CMB12",
+    "CMB13",
+    "CMB14",
+    "CMB15",
+    "CMB16",
+    "CMB17",
+    "CMB18",
+    "CMB19",
+    "CMB20",
+    "CMB21",
+    "CMB22",
+    "CMB23",
+    "CMB26",
+    "CMB27",
+    "CMB28",
+    "CMB29",
+    "CMB30",
+    "CMB31",
+    "CMB32"
+   ],
+   "entrance": [
+    "ENTRY"
+   ],
+   "exit": [
+    "EXIT"
+   ],
+   "in": [
+    "INN0"
+   ],
+   "jump": [
+    "JMP0",
+    "JMP1"
+   ],
+   "landing": [
+    "LAN"
+   ],
+   "next_jump": [
+    "NXJ0"
+   ],
+   "nutada": [
+    "NUT"
+   ],
+   "out": [
+    "IXN0"
+   ],
+   "plea": [
+    "PLEASED"
+   ],
+   "reaction": [
+    "RXN0"
+   ],
+   "run": [
+    "RUN0",
+    "RUN1"
+   ],
+   "turn": [
+    "TRN1"
+   ]
+  },
+  "anim_total": 47
+ },
+ "1jrb": {
+  "subtables": [
+   "etc",
+   "mot",
+   "skl",
+   "spl"
+  ],
+  "files": [
+   "data_spc_1jrbeff1.xfbin",
+   "data_spc_1jrbprm.bin.xfbin",
+   "data_spc_1jrbskl1.xfbin"
+  ],
+  "asset_ids": [
+   "1jrbcat10",
+   "1jrbcha10",
+   "1jrbdmg0f",
+   "1jrbdow1",
+   "1jrbdsc00",
+   "1jrbent0",
+   "1jrblan0",
+   "1jrbnut0",
+   "1jrbnut0f",
+   "1jrbout0",
+   "1jrbpur10",
+   "1jrbpur11",
+   "1jrbwin10",
+   "1jrbwin11"
+  ],
+  "anim_groups": {
+   "airborne": [
+    "FALL1"
+   ],
+   "entrance": [
+    "ENTRY"
+   ],
+   "exit": [
+    "EXIT"
+   ],
+   "landing": [
+    "LAN"
+   ],
+   "nutada": [
+    "NUT"
+   ]
+  },
+  "anim_total": 5
+ },
+ "1jry": {
+  "subtables": [
+   "etc",
+   "mot",
+   "skl",
+   "spl"
+  ],
+  "files": [
+   "data_spc_1jryeff1.xfbin",
+   "data_spc_1jryprm.bin.xfbin",
+   "data_spc_1jryskl1.xfbin",
+   "data_spc_1jryskl2.xfbin"
+  ],
+  "asset_ids": [
+   "1jryeff01",
+   "1jryeff02",
+   "1jryeff03"
+  ],
+  "anim_groups": {
+   "airborne": [
+    "FALL0",
+    "FALL1"
+   ],
+   "combo": [
+    "CMB00",
+    "CMB01",
+    "CMB02",
+    "CMB03",
+    "CMB04",
+    "CMB05",
+    "CMB06",
+    "CMB07",
+    "CMB08",
+    "CMB09",
+    "CMB10",
+    "CMB11",
+    "CMB12",
+    "CMB13",
+    "CMB14",
+    "CMB16",
+    "CMB17",
+    "CMB18",
+    "CMB20",
+    "CMB21"
+   ],
+   "entrance": [
+    "ENTRY"
+   ],
+   "exit": [
+    "EXIT"
+   ],
+   "in": [
+    "INN0"
+   ],
+   "jump": [
+    "JMP0",
+    "JMP1"
+   ],
+   "landing": [
+    "LAN"
+   ],
+   "next_jump": [
+    "NXJ0"
+   ],
+   "nutada": [
+    "NUT"
+   ],
+   "out": [
+    "IXN0"
+   ],
+   "reaction": [
+    "RXN0"
+   ],
+   "run": [
+    "RUN0",
+    "RUN1"
+   ],
+   "turn": [
+    "TRN1"
+   ]
+  },
+  "anim_total": 35
+ },
+ "1kbt": {
+  "subtables": [
+   "etc",
+   "mot",
+   "skl",
+   "spl"
+  ],
+  "files": [
+   "data_spc_1kbteff1.xfbin",
+   "data_spc_1kbtprm.bin.xfbin",
+   "data_spc_1kbtskl1.xfbin",
+   "data_spc_1kbtskl2.xfbin"
+  ],
+  "asset_ids": [
+   "1kbt00t0",
+   "1kbtbre00",
+   "1kbtcat10",
+   "1kbtcha10",
+   "1kbtcha12",
+   "1kbtcha20",
+   "1kbtcha21",
+   "1kbtchd20",
+   "1kbtcma00",
+   "1kbtcmb19",
+   "1kbtdmg0f",
+   "1kbtdow0",
+   "1kbtdow1",
+   "1kbtdsc00",
+   "1kbtdsf0",
+   "1kbtdwa00",
+   "1kbtent0",
+   "1kbtgda0",
+   "1kbtghf0",
+   "1kbtghl0",
+   "1kbtghr0",
+   "1kbtght1",
+   "1kbtgit0",
+   "1kbtgit1",
+   "1kbtgit2",
+   "1kbtgit3",
+   "1kbthola0",
+   "1kbthold0",
+   "1kbtinn0",
+   "1kbtitl0",
+   "1kbtitma0",
+   "1kbtitmg0",
+   "1kbtixn0",
+   "1kbtjmp0",
+   "1kbtjmp1",
+   "1kbtlan0",
+   "1kbtlos10",
+   "1kbtlos11",
+   "1kbtnut0",
+   "1kbtnut0f",
+   "1kbtnut1f",
+   "1kbtnxi0",
+   "1kbtout0",
+   "1kbtpur10",
+   "1kbtpur11",
+   "1kbtrun0",
+   "1kbtrun1",
+   "1kbtspk0f",
+   "1kbtstr10",
+   "1kbtstr11",
+   "1kbttra0e",
+   "1kbttra0l",
+   "1kbttrn1",
+   "1kbtwin10",
+   "1kbtwin11"
+  ],
+  "anim_groups": {
+   "airborne": [
+    "FALL0",
+    "FALL1"
+   ],
+   "combo": [
+    "CMB00",
+    "CMB01",
+    "CMB02",
+    "CMB03",
+    "CMB04",
+    "CMB05",
+    "CMB06",
+    "CMB07",
+    "CMB08",
+    "CMB09",
+    "CMB10",
+    "CMB11",
+    "CMB12",
+    "CMB13",
+    "CMB14",
+    "CMB15",
+    "CMB16",
+    "CMB17",
+    "CMB19",
+    "CMB20",
+    "CMB21",
+    "CMB22",
+    "CMB23",
+    "CMB24"
+   ],
+   "entrance": [
+    "ENTRY"
+   ],
+   "exit": [
+    "EXIT"
+   ],
+   "in": [
+    "INN0"
+   ],
+   "jump": [
+    "JMP0",
+    "JMP1"
+   ],
+   "landing": [
+    "LAN"
+   ],
+   "next_jump": [
+    "NXJ0"
+   ],
+   "nutada": [
+    "NUT"
+   ],
+   "out": [
+    "IXN0"
+   ],
+   "reaction": [
+    "RXN0"
+   ],
+   "run": [
+    "RUN0",
+    "RUN1"
+   ],
+   "turn": [
+    "TRN1"
+   ]
+  },
+  "anim_total": 39
+ },
+ "1kdm": {
+  "subtables": [
+   "etc",
+   "mot",
+   "skl",
+   "spl"
+  ],
+  "files": [
+   "data_spc_1kdmeff1.xfbin",
+   "data_spc_1kdmprm.bin.xfbin",
+   "data_spc_1kdmskl1.xfbin"
+  ],
+  "asset_ids": [
+   "1kdmcat10",
+   "1kdmcha10",
+   "1kdmcha12",
+   "1kdmcha13",
+   "1kdmcha14",
+   "1kdmcha15",
+   "1kdmcha16",
+   "1kdmcha1cut",
+   "1kdmdmg0f",
+   "1kdmdow1",
+   "1kdmdsc00",
+   "1kdment0",
+   "1kdmlan0",
+   "1kdmnut0",
+   "1kdmnut0f",
+   "1kdmout0",
+   "1kdmpur10",
+   "1kdmpur11",
+   "1kdmwin10",
+   "1kdmwin11"
+  ],
+  "anim_groups": {
+   "airborne": [
+    "FALL1"
+   ],
+   "entrance": [
+    "ENTRY"
+   ],
+   "exit": [
+    "EXIT"
+   ],
+   "landing": [
+    "LAN"
+   ],
+   "nutada": [
+    "NUT"
+   ]
+  },
+  "anim_total": 5
+ },
+ "1kib": {
+  "subtables": [
+   "etc",
+   "mot",
+   "skl",
+   "spl"
+  ],
+  "files": [
+   "data_spc_1kibeff1.xfbin",
+   "data_spc_1kibprm.bin.xfbin",
+   "data_spc_1kibskl1.xfbin",
+   "data_spc_1kibskl2.xfbin"
+  ],
+  "asset_ids": [
+   "1kib00t0",
+   "1kibbre00",
+   "1kibcat10",
+   "1kibcha10",
+   "1kibcha20",
+   "1kibcha21",
+   "1kibcha27",
+   "1kibcha2cut1",
+   "1kibchd20",
+   "1kibcma00",
+   "1kibdmg0f",
+   "1kibdow0",
+   "1kibdow1",
+   "1kibdsc00",
+   "1kibdsf0",
+   "1kibdwa00",
+   "1kibent0",
+   "1kibgda0",
+   "1kibghf0",
+   "1kibghl0",
+   "1kibghr0",
+   "1kibght1",
+   "1kibgit0",
+   "1kibgit1",
+   "1kibgit2",
+   "1kibgit3",
+   "1kibhola0",
+   "1kibhold0",
+   "1kibinn0",
+   "1kibitl0",
+   "1kibitma0",
+   "1kibitmg0",
+   "1kibixn0",
+   "1kibjmp0",
+   "1kibjmp1",
+   "1kiblan0",
+   "1kiblos10",
+   "1kiblos11",
+   "1kibnut0",
+   "1kibnut0f",
+   "1kibnut1f",
+   "1kibnxi0",
+   "1kibout0",
+   "1kibpur10",
+   "1kibpur11",
+   "1kibrun0",
+   "1kibrun1",
+   "1kibspk0f",
+   "1kibstr10",
+   "1kibtra0e",
+   "1kibtra0l",
+   "1kibtrn1",
+   "1kibwin10",
+   "1kibwin11"
+  ],
+  "anim_groups": {
+   "airborne": [
+    "FALL0",
+    "FALL1"
+   ],
+   "combo": [
+    "CMB00",
+    "CMB01",
+    "CMB02",
+    "CMB03",
+    "CMB04",
+    "CMB05",
+    "CMB06",
+    "CMB07",
+    "CMB08",
+    "CMB09",
+    "CMB10",
+    "CMB11",
+    "CMB12",
+    "CMB13",
+    "CMB14",
+    "CMB15",
+    "CMB16",
+    "CMB17",
+    "CMB18",
+    "CMB19",
+    "CMB20",
+    "CMB21",
+    "CMB22",
+    "CMB23",
+    "CMB24",
+    "CMB25",
+    "CMB26",
+    "CMB27",
+    "CMB28",
+    "CMB29",
+    "CMB30",
+    "CMB31",
+    "CMB32"
+   ],
+   "entrance": [
+    "ENTRY"
+   ],
+   "exit": [
+    "EXIT"
+   ],
+   "in": [
+    "INN0"
+   ],
+   "jump": [
+    "JMP0",
+    "JMP1"
+   ],
+   "landing": [
+    "LAN"
+   ],
+   "next_jump": [
+    "NXJ0"
+   ],
+   "nutada": [
+    "NUT"
+   ],
+   "out": [
+    "IXN0"
+   ],
+   "reaction": [
+    "RXN0"
+   ],
+   "run": [
+    "RUN0",
+    "RUN1"
+   ],
+   "turn": [
+    "TRN1"
+   ]
+  },
+  "anim_total": 48
+ },
+ "1kks": {
+  "subtables": [
+   "etc",
+   "mot",
+   "skl",
+   "spl"
+  ],
+  "files": [
+   "data_spc_1kkseff1.xfbin",
+   "data_spc_1kksprm.bin.xfbin",
+   "data_spc_1kksskl1.xfbin",
+   "data_spc_1kksskl2.xfbin",
+   "data_spc_1kksskl3.xfbin",
+   "data_spc_1kksskl4.xfbin"
+  ],
+  "asset_ids": [
+   "1kks00t0",
+   "1kksbre00",
+   "1kkscat10",
+   "1kkscha10",
+   "1kkscha12",
+   "1kkscha13",
+   "1kkscha16",
+   "1kkscha17",
+   "1kkscha1cut1",
+   "1kkscha20",
+   "1kkscha30",
+   "1kkscha40",
+   "1kkscha42",
+   "1kkscha44",
+   "1kkschd10",
+   "1kkschd40",
+   "1kkscma00",
+   "1kksdmg0f",
+   "1kksdow0",
+   "1kksdow1",
+   "1kksdsc00",
+   "1kksdsf0",
+   "1kksdwa00",
+   "1kksent0",
+   "1kksgda0",
+   "1kksghf0",
+   "1kksghl0",
+   "1kksghr0",
+   "1kksght1",
+   "1kksgit0",
+   "1kksgit1",
+   "1kksgit2",
+   "1kksgit3",
+   "1kkshola0",
+   "1kkshold0",
+   "1kksinn0",
+   "1kksitl0",
+   "1kksitma0",
+   "1kksitmg0",
+   "1kksixn0",
+   "1kksjmp0",
+   "1kksjmp1",
+   "1kkslan0",
+   "1kkslos10",
+   "1kkslos11",
+   "1kksnut0",
+   "1kksnut0f",
+   "1kksnut1f",
+   "1kksnxi0",
+   "1kksout0",
+   "1kkspur10",
+   "1kkspur11",
+   "1kksrun0",
+   "1kksrun1",
+   "1kksspk0f",
+   "1kksstr10",
+   "1kkstra0e",
+   "1kkstra0l",
+   "1kkstrn1",
+   "1kkswin10",
+   "1kkswin11"
+  ],
+  "anim_groups": {
+   "airborne": [
+    "FALL0",
+    "FALL1"
+   ],
+   "combo": [
+    "CMB00",
+    "CMB01",
+    "CMB02",
+    "CMB03",
+    "CMB04",
+    "CMB05",
+    "CMB06",
+    "CMB07",
+    "CMB08",
+    "CMB09",
+    "CMB10",
+    "CMB11",
+    "CMB12",
+    "CMB13",
+    "CMB14",
+    "CMB15",
+    "CMB16",
+    "CMB17",
+    "CMB18",
+    "CMB19",
+    "CMB20"
+   ],
+   "entrance": [
+    "ENTRY"
+   ],
+   "exit": [
+    "EXIT"
+   ],
+   "in": [
+    "INN0"
+   ],
+   "jump": [
+    "JMP0",
+    "JMP1"
+   ],
+   "landing": [
+    "LAN"
+   ],
+   "next_jump": [
+    "NXJ0"
+   ],
+   "nutada": [
+    "NUT"
+   ],
+   "out": [
+    "IXN0"
+   ],
+   "reaction": [
+    "RXN0"
+   ],
+   "run": [
+    "RUN0",
+    "RUN1"
+   ],
+   "turn": [
+    "TRN1"
+   ]
+  },
+  "anim_total": 36
+ },
+ "1kmm": {
+  "subtables": [
+   "etc",
+   "mot",
+   "skl",
+   "spl"
+  ],
+  "files": [
+   "data_spc_1kmmeff1.xfbin",
+   "data_spc_1kmmprm.bin.xfbin",
+   "data_spc_1kmmskl1.xfbin",
+   "data_spc_1kmmskl2.xfbin"
+  ],
+  "asset_ids": [
+   "1kmm00t0",
+   "1kmmawa00",
+   "1kmmawa02",
+   "1kmmbre00",
+   "1kmmcat10",
+   "1kmmcha10",
+   "1kmmcha12",
+   "1kmmcha14",
+   "1kmmcha1cut",
+   "1kmmcha20",
+   "1kmmchd10",
+   "1kmmcma00",
+   "1kmmdmg0f",
+   "1kmmdow0",
+   "1kmmdow1",
+   "1kmmdsc00",
+   "1kmmdsf0",
+   "1kmmdwa00",
+   "1kmment0",
+   "1kmmgda0",
+   "1kmmghf0",
+   "1kmmghl0",
+   "1kmmghr0",
+   "1kmmght1",
+   "1kmmgit0",
+   "1kmmgit1",
+   "1kmmgit2",
+   "1kmmgit3",
+   "1kmmhola0",
+   "1kmmhold0",
+   "1kmminn0",
+   "1kmmitl0",
+   "1kmmitma0",
+   "1kmmitmg0",
+   "1kmmixn0",
+   "1kmmjmp0",
+   "1kmmjmp1",
+   "1kmmlan0",
+   "1kmmlos10",
+   "1kmmlos11",
+   "1kmmnut0",
+   "1kmmnut0f",
+   "1kmmnut1f",
+   "1kmmnxi0",
+   "1kmmout0",
+   "1kmmpur10",
+   "1kmmpur11",
+   "1kmmrun0",
+   "1kmmrun1",
+   "1kmmspk0f",
+   "1kmmstr10",
+   "1kmmstr11",
+   "1kmmtra0e",
+   "1kmmtra0l",
+   "1kmmtrn1",
+   "1kmmwin10",
+   "1kmmwin11"
+  ],
+  "anim_groups": {
+   "airborne": [
+    "FALL0",
+    "FALL1"
+   ],
+   "combo": [
+    "CMB00",
+    "CMB01",
+    "CMB02",
+    "CMB03",
+    "CMB04",
+    "CMB05",
+    "CMB06",
+    "CMB07",
+    "CMB08",
+    "CMB09",
+    "CMB10",
+    "CMB11",
+    "CMB12",
+    "CMB13",
+    "CMB14",
+    "CMB15",
+    "CMB16",
+    "CMB17",
+    "CMB18",
+    "CMB19",
+    "CMB20",
+    "CMB21"
+   ],
+   "entrance": [
+    "ENTRY"
+   ],
+   "exit": [
+    "EXIT"
+   ],
+   "in": [
+    "INN0"
+   ],
+   "jump": [
+    "JMP0",
+    "JMP1"
+   ],
+   "landing": [
+    "LAN"
+   ],
+   "next_jump": [
+    "NXJ0"
+   ],
+   "nutada": [
+    "NUT"
+   ],
+   "out": [
+    "IXN0"
+   ],
+   "reaction": [
+    "RXN0"
+   ],
+   "run": [
+    "RUN0",
+    "RUN1"
+   ],
+   "turn": [
+    "TRN1"
+   ]
+  },
+  "anim_total": 37
+ },
+ "1kmv": {
+  "subtables": [
+   "etc",
+   "mot",
+   "skl",
+   "spl"
+  ],
+  "files": [
+   "data_spc_1kmveff1.xfbin",
+   "data_spc_1kmvprm.bin.xfbin",
+   "data_spc_1kmvskl1.xfbin"
+  ],
+  "asset_ids": [
+   "1kmv00t0",
+   "1kmvawa00",
+   "1kmvawa01",
+   "1kmvbre00",
+   "1kmvcat10",
+   "1kmvcha10",
+   "1kmvchd10",
+   "1kmvcma00",
+   "1kmvcmb16",
+   "1kmvdmg0f",
+   "1kmvdow0",
+   "1kmvdow1",
+   "1kmvdsc00",
+   "1kmvdsf0",
+   "1kmvdwa00",
+   "1kmvent0",
+   "1kmvgda0",
+   "1kmvghf0",
+   "1kmvghl0",
+   "1kmvghr0",
+   "1kmvght1",
+   "1kmvgit0",
+   "1kmvgit1",
+   "1kmvgit2",
+   "1kmvgit3",
+   "1kmvhola0",
+   "1kmvhold0",
+   "1kmvinn0",
+   "1kmvitl0",
+   "1kmvitma0",
+   "1kmvitmg0",
+   "1kmvixn0",
+   "1kmvjmp0",
+   "1kmvjmp1",
+   "1kmvlan0",
+   "1kmvlos10",
+   "1kmvlos11",
+   "1kmvnut0",
+   "1kmvnut0f",
+   "1kmvnut1f",
+   "1kmvnxi0",
+   "1kmvout0",
+   "1kmvpur10",
+   "1kmvpur11",
+   "1kmvrun0",
+   "1kmvrun1",
+   "1kmvspk0f",
+   "1kmvstr10",
+   "1kmvtrn1",
+   "1kmvwin10",
+   "1kmvwin11"
+  ],
+  "anim_groups": {
+   "airborne": [
+    "FALL0",
+    "FALL1"
+   ],
+   "combo": [
+    "CMB00",
+    "CMB01",
+    "CMB02",
+    "CMB03",
+    "CMB04",
+    "CMB05",
+    "CMB06",
+    "CMB07",
+    "CMB08",
+    "CMB09",
+    "CMB10",
+    "CMB11",
+    "CMB12",
+    "CMB13",
+    "CMB14",
+    "CMB16",
+    "CMB17",
+    "CMB18",
+    "CMB19",
+    "CMB20"
+   ],
+   "entrance": [
+    "ENTRY"
+   ],
+   "exit": [
+    "EXIT"
+   ],
+   "in": [
+    "INN0"
+   ],
+   "jump": [
+    "JMP0",
+    "JMP1"
+   ],
+   "landing": [
+    "LAN"
+   ],
+   "next_jump": [
+    "NXJ0"
+   ],
+   "nutada": [
+    "NUT"
+   ],
+   "out": [
+    "IXN0"
+   ],
+   "reaction": [
+    "RXN0"
+   ],
+   "run": [
+    "RUN0",
+    "RUN1"
+   ],
+   "turn": [
+    "TRN1"
+   ]
+  },
+  "anim_total": 35
+ },
+ "1knk": {
+  "subtables": [
+   "etc",
+   "mot",
+   "skl",
+   "spl"
+  ],
+  "files": [
+   "data_spc_1knkeff1.xfbin",
+   "data_spc_1knkprm.bin.xfbin",
+   "data_spc_1knkskl1.xfbin",
+   "data_spc_1knkskl2.xfbin"
+  ],
+  "asset_ids": [
+   "1knkcat10",
+   "1knkcha10",
+   "1knkcha20",
+   "1knkchd20",
+   "1knkcma00",
+   "1knkcmb03",
+   "1knkcmb06",
+   "1knkcmb07",
+   "1knkdmg0f",
+   "1knkdow0",
+   "1knkdow1",
+   "1knkdsc00",
+   "1knkdsf0",
+   "1knkdsh0l",
+   "1knkent0",
+   "1knkgda0",
+   "1knkghf0",
+   "1knkghl0",
+   "1knkghr0",
+   "1knkght1",
+   "1knkgit0",
+   "1knkgit1",
+   "1knkgit2",
+   "1knkgit3",
+   "1knkhold0",
+   "1knkimp0l",
+   "1knkinn0",
+   "1knkitl0",
+   "1knkitma0",
+   "1knkitmg0",
+   "1knkixn0",
+   "1knkjmp0",
+   "1knkjmp1",
+   "1knklan0",
+   "1knklos10",
+   "1knklos11",
+   "1knkmovb0",
+   "1knkmovf0",
+   "1knkmovl0",
+   "1knkmovr0",
+   "1knknut0",
+   "1knknut0f",
+   "1knknut1f",
+   "1knknxi0",
+   "1knkout0",
+   "1knkpur10",
+   "1knkpur11",
+   "1knkrun0",
+   "1knkrun1",
+   "1knkspk0f",
+   "1knkstr10",
+   "1knktra0e",
+   "1knktra0l",
+   "1knktrn1",
+   "1knkwin10"
+  ],
+  "anim_groups": {
+   "airborne": [
+    "FALL0",
+    "FALL1"
+   ],
+   "combo": [
+    "CMB00",
+    "CMB01",
+    "CMB02",
+    "CMB03",
+    "CMB04",
+    "CMB05",
+    "CMB06",
+    "CMB07",
+    "CMB08",
+    "CMB09",
+    "CMB10",
+    "CMB11",
+    "CMB12",
+    "CMB13",
+    "CMB14",
+    "CMB15",
+    "CMB16",
+    "CMB17",
+    "CMB18",
+    "CMB19",
+    "CMB20",
+    "CMB21",
+    "CMB22",
+    "CMB23",
+    "CMB24",
+    "CMB25",
+    "CMB26"
+   ],
+   "entrance": [
+    "ENTRY"
+   ],
+   "etc": [
+    "ETC00",
+    "ETC01",
+    "ETC02",
+    "ETC03"
+   ],
+   "exit": [
+    "EXIT"
+   ],
+   "in": [
+    "INN0"
+   ],
+   "jump": [
+    "JMP0",
+    "JMP1"
+   ],
+   "landing": [
+    "LAN"
+   ],
+   "next_jump": [
+    "NXJ0"
+   ],
+   "nutada": [
+    "NUT"
+   ],
+   "out": [
+    "IXN0"
+   ],
+   "reaction": [
+    "RXN0"
+   ],
+   "run": [
+    "RUN0",
+    "RUN1"
+   ],
+   "turn": [
+    "TRN1"
+   ]
+  },
+  "anim_total": 46
+ },
+ "1krn": {
+  "subtables": [
+   "etc",
+   "mot",
+   "skl",
+   "spl"
+  ],
+  "files": [
+   "data_spc_1krneff1.xfbin",
+   "data_spc_1krnprm.bin.xfbin",
+   "data_spc_1krnskl1.xfbin"
+  ],
+  "asset_ids": [
+   "1krn00t0",
+   "1krncat10",
+   "1krncha10",
+   "1krncha12",
+   "1krndmg0f",
+   "1krndow1",
+   "1krndsc00",
+   "1krnent0",
+   "1krnlan0",
+   "1krnnut0",
+   "1krnnut0f",
+   "1krnout0",
+   "1krnpur10",
+   "1krnpur11",
+   "1krnwin10",
+   "1krnwin11"
+  ],
+  "anim_groups": {
+   "airborne": [
+    "FALL1"
+   ],
+   "entrance": [
+    "ENTRY"
+   ],
+   "exit": [
+    "EXIT"
+   ],
+   "landing": [
+    "LAN"
+   ],
+   "nutada": [
+    "NUT"
+   ]
+  },
+  "anim_total": 5
+ },
+ "1krs": {
+  "subtables": [
+   "etc",
+   "mot",
+   "motcmn",
+   "skl",
+   "spl"
+  ],
+  "files": [
+   "data_spc_1krseff1.xfbin",
+   "data_spc_1krsprm.bin.xfbin",
+   "data_spc_1krsskl1.xfbin",
+   "data_spc_1krsskl2.xfbin"
+  ],
+  "asset_ids": [
+   "1knkhola0",
+   "1knkhold0",
+   "1krsbre00",
+   "1krsbre00s",
+   "1krscat10",
+   "1krscha10",
+   "1krscha11",
+   "1krscha12",
+   "1krscha13",
+   "1krscha14",
+   "1krscha15",
+   "1krscha16",
+   "1krscha1cut",
+   "1krscha20",
+   "1krschd10",
+   "1krschd11",
+   "1krscma00",
+   "1krscmb00",
+   "1krscmr00",
+   "1krscol0",
+   "1krscol1",
+   "1krscol3",
+   "1krsddg0",
+   "1krsdga0",
+   "1krsdga1",
+   "1krsdga2",
+   "1krsdga3",
+   "1krsdma0",
+   "1krsdmb0",
+   "1krsdmb1",
+   "1krsdmd0",
+   "1krsdmf0",
+   "1krsdmg0",
+   "1krsdmg1",
+   "1krsdml0",
+   "1krsdmr0",
+   "1krsdow0",
+   "1krsdow1",
+   "1krsdsh0s",
+   "1krsdwa00",
+   "1krsdwn0",
+   "1krsdwn1",
+   "1krsdxn0",
+   "1krsdxn1",
+   "1krsent0",
+   "1krsfal0",
+   "1krsfal1",
+   "1krsgat0",
+   "1krsgbr0",
+   "1krsgda0",
+   "1krsghf0",
+   "1krsghl0",
+   "1krsghr0",
+   "1krsght1",
+   "1krsgit0",
+   "1krsgit1",
+   "1krsgit2",
+   "1krsgit3",
+   "1krsimp0r",
+   "1krsitma0",
+   "1krsitmg0",
+   "1krsjmp0",
+   "1krsjmp1",
+   "1krskno0",
+   "1krslan0",
+   "1krslos10",
+   "1krslos11",
+   "1krsnut0",
+   "1krsout0",
+   "1krspin0",
+   "1krspiy0",
+   "1krspro0",
+   "1krspur10",
+   "1krspur11",
+   "1krsret0",
+   "1krsrun0",
+   "1krsrun1",
+   "1krssdg0",
+   "1krssdg2",
+   "1krsstr10"
+  ],
+  "anim_groups": {
+   "airborne": [
+    "FALL0",
+    "FALL1"
+   ],
+   "catch": [
+    "CATCHED0",
+    "CATCHED1"
+   ],
+   "combo": [
+    "CMB00",
+    "CMB01",
+    "CMB02",
+    "CMB03",
+    "CMB04",
+    "CMB05",
+    "CMB06",
+    "CMB07",
+    "CMB08",
+    "CMB09",
+    "CMB10",
+    "CMB11",
+    "CMB12",
+    "CMB13",
+    "CMB14",
+    "CMB15",
+    "CMB16",
+    "CMB17",
+    "CMB18",
+    "CMB19",
+    "CMB20",
+    "CMB21",
+    "CMB22",
+    "CMB23",
+    "CMB24",
+    "CMB25",
+    "CMB26"
+   ],
+   "entrance": [
+    "ENTRY"
+   ],
+   "exit": [
+    "EXIT"
+   ],
+   "in": [
+    "INN0"
+   ],
+   "jump": [
+    "JMP0",
+    "JMP1"
+   ],
+   "landing": [
+    "LAN"
+   ],
+   "next_jump": [
+    "NXJ0"
+   ],
+   "nutada": [
+    "NUT"
+   ],
+   "other": [
+    "DWN2NUT",
+    "DWNLP",
+    "PROVOKE"
+   ],
+   "out": [
+    "IXN0"
+   ],
+   "plea": [
+    "PLEASED"
+   ],
+   "reaction": [
+    "RXN0"
+   ],
+   "run": [
+    "RUN0",
+    "RUN1"
+   ],
+   "turn": [
+    "TRN1"
+   ]
+  },
+  "anim_total": 48
+ },
+ "1ksm": {
+  "subtables": [
+   "etc",
+   "mot",
+   "skl",
+   "spl"
+  ],
+  "files": [
+   "data_spc_1ksmeff1.xfbin",
+   "data_spc_1ksmprm.bin.xfbin",
+   "data_spc_1ksmskl1.xfbin",
+   "data_spc_1ksmskl2.xfbin"
+  ],
+  "asset_ids": [
+   "1ksm00t0",
+   "1ksmbre00",
+   "1ksmcat10",
+   "1ksmcha10",
+   "1ksmcha12",
+   "1ksmcha13",
+   "1ksmcha14",
+   "1ksmcha15",
+   "1ksmcha16",
+   "1ksmcha1cut",
+   "1ksmcha20",
+   "1ksmcha22",
+   "1ksmcha23",
+   "1ksmcha24",
+   "1ksmcha25",
+   "1ksmchd10",
+   "1ksmchd11",
+   "1ksmcma00",
+   "1ksmdmg0f",
+   "1ksmdow0",
+   "1ksmdow1",
+   "1ksmdsc00",
+   "1ksmdsf0",
+   "1ksmdwa00",
+   "1ksment0",
+   "1ksmgda0",
+   "1ksmghf0",
+   "1ksmghl0",
+   "1ksmghr0",
+   "1ksmght1",
+   "1ksmgit0",
+   "1ksmgit1",
+   "1ksmgit2",
+   "1ksmgit3",
+   "1ksmhola0",
+   "1ksmhold0",
+   "1ksminn0",
+   "1ksmitl0",
+   "1ksmitma0",
+   "1ksmitmg0",
+   "1ksmixn0",
+   "1ksmjmp0",
+   "1ksmjmp1",
+   "1ksmlan0",
+   "1ksmlos10",
+   "1ksmlos11",
+   "1ksmnut0",
+   "1ksmnut0f",
+   "1ksmnut1f",
+   "1ksmnxi0",
+   "1ksmout0",
+   "1ksmpur10",
+   "1ksmpur11",
+   "1ksmrun0",
+   "1ksmrun1",
+   "1ksmspk0f",
+   "1ksmstr10",
+   "1ksmtra0e",
+   "1ksmtra0l",
+   "1ksmtrn1",
+   "1ksmwin10",
+   "1ksmwin11"
+  ],
+  "anim_groups": {
+   "airborne": [
+    "FALL0",
+    "FALL1"
+   ],
+   "combo": [
+    "CMB00",
+    "CMB01",
+    "CMB02",
+    "CMB03",
+    "CMB04",
+    "CMB05",
+    "CMB06",
+    "CMB07",
+    "CMB08",
+    "CMB09",
+    "CMB10",
+    "CMB11",
+    "CMB12",
+    "CMB13",
+    "CMB14",
+    "CMB15",
+    "CMB16",
+    "CMB17"
+   ],
+   "entrance": [
+    "ENTRY"
+   ],
+   "exit": [
+    "EXIT"
+   ],
+   "in": [
+    "INN0"
+   ],
+   "jump": [
+    "JMP0",
+    "JMP1"
+   ],
+   "landing": [
+    "LAN"
+   ],
+   "next_jump": [
+    "NXJ0"
+   ],
+   "nutada": [
+    "NUT"
+   ],
+   "out": [
+    "IXN0"
+   ],
+   "reaction": [
+    "RXN0"
+   ],
+   "run": [
+    "RUN0",
+    "RUN1"
+   ],
+   "turn": [
+    "TRN1"
+   ]
+  },
+  "anim_total": 33
+ },
+ "1nej": {
+  "subtables": [
+   "etc",
+   "mot",
+   "skl",
+   "spl"
+  ],
+  "files": [
+   "data_spc_1nejeff1.xfbin",
+   "data_spc_1nejprm.bin.xfbin",
+   "data_spc_1nejskl1.xfbin",
+   "data_spc_1nejskl2.xfbin"
+  ],
+  "asset_ids": [
+   "1nej00t0",
+   "1nejcat10",
+   "1nejcha10",
+   "1nejcha12",
+   "1nejcha16",
+   "1nejcha17",
+   "1nejcha1cut1",
+   "1nejcha20",
+   "1nejcha21",
+   "1nejchd10",
+   "1nejchd11",
+   "1nejchd20",
+   "1nejcma00",
+   "1nejcmb05",
+   "1nejcmb08",
+   "1nejcmb11",
+   "1nejcmb17",
+   "1nejdmg0f",
+   "1nejdow0",
+   "1nejdow1",
+   "1nejdsc00",
+   "1nejdsf0",
+   "1nejdwa00",
+   "1nejent0",
+   "1nejgda0",
+   "1nejghf0",
+   "1nejghl0",
+   "1nejghr0",
+   "1nejght1",
+   "1nejgit0",
+   "1nejgit1",
+   "1nejgit2",
+   "1nejgit3",
+   "1nejhola0",
+   "1nejhold0",
+   "1nejinn0",
+   "1nejitl0",
+   "1nejitma0",
+   "1nejitmg0",
+   "1nejixn0",
+   "1nejjmp0",
+   "1nejjmp1",
+   "1nejlan0",
+   "1nejlos10",
+   "1nejlos11",
+   "1nejnut0",
+   "1nejnut0f",
+   "1nejnut1f",
+   "1nejnxi0",
+   "1nejout0",
+   "1nejpur10",
+   "1nejpur11",
+   "1nejrun0",
+   "1nejrun1",
+   "1nejspk0f",
+   "1nejstr10",
+   "1nejstr11",
+   "1nejtra0e",
+   "1nejtra0l",
+   "1nejtrn1",
+   "1nejwin10",
+   "1nejwin11"
+  ],
+  "anim_groups": {
+   "airborne": [
+    "FALL0",
+    "FALL1"
+   ],
+   "combo": [
+    "CMB00",
+    "CMB01",
+    "CMB02",
+    "CMB03",
+    "CMB05",
+    "CMB06",
+    "CMB08",
+    "CMB09",
+    "CMB11",
+    "CMB12",
+    "CMB13",
+    "CMB17",
+    "CMB18",
+    "CMB19",
+    "CMB20",
+    "CMB21",
+    "CMB22",
+    "CMB23",
+    "CMB24",
+    "CMB25",
+    "CMB26",
+    "CMB27",
+    "CMB28",
+    "CMB29",
+    "CMB30",
+    "CMB31",
+    "CMB32"
+   ],
+   "entrance": [
+    "ENTRY"
+   ],
+   "exit": [
+    "EXIT"
+   ],
+   "in": [
+    "INN0"
+   ],
+   "jump": [
+    "JMP0",
+    "JMP1"
+   ],
+   "landing": [
+    "LAN"
+   ],
+   "next_jump": [
+    "NXJ0"
+   ],
+   "nutada": [
+    "NUT"
+   ],
+   "out": [
+    "IXN0"
+   ],
+   "reaction": [
+    "RXN0"
+   ],
+   "run": [
+    "RUN0",
+    "RUN1"
+   ],
+   "turn": [
+    "TRN1"
+   ]
+  },
+  "anim_total": 42
+ },
+ "1nrt": {
+  "subtables": [
+   "etc",
+   "mot",
+   "skl",
+   "spl"
+  ],
+  "files": [
+   "data_spc_1nrteff1.xfbin",
+   "data_spc_1nrtprm.bin.xfbin",
+   "data_spc_1nrtskl1.xfbin",
+   "data_spc_1nrtskl2.xfbin"
+  ],
+  "asset_ids": [
+   "1buncol0",
+   "1bunhav0",
+   "1bunhavr0",
+   "1bunhavw0",
+   "1bunhsta0",
+   "1bunhxn0",
+   "1bunid02",
+   "1bunid03",
+   "1bunixn0",
+   "1bunnxh0",
+   "1bunnxi0",
+   "1bunrun1",
+   "1bunsdg2",
+   "1nrt00t0",
+   "1nrt01t0",
+   "1nrtbox0",
+   "1nrtbre00",
+   "1nrtcat10",
+   "1nrtcha10",
+   "1nrtcha11",
+   "1nrtcha12",
+   "1nrtcha13",
+   "1nrtcha15",
+   "1nrtcha16",
+   "1nrtcha17",
+   "1nrtcha18",
+   "1nrtcha1cut1",
+   "1nrtcha20",
+   "1nrtcha22",
+   "1nrtcha23",
+   "1nrtcha24",
+   "1nrtcha25",
+   "1nrtchd10",
+   "1nrtchd11",
+   "1nrtcma00",
+   "1nrtcmp10",
+   "1nrtcmp11",
+   "1nrtcmp20",
+   "1nrtcmp21",
+   "1nrtcmp30",
+   "1nrtcmp31",
+   "1nrtdmg0f",
+   "1nrtdow0",
+   "1nrtdow1",
+   "1nrtdow2",
+   "1nrtdsc00",
+   "1nrtdsf0",
+   "1nrtdsl2",
+   "1nrtdsr2",
+   "1nrtdwa00",
+   "1nrtdxg0",
+   "1nrtdxw0",
+   "1nrtent0",
+   "1nrtgat0",
+   "1nrtgda0",
+   "1nrtget00",
+   "1nrtghf0",
+   "1nrtghl0",
+   "1nrtghr0",
+   "1nrtght1",
+   "1nrtgit0",
+   "1nrtgit1",
+   "1nrtgit2",
+   "1nrtgit3",
+   "1nrtgrb0",
+   "1nrtgrbl0",
+   "1nrtgrbr0",
+   "1nrtgxd0",
+   "1nrthav0",
+   "1nrthav1",
+   "1nrthav2",
+   "1nrthavr0",
+   "1nrthavr1",
+   "1nrthavw0",
+   "1nrthavw1",
+   "1nrthdg0",
+   "1nrthola0",
+   "1nrthold0",
+   "1nrthsta0",
+   "1nrthsta1"
+  ],
+  "anim_groups": {
+   "airborne": [
+    "FALL0",
+    "FALL1"
+   ],
+   "combo": [
+    "CMB00",
+    "CMB01",
+    "CMB02",
+    "CMB03",
+    "CMB04",
+    "CMB05",
+    "CMB06",
+    "CMB07",
+    "CMB08",
+    "CMB09",
+    "CMB10",
+    "CMB11",
+    "CMB12",
+    "CMB13",
+    "CMB14",
+    "CMB15",
+    "CMB16",
+    "CMB17",
+    "CMB18",
+    "CMB19"
+   ],
+   "entrance": [
+    "ENTRY"
+   ],
+   "exit": [
+    "EXIT"
+   ],
+   "in": [
+    "INN0"
+   ],
+   "jump": [
+    "JMP0",
+    "JMP1"
+   ],
+   "landing": [
+    "LAN"
+   ],
+   "next_jump": [
+    "NXJ0"
+   ],
+   "nutada": [
+    "NUT"
+   ],
+   "out": [
+    "IXN0"
+   ],
+   "plea": [
+    "PLEASED"
+   ],
+   "reaction": [
+    "RXN0"
+   ],
+   "rpg_skill": [
+    "RPG06",
+    "RPG07",
+    "RPG08",
+    "RPG09",
+    "RPG10",
+    "RPG100",
+    "RPG101",
+    "RPG102",
+    "RPG103",
+    "RPG104",
+    "RPG105",
+    "RPG106",
+    "RPG107",
+    "RPG108",
+    "RPG109",
+    "RPG11",
+    "RPG110",
+    "RPG111",
+    "RPG112",
+    "RPG113",
+    "RPG114",
+    "RPG115",
+    "RPG116",
+    "RPG117",
+    "RPG118",
+    "RPG119",
+    "RPG12",
+    "RPG120",
+    "RPG121",
+    "RPG122",
+    "RPG123",
+    "RPG124",
+    "RPG125",
+    "RPG126",
+    "RPG127",
+    "RPG128",
+    "RPG129",
+    "RPG13",
+    "RPG130",
+    "RPG131",
+    "RPG132",
+    "RPG133",
+    "RPG134",
+    "RPG135",
+    "RPG136",
+    "RPG137",
+    "RPG138",
+    "RPG139",
+    "RPG14",
+    "RPG140",
+    "RPG141",
+    "RPG142",
+    "RPG143",
+    "RPG144",
+    "RPG145",
+    "RPG146",
+    "RPG147",
+    "RPG148",
+    "RPG149",
+    "RPG15",
+    "RPG16",
+    "RPG17",
+    "RPG18",
+    "RPG19",
+    "RPG20",
+    "RPG21",
+    "RPG22",
+    "RPG23",
+    "RPG24",
+    "RPG25",
+    "RPG26",
+    "RPG27",
+    "RPG28",
+    "RPG29",
+    "RPG30",
+    "RPG31",
+    "RPG32",
+    "RPG33",
+    "RPG34",
+    "RPG35",
+    "RPG36",
+    "RPG37",
+    "RPG38",
+    "RPG39",
+    "RPG40",
+    "RPG41",
+    "RPG42",
+    "RPG43",
+    "RPG44",
+    "RPG45",
+    "RPG46",
+    "RPG47",
+    "RPG48",
+    "RPG49",
+    "RPG50",
+    "RPG51",
+    "RPG52",
+    "RPG53",
+    "RPG54",
+    "RPG55",
+    "RPG56",
+    "RPG57",
+    "RPG58",
+    "RPG59",
+    "RPG60",
+    "RPG61",
+    "RPG62",
+    "RPG63",
+    "RPG64",
+    "RPG65",
+    "RPG66",
+    "RPG67",
+    "RPG68",
+    "RPG69",
+    "RPG70",
+    "RPG71",
+    "RPG72",
+    "RPG73",
+    "RPG74",
+    "RPG75",
+    "RPG76",
+    "RPG77",
+    "RPG78",
+    "RPG79",
+    "RPG80",
+    "RPG81",
+    "RPG82",
+    "RPG83",
+    "RPG84",
+    "RPG85",
+    "RPG86",
+    "RPG87",
+    "RPG88",
+    "RPG89",
+    "RPG90",
+    "RPG91",
+    "RPG92",
+    "RPG93",
+    "RPG94",
+    "RPG95",
+    "RPG96",
+    "RPG97",
+    "RPG98",
+    "RPG99"
+   ],
+   "run": [
+    "RUN0",
+    "RUN1"
+   ],
+   "turn": [
+    "TRN1"
+   ]
+  },
+  "anim_total": 180
+ },
+ "1nrv": {
+  "subtables": [
+   "etc",
+   "mot",
+   "skl",
+   "spl"
+  ],
+  "files": [
+   "data_spc_1nrveff1.xfbin",
+   "data_spc_1nrvprm.bin.xfbin",
+   "data_spc_1nrvskl1.xfbin"
+  ],
+  "asset_ids": [
+   "1nrv00t0",
+   "1nrvawa00",
+   "1nrvawa01",
+   "1nrvbre00",
+   "1nrvcat10",
+   "1nrvcha10",
+   "1nrvcha12",
+   "1nrvcha13",
+   "1nrvcha16",
+   "1nrvcha17",
+   "1nrvcha1cut1",
+   "1nrvchd10",
+   "1nrvchg0a",
+   "1nrvcma00",
+   "1nrvdmg0f",
+   "1nrvdow0",
+   "1nrvdow1",
+   "1nrvdsf0",
+   "1nrvent0",
+   "1nrvgda0",
+   "1nrvghf0",
+   "1nrvghl0",
+   "1nrvghr0",
+   "1nrvght1",
+   "1nrvgit0",
+   "1nrvgit1",
+   "1nrvgit2",
+   "1nrvgit3",
+   "1nrvhola0",
+   "1nrvhold0",
+   "1nrvinn0",
+   "1nrvitl0",
+   "1nrvitma0",
+   "1nrvitmg0",
+   "1nrvixn0",
+   "1nrvjmp0",
+   "1nrvjmp1",
+   "1nrvlan0",
+   "1nrvlos10",
+   "1nrvlos11",
+   "1nrvnut0",
+   "1nrvnut0f",
+   "1nrvnut1f",
+   "1nrvnxi0",
+   "1nrvout0",
+   "1nrvpur10",
+   "1nrvpur11",
+   "1nrvrun0",
+   "1nrvrun1",
+   "1nrvspk0f",
+   "1nrvstr10",
+   "1nrvsup00",
+   "1nrvtrn1",
+   "1nrvwin10",
+   "1nrvwin11"
+  ],
+  "anim_groups": {
+   "airborne": [
+    "FALL0",
+    "FALL1"
+   ],
+   "combo": [
+    "CMB00",
+    "CMB01",
+    "CMB02",
+    "CMB03",
+    "CMB04",
+    "CMB05",
+    "CMB06",
+    "CMB07",
+    "CMB08",
+    "CMB09",
+    "CMB10",
+    "CMB11",
+    "CMB12",
+    "CMB13",
+    "CMB14",
+    "CMB15",
+    "CMB16",
+    "CMB17",
+    "CMB18",
+    "CMB19",
+    "CMB20"
+   ],
+   "entrance": [
+    "ENTRY"
+   ],
+   "exit": [
+    "EXIT"
+   ],
+   "in": [
+    "INN0"
+   ],
+   "jump": [
+    "JMP0",
+    "JMP1"
+   ],
+   "landing": [
+    "LAN"
+   ],
+   "next_jump": [
+    "NXJ0"
+   ],
+   "nutada": [
+    "NUT"
+   ],
+   "out": [
+    "IXN0"
+   ],
+   "reaction": [
+    "RXN0"
+   ],
+   "run": [
+    "RUN0",
+    "RUN1"
+   ],
+   "turn": [
+    "TRN1"
+   ]
+  },
+  "anim_total": 36
+ },
+ "1orc": {
+  "subtables": [
+   "etc",
+   "mot",
+   "skl",
+   "spl"
+  ],
+  "files": [
+   "data_spc_1orceff1.xfbin",
+   "data_spc_1orcprm.bin.xfbin",
+   "data_spc_1orcskl1.xfbin",
+   "data_spc_1orcskl2.xfbin"
+  ],
+  "asset_ids": [
+   "1orc00t0",
+   "1orcbre00",
+   "1orccat10",
+   "1orccha10",
+   "1orccha20",
+   "1orccha22",
+   "1orccha23",
+   "1orccha24",
+   "1orccha25",
+   "1orcchd10",
+   "1orccma00",
+   "1orcdmg0f",
+   "1orcdow0",
+   "1orcdow1",
+   "1orcdsc00",
+   "1orcdsf0",
+   "1orcdwa00",
+   "1orcent0",
+   "1orcgda0",
+   "1orcghf0",
+   "1orcghl0",
+   "1orcghr0",
+   "1orcght1",
+   "1orcgit0",
+   "1orcgit1",
+   "1orcgit2",
+   "1orcgit3",
+   "1orchola0",
+   "1orchold0",
+   "1orcinn0",
+   "1orcitl0",
+   "1orcitma0",
+   "1orcitmg0",
+   "1orcixn0",
+   "1orcjmp0",
+   "1orcjmp1",
+   "1orcktn",
+   "1orclan0",
+   "1orclos10",
+   "1orclos11",
+   "1orcnut0",
+   "1orcnut0f",
+   "1orcnut1f",
+   "1orcnxi0",
+   "1orcout0",
+   "1orcpur10",
+   "1orcpur11",
+   "1orcrun0",
+   "1orcrun1",
+   "1orcspk0f",
+   "1orcstr10",
+   "1orcstr11",
+   "1orctra0e",
+   "1orctra0l",
+   "1orctrn1",
+   "1orcwin10",
+   "1orcwin11"
+  ],
+  "anim_groups": {
+   "airborne": [
+    "FALL0",
+    "FALL1"
+   ],
+   "combo": [
+    "CMB00",
+    "CMB01",
+    "CMB02",
+    "CMB03",
+    "CMB04",
+    "CMB05",
+    "CMB06",
+    "CMB07",
+    "CMB08",
+    "CMB09",
+    "CMB10",
+    "CMB11",
+    "CMB12",
+    "CMB13",
+    "CMB14",
+    "CMB15",
+    "CMB16",
+    "CMB17",
+    "CMB18",
+    "CMB19",
+    "CMB20",
+    "CMB21"
+   ],
+   "entrance": [
+    "ENTRY"
+   ],
+   "exit": [
+    "EXIT"
+   ],
+   "in": [
+    "INN0"
+   ],
+   "jump": [
+    "JMP0",
+    "JMP1"
+   ],
+   "landing": [
+    "LAN"
+   ],
+   "next_jump": [
+    "NXJ0"
+   ],
+   "nutada": [
+    "NUT"
+   ],
+   "out": [
+    "IXN0"
+   ],
+   "reaction": [
+    "RXN0"
+   ],
+   "run": [
+    "RUN0",
+    "RUN1"
+   ],
+   "turn": [
+    "TRN1"
+   ]
+  },
+  "anim_total": 37
+ },
+ "1roc": {
+  "subtables": [
+   "etc",
+   "mot",
+   "skl",
+   "spl"
+  ],
+  "files": [
+   "data_spc_1roceff1.xfbin",
+   "data_spc_1rocprm.bin.xfbin",
+   "data_spc_1rocskl1.xfbin",
+   "data_spc_1rocskl2.xfbin"
+  ],
+  "asset_ids": [
+   "1roc00t0",
+   "1rocawa00",
+   "1rocawa02",
+   "1rocbre00",
+   "1roccat10",
+   "1roccha10",
+   "1roccha12",
+   "1roccha13",
+   "1roccha14",
+   "1roccha15",
+   "1roccha16",
+   "1roccha1cut",
+   "1roccha20",
+   "1roccha21",
+   "1roccha22",
+   "1roccha23",
+   "1roccha24",
+   "1roccha26",
+   "1rocchd10",
+   "1rocchd11",
+   "1rocchd20",
+   "1rocchd21",
+   "1roccma00",
+   "1rocdmg0f",
+   "1rocdow0",
+   "1rocdow1",
+   "1rocdsc00",
+   "1rocdsf0",
+   "1rocdwa00",
+   "1rocent0",
+   "1rocgda0",
+   "1rocghf0",
+   "1rocghl0",
+   "1rocghr0",
+   "1rocght1",
+   "1rocgit0",
+   "1rocgit1",
+   "1rocgit2",
+   "1rocgit3",
+   "1rochola0",
+   "1rochola1r",
+   "1rochold0",
+   "1rocinn0",
+   "1rocitl0",
+   "1rocitma0",
+   "1rocitmg0",
+   "1rocixn0",
+   "1rocjmp0",
+   "1rocjmp1",
+   "1roclan0",
+   "1roclos10",
+   "1roclos11",
+   "1rocnut0",
+   "1rocnut0f",
+   "1rocnut1f",
+   "1rocnxi0",
+   "1rocout0",
+   "1rocpur10",
+   "1rocpur11",
+   "1rocrun0",
+   "1rocrun1",
+   "1rocspk0f",
+   "1rocstr10",
+   "1roctra0e",
+   "1roctra0l",
+   "1roctrn1",
+   "1rocwin10",
+   "1rocwin11"
+  ],
+  "anim_groups": {
+   "airborne": [
+    "FALL0",
+    "FALL1"
+   ],
+   "combo": [
+    "CMB00",
+    "CMB01",
+    "CMB02",
+    "CMB03",
+    "CMB04",
+    "CMB05",
+    "CMB06",
+    "CMB07",
+    "CMB08",
+    "CMB09",
+    "CMB10",
+    "CMB11",
+    "CMB12",
+    "CMB13",
+    "CMB14",
+    "CMB15",
+    "CMB16",
+    "CMB17",
+    "CMB18",
+    "CMB19",
+    "CMB20",
+    "CMB21",
+    "CMB22",
+    "CMB23",
+    "CMB24",
+    "CMB25",
+    "CMB26",
+    "CMB27"
+   ],
+   "entrance": [
+    "ENTRY"
+   ],
+   "exit": [
+    "EXIT"
+   ],
+   "in": [
+    "INN0"
+   ],
+   "jump": [
+    "JMP0",
+    "JMP1"
+   ],
+   "landing": [
+    "LAN"
+   ],
+   "next_jump": [
+    "NXJ0"
+   ],
+   "nutada": [
+    "NUT"
+   ],
+   "out": [
+    "IXN0"
+   ],
+   "reaction": [
+    "RXN0"
+   ],
+   "run": [
+    "RUN0",
+    "RUN1"
+   ],
+   "turn": [
+    "TRN1"
+   ]
+  },
+  "anim_total": 43
+ },
+ "1rov": {
+  "subtables": [
+   "etc",
+   "mot",
+   "skl",
+   "spl"
+  ],
+  "files": [
+   "data_spc_1roveff1.xfbin",
+   "data_spc_1rovprm.bin.xfbin",
+   "data_spc_1rovskl1.xfbin"
+  ],
+  "asset_ids": [
+   "1rov00t0",
+   "1rovawa00",
+   "1rovawa01",
+   "1rovbre00",
+   "1rovcat10",
+   "1rovcat11",
+   "1rovcha10",
+   "1rovcha12",
+   "1rovcha13",
+   "1rovcha14",
+   "1rovcha16",
+   "1rovcha1cut",
+   "1rovchd10",
+   "1rovchd11",
+   "1rovdmg0f",
+   "1rovdow0",
+   "1rovdow1",
+   "1rovdsc00",
+   "1rovdsf0",
+   "1rovdwa00",
+   "1rovent0",
+   "1rovgat0",
+   "1rovgda0",
+   "1rovghf0",
+   "1rovghl0",
+   "1rovghr0",
+   "1rovght1",
+   "1rovgit0",
+   "1rovgit1",
+   "1rovgit2",
+   "1rovgit3",
+   "1rovhola0",
+   "1rovinn0",
+   "1rovitl0",
+   "1rovitma0",
+   "1rovitmg0",
+   "1rovixn0",
+   "1rovjmp0",
+   "1rovjmp1",
+   "1rovlan0",
+   "1rovlos10",
+   "1rovlos11",
+   "1rovnut0",
+   "1rovnut0f",
+   "1rovnut1f",
+   "1rovnxi0",
+   "1rovout0",
+   "1rovpur10",
+   "1rovpur11",
+   "1rovrun0",
+   "1rovrun1",
+   "1rovspk0f",
+   "1rovstr10",
+   "1rovtrn1",
+   "1rovwin10",
+   "1rovwin11"
+  ],
+  "anim_groups": {
+   "airborne": [
+    "FALL0",
+    "FALL1"
+   ],
+   "combo": [
+    "CMB00",
+    "CMB01",
+    "CMB02",
+    "CMB03",
+    "CMB04",
+    "CMB05",
+    "CMB06",
+    "CMB07",
+    "CMB08",
+    "CMB09",
+    "CMB10",
+    "CMB11",
+    "CMB12",
+    "CMB13",
+    "CMB14",
+    "CMB15",
+    "CMB16",
+    "CMB17",
+    "CMB18",
+    "CMB19",
+    "CMB20",
+    "CMB21",
+    "CMB22",
+    "CMB23",
+    "CMB24",
+    "CMB25",
+    "CMB26",
+    "CMB27",
+    "CMB28",
+    "CMB29",
+    "CMB30",
+    "CMB31",
+    "CMB32"
+   ],
+   "entrance": [
+    "ENTRY"
+   ],
+   "exit": [
+    "EXIT"
+   ],
+   "in": [
+    "INN0"
+   ],
+   "jump": [
+    "JMP0",
+    "JMP1"
+   ],
+   "landing": [
+    "LAN"
+   ],
+   "next_jump": [
+    "NXJ0"
+   ],
+   "nutada": [
+    "NUT"
+   ],
+   "out": [
+    "IXN0"
+   ],
+   "plea": [
+    "PLEASED"
+   ],
+   "reaction": [
+    "RXN0"
+   ],
+   "run": [
+    "RUN0",
+    "RUN1"
+   ],
+   "turn": [
+    "TRN1"
+   ]
+  },
+  "anim_total": 49
+ },
+ "1sec": {
+  "subtables": [
+   "etc",
+   "mot",
+   "skl",
+   "spl"
+  ],
+  "files": [
+   "data_spc_1seceff1.xfbin",
+   "data_spc_1secprm.bin.xfbin",
+   "data_spc_1secskl1.xfbin"
+  ],
+  "asset_ids": [
+   "1seccat10",
+   "1seccha10",
+   "1seccha14",
+   "1seccha15",
+   "1seccha16",
+   "1seccha1cut",
+   "1secdmg0f",
+   "1secdow1",
+   "1secdsc00",
+   "1secent0",
+   "1seclan0",
+   "1secnut0",
+   "1secnut0f",
+   "1secout0",
+   "1secpur10",
+   "1secpur11",
+   "1secwin10",
+   "1secwin11"
+  ],
+  "anim_groups": {
+   "airborne": [
+    "FALL1"
+   ],
+   "entrance": [
+    "ENTRY"
+   ],
+   "exit": [
+    "EXIT"
+   ],
+   "landing": [
+    "LAN"
+   ],
+   "nutada": [
+    "NUT"
+   ]
+  },
+  "anim_total": 5
+ },
+ "1sik": {
+  "subtables": [
+   "etc",
+   "mot",
+   "skl",
+   "spl"
+  ],
+  "files": [
+   "data_spc_1sikeff1.xfbin",
+   "data_spc_1sikprm.bin.xfbin",
+   "data_spc_1sikskl1.xfbin",
+   "data_spc_1sikskl2.xfbin"
+  ],
+  "asset_ids": [
+   "1sik00t0",
+   "1sikbre00",
+   "1sikcat10",
+   "1sikcha10",
+   "1sikcha20",
+   "1sikchd20",
+   "1sikcma00",
+   "1sikdmg0f",
+   "1sikdow0",
+   "1sikdow1",
+   "1sikdsc00",
+   "1sikdsf0",
+   "1sikdwa00",
+   "1sikent0",
+   "1sikgda0",
+   "1sikghf0",
+   "1sikghl0",
+   "1sikghr0",
+   "1sikght1",
+   "1sikgit0",
+   "1sikgit1",
+   "1sikgit2",
+   "1sikgit3",
+   "1sikhola0",
+   "1sikhold0",
+   "1sikinn0",
+   "1sikitl0",
+   "1sikitma0",
+   "1sikitmg0",
+   "1sikixn0",
+   "1sikjmp0",
+   "1sikjmp1",
+   "1siklan0",
+   "1siklos10",
+   "1siklos11",
+   "1siknut0",
+   "1siknut0f",
+   "1siknut1f",
+   "1siknxi0",
+   "1sikout0",
+   "1sikpur10",
+   "1sikpur11",
+   "1sikrun0",
+   "1sikrun1",
+   "1sikspk0f",
+   "1sikstr10",
+   "1sikstr11",
+   "1siktra0e",
+   "1siktra0l",
+   "1siktrn1",
+   "1sikwin10",
+   "1sikwin11"
+  ],
+  "anim_groups": {
+   "airborne": [
+    "FALL0",
+    "FALL1"
+   ],
+   "combo": [
+    "CMB00",
+    "CMB01",
+    "CMB02",
+    "CMB03",
+    "CMB04",
+    "CMB05",
+    "CMB06",
+    "CMB07",
+    "CMB08",
+    "CMB09",
+    "CMB10",
+    "CMB11",
+    "CMB12",
+    "CMB13",
+    "CMB14",
+    "CMB15",
+    "CMB16",
+    "CMB17",
+    "CMB18",
+    "CMB19"
+   ],
+   "entrance": [
+    "ENTRY"
+   ],
+   "exit": [
+    "EXIT"
+   ],
+   "in": [
+    "INN0"
+   ],
+   "jump": [
+    "JMP0",
+    "JMP1"
+   ],
+   "landing": [
+    "LAN"
+   ],
+   "next_jump": [
+    "NXJ0"
+   ],
+   "nutada": [
+    "NUT"
+   ],
+   "out": [
+    "IXN0"
+   ],
+   "reaction": [
+    "RXN0"
+   ],
+   "run": [
+    "RUN0",
+    "RUN1"
+   ],
+   "turn": [
+    "TRN1"
+   ]
+  },
+  "anim_total": 35
+ },
+ "1sin": {
+  "subtables": [
+   "etc",
+   "mot",
+   "skl",
+   "spl"
+  ],
+  "files": [
+   "data_spc_1sineff1.xfbin",
+   "data_spc_1sinprm.bin.xfbin",
+   "data_spc_1sinskl1.xfbin",
+   "data_spc_1sinskl2.xfbin"
+  ],
+  "asset_ids": [
+   "1sineff01",
+   "1sineff02",
+   "1sineff03",
+   "1sineff04",
+   "1sineff05"
+  ],
+  "anim_groups": {
+   "airborne": [
+    "FALL0",
+    "FALL1"
+   ],
+   "combo": [
+    "CMB00",
+    "CMB01",
+    "CMB02",
+    "CMB03",
+    "CMB04",
+    "CMB05",
+    "CMB06",
+    "CMB07",
+    "CMB08",
+    "CMB09",
+    "CMB10",
+    "CMB11",
+    "CMB12",
+    "CMB13",
+    "CMB14",
+    "CMB15",
+    "CMB16",
+    "CMB17",
+    "CMB18",
+    "CMB19"
+   ],
+   "entrance": [
+    "ENTRY"
+   ],
+   "exit": [
+    "EXIT"
+   ],
+   "in": [
+    "INN0"
+   ],
+   "jump": [
+    "JMP0",
+    "JMP1"
+   ],
+   "landing": [
+    "LAN"
+   ],
+   "next_jump": [
+    "NXJ0"
+   ],
+   "nutada": [
+    "NUT"
+   ],
+   "out": [
+    "IXN0"
+   ],
+   "reaction": [
+    "RXN0"
+   ],
+   "run": [
+    "RUN0",
+    "RUN1"
+   ],
+   "turn": [
+    "TRN1"
+   ]
+  },
+  "anim_total": 35
+ },
+ "1skn": {
+  "subtables": [
+   "etc",
+   "mot",
+   "skl",
+   "spl"
+  ],
+  "files": [
+   "data_spc_1skneff1.xfbin",
+   "data_spc_1sknprm.bin.xfbin",
+   "data_spc_1sknskl1.xfbin"
+  ],
+  "asset_ids": [
+   "1sknbody"
+  ],
+  "anim_groups": {
+   "airborne": [
+    "FALL1"
+   ],
+   "entrance": [
+    "ENTRY"
+   ],
+   "exit": [
+    "EXIT"
+   ],
+   "landing": [
+    "LAN"
+   ],
+   "nutada": [
+    "NUT"
+   ]
+  },
+  "anim_total": 5
+ },
+ "1skr": {
+  "subtables": [
+   "etc",
+   "mot",
+   "skl",
+   "spl"
+  ],
+  "files": [
+   "data_spc_1skreff1.xfbin",
+   "data_spc_1skrprm.bin.xfbin",
+   "data_spc_1skrskl1.xfbin",
+   "data_spc_1skrskl2.xfbin"
+  ],
+  "asset_ids": [
+   "1cmn00t0",
+   "1skr00t0",
+   "1skrbre00",
+   "1skrcat10",
+   "1skrcha10",
+   "1skrcha11",
+   "1skrcha12",
+   "1skrcha13",
+   "1skrcha14",
+   "1skrcha1cut",
+   "1skrcha20",
+   "1skrchd10",
+   "1skrchd11",
+   "1skrcma00",
+   "1skrdmg0f",
+   "1skrdow0",
+   "1skrdow1",
+   "1skrdsc00",
+   "1skrdsf0",
+   "1skrdsl2",
+   "1skrdsr2",
+   "1skrdwa00",
+   "1skrent0",
+   "1skrgda0",
+   "1skrghf0",
+   "1skrghl0",
+   "1skrghr0",
+   "1skrght1",
+   "1skrgit0",
+   "1skrgit1",
+   "1skrgit2",
+   "1skrgit3",
+   "1skrhola0",
+   "1skrhold0",
+   "1skrinn0",
+   "1skritl0",
+   "1skritma0",
+   "1skritmg0",
+   "1skrixn0",
+   "1skrjmp0",
+   "1skrjmp1",
+   "1skrlan0",
+   "1skrlos10",
+   "1skrlos11",
+   "1skrnut0",
+   "1skrnut0f",
+   "1skrnut1f",
+   "1skrnxi0",
+   "1skrout0",
+   "1skrpur10",
+   "1skrpur11",
+   "1skrrun0",
+   "1skrrun1",
+   "1skrspk0f",
+   "1skrstr10",
+   "1skrstr11",
+   "1skrtra0e",
+   "1skrtra0l",
+   "1skrtrn1",
+   "1skrwin10",
+   "1skrwin11"
+  ],
+  "anim_groups": {
+   "airborne": [
+    "FALL0",
+    "FALL1"
+   ],
+   "combo": [
+    "CMB00",
+    "CMB01",
+    "CMB02",
+    "CMB03",
+    "CMB04",
+    "CMB05",
+    "CMB06",
+    "CMB07",
+    "CMB08",
+    "CMB09",
+    "CMB10",
+    "CMB11",
+    "CMB12",
+    "CMB13",
+    "CMB14"
+   ],
+   "entrance": [
+    "ENTRY"
+   ],
+   "exit": [
+    "EXIT"
+   ],
+   "in": [
+    "INN0"
+   ],
+   "jump": [
+    "JMP0",
+    "JMP1"
+   ],
+   "landing": [
+    "LAN"
+   ],
+   "next_jump": [
+    "NXJ0"
+   ],
+   "nutada": [
+    "NUT"
+   ],
+   "out": [
+    "IXN0"
+   ],
+   "reaction": [
+    "RXN0"
+   ],
+   "rpg_skill": [
+    "RPG101",
+    "RPG102",
+    "RPG103"
+   ],
+   "run": [
+    "RUN0",
+    "RUN1"
+   ],
+   "turn": [
+    "TRN1"
+   ]
+  },
+  "anim_total": 33
+ },
+ "1ssk": {
+  "subtables": [
+   "etc",
+   "mot",
+   "skl",
+   "spl"
+  ],
+  "files": [
+   "data_spc_1sskeff1.xfbin",
+   "data_spc_1sskprm.bin.xfbin",
+   "data_spc_1sskskl1.xfbin",
+   "data_spc_1sskskl2.xfbin",
+   "data_spc_1sskskl3.xfbin"
+  ],
+  "asset_ids": [
+   "1ssk00t0",
+   "1sskawa02",
+   "1sskbre00",
+   "1sskcat10",
+   "1sskcha10",
+   "1sskcha20",
+   "1sskcha30",
+   "1sskcha32",
+   "1sskcha35",
+   "1sskcha36",
+   "1sskcha37",
+   "1sskcha3cut1",
+   "1sskchd30",
+   "1sskcmb06",
+   "1sskcmb20",
+   "1sskdmg0f",
+   "1sskdow0",
+   "1sskdow1",
+   "1sskdsc00",
+   "1sskdsf0",
+   "1sskdsl2",
+   "1sskdsr2",
+   "1sskdwa00",
+   "1sskent0",
+   "1sskgda0",
+   "1sskghf0",
+   "1sskghl0",
+   "1sskghr0",
+   "1sskght1",
+   "1sskgit0",
+   "1sskgit1",
+   "1sskgit2",
+   "1sskgit3",
+   "1sskhola0",
+   "1sskhold0",
+   "1sskinn0",
+   "1sskitl0",
+   "1sskitma0",
+   "1sskitmg0",
+   "1sskixn0",
+   "1sskjmp0",
+   "1sskjmp1",
+   "1ssklan0",
+   "1ssklos10",
+   "1ssklos11",
+   "1ssknut0",
+   "1ssknut0f",
+   "1ssknut1f",
+   "1ssknxi0",
+   "1sskout0",
+   "1sskpur10",
+   "1sskpur11",
+   "1sskrun0",
+   "1sskrun1",
+   "1sskspk0f",
+   "1sskstr10",
+   "1ssktra0l",
+   "1ssktra1e",
+   "1ssktra1l",
+   "1ssktrn1",
+   "1sskwin11"
+  ],
+  "anim_groups": {
+   "airborne": [
+    "FALL0",
+    "FALL1"
+   ],
+   "combo": [
+    "CMB00",
+    "CMB01",
+    "CMB02",
+    "CMB03",
+    "CMB04",
+    "CMB06",
+    "CMB07",
+    "CMB08",
+    "CMB09",
+    "CMB10",
+    "CMB11",
+    "CMB12",
+    "CMB13",
+    "CMB14",
+    "CMB15",
+    "CMB16",
+    "CMB17",
+    "CMB18",
+    "CMB20",
+    "CMB21",
+    "CMB22",
+    "CMB23",
+    "CMB24",
+    "CMB25",
+    "CMB26",
+    "CMB27",
+    "CMB28",
+    "CMB29",
+    "CMB30",
+    "CMB31",
+    "CMB32"
+   ],
+   "entrance": [
+    "ENTRY"
+   ],
+   "exit": [
+    "EXIT"
+   ],
+   "in": [
+    "INN0"
+   ],
+   "jump": [
+    "JMP0",
+    "JMP1"
+   ],
+   "landing": [
+    "LAN"
+   ],
+   "next_jump": [
+    "NXJ0"
+   ],
+   "nutada": [
+    "NUT"
+   ],
+   "out": [
+    "IXN0"
+   ],
+   "reaction": [
+    "RXN0"
+   ],
+   "rpg_skill": [
+    "RPG101",
+    "RPG102",
+    "RPG103"
+   ],
+   "run": [
+    "RUN0",
+    "RUN1"
+   ],
+   "turn": [
+    "TRN1"
+   ]
+  },
+  "anim_total": 49
+ },
+ "1ssv": {
+  "subtables": [
+   "etc",
+   "mot",
+   "skl",
+   "spl"
+  ],
+  "files": [
+   "data_spc_1ssveff1.xfbin",
+   "data_spc_1ssvprm.bin.xfbin",
+   "data_spc_1ssvskl1.xfbin"
+  ],
+  "asset_ids": [
+   "1ssv00t0",
+   "1ssvawa00",
+   "1ssvawa01",
+   "1ssvbre00",
+   "1ssvcat10",
+   "1ssvcha10",
+   "1ssvcha12",
+   "1ssvcha13",
+   "1ssvcha16",
+   "1ssvcha17",
+   "1ssvcha1cut1",
+   "1ssvchd10",
+   "1ssvcma00",
+   "1ssvdmg0f",
+   "1ssvdow0",
+   "1ssvdow1",
+   "1ssvdsc00",
+   "1ssvdsf0",
+   "1ssvdwa00",
+   "1ssvent0",
+   "1ssvgat0",
+   "1ssvgda0",
+   "1ssvghf0",
+   "1ssvghl0",
+   "1ssvghr0",
+   "1ssvght1",
+   "1ssvgit0",
+   "1ssvgit1",
+   "1ssvgit2",
+   "1ssvgit3",
+   "1ssvhola0",
+   "1ssvhold0",
+   "1ssvinn0",
+   "1ssvitma0",
+   "1ssvitmg0",
+   "1ssvitml0",
+   "1ssvixn0",
+   "1ssvjmp0",
+   "1ssvjmp1",
+   "1ssvlan0",
+   "1ssvlos10",
+   "1ssvlos11",
+   "1ssvnut0",
+   "1ssvnut0f",
+   "1ssvnut1f",
+   "1ssvnut2f",
+   "1ssvnxi0",
+   "1ssvout0",
+   "1ssvpur10",
+   "1ssvpur11",
+   "1ssvrun0",
+   "1ssvrun1",
+   "1ssvspk0f",
+   "1ssvstr10",
+   "1ssvtrn1",
+   "1ssvwin10",
+   "1ssvwin11"
+  ],
+  "anim_groups": {
+   "airborne": [
+    "FALL0",
+    "FALL1"
+   ],
+   "combo": [
+    "CMB00",
+    "CMB01",
+    "CMB02",
+    "CMB03",
+    "CMB04",
+    "CMB05",
+    "CMB06",
+    "CMB07",
+    "CMB08",
+    "CMB09",
+    "CMB10",
+    "CMB11",
+    "CMB12",
+    "CMB13",
+    "CMB14",
+    "CMB15",
+    "CMB16",
+    "CMB17",
+    "CMB18",
+    "CMB19",
+    "CMB20",
+    "CMB21"
+   ],
+   "entrance": [
+    "ENTRY"
+   ],
+   "etc": [
+    "ETC00"
+   ],
+   "exit": [
+    "EXIT"
+   ],
+   "in": [
+    "INN0"
+   ],
+   "jump": [
+    "JMP0",
+    "JMP1"
+   ],
+   "landing": [
+    "LAN"
+   ],
+   "next_jump": [
+    "NXJ0"
+   ],
+   "nutada": [
+    "NUT"
+   ],
+   "out": [
+    "IXN0"
+   ],
+   "plea": [
+    "PLEASED"
+   ],
+   "reaction": [
+    "RXN0"
+   ],
+   "run": [
+    "RUN0",
+    "RUN1"
+   ],
+   "turn": [
+    "TRN1"
+   ]
+  },
+  "anim_total": 39
+ },
+ "1szn": {
+  "subtables": [
+   "etc",
+   "mot",
+   "skl",
+   "spl"
+  ],
+  "files": [
+   "data_spc_1szneff1.xfbin",
+   "data_spc_1sznprm.bin.xfbin",
+   "data_spc_1sznskl1.xfbin"
+  ],
+  "asset_ids": [
+   "1szneff01"
+  ],
+  "anim_groups": {
+   "airborne": [
+    "FALL1"
+   ],
+   "entrance": [
+    "ENTRY"
+   ],
+   "exit": [
+    "EXIT"
+   ],
+   "landing": [
+    "LAN"
+   ],
+   "nutada": [
+    "NUT"
+   ]
+  },
+  "anim_total": 5
+ },
+ "1ten": {
+  "subtables": [
+   "etc",
+   "mot",
+   "skl",
+   "spl"
+  ],
+  "files": [
+   "data_spc_1teneff1.xfbin",
+   "data_spc_1tenprm.bin.xfbin",
+   "data_spc_1tenskl1.xfbin",
+   "data_spc_1tenskl2.xfbin"
+  ],
+  "asset_ids": [
+   "1tenblur",
+   "1tenbok",
+   "1tenkm",
+   "1tenkon",
+   "1tenmkm1",
+   "1tennagi",
+   "1tenskn1",
+   "1tenton",
+   "1tentq"
+  ],
+  "anim_groups": {
+   "airborne": [
+    "FALL0",
+    "FALL1"
+   ],
+   "combo": [
+    "CMB00",
+    "CMB01",
+    "CMB02",
+    "CMB03",
+    "CMB04",
+    "CMB05",
+    "CMB06",
+    "CMB07",
+    "CMB08",
+    "CMB09",
+    "CMB10",
+    "CMB11",
+    "CMB12",
+    "CMB13",
+    "CMB14",
+    "CMB15",
+    "CMB16",
+    "CMB17"
+   ],
+   "entrance": [
+    "ENTRY"
+   ],
+   "exit": [
+    "EXIT"
+   ],
+   "in": [
+    "INN0"
+   ],
+   "jump": [
+    "JMP0",
+    "JMP1"
+   ],
+   "landing": [
+    "LAN"
+   ],
+   "next_jump": [
+    "NXJ0"
+   ],
+   "nutada": [
+    "NUT"
+   ],
+   "out": [
+    "IXN0"
+   ],
+   "reaction": [
+    "RXN0"
+   ],
+   "run": [
+    "RUN0",
+    "RUN1"
+   ],
+   "turn": [
+    "TRN1"
+   ]
+  },
+  "anim_total": 33
+ },
+ "1tmr": {
+  "subtables": [
+   "etc",
+   "mot",
+   "skl",
+   "spl"
+  ],
+  "files": [
+   "data_spc_1tmreff1.xfbin",
+   "data_spc_1tmrprm.bin.xfbin",
+   "data_spc_1tmrskl1.xfbin",
+   "data_spc_1tmrskl2.xfbin"
+  ],
+  "asset_ids": [
+   "1tmr00t0",
+   "1tmrbre00",
+   "1tmrcat10",
+   "1tmrcha10",
+   "1tmrcha12",
+   "1tmrcha20",
+   "1tmrcha25",
+   "1tmrcma00",
+   "1tmrdmg0f",
+   "1tmrdow0",
+   "1tmrdow1",
+   "1tmrdsc00",
+   "1tmrdsf0",
+   "1tmrdwa00",
+   "1tmrent0",
+   "1tmrgda0",
+   "1tmrghf0",
+   "1tmrghl0",
+   "1tmrghr0",
+   "1tmrght1",
+   "1tmrgit0",
+   "1tmrgit1",
+   "1tmrgit2",
+   "1tmrgit3",
+   "1tmrhola0",
+   "1tmrhold0",
+   "1tmrinn0",
+   "1tmritl0",
+   "1tmritma0",
+   "1tmritmg0",
+   "1tmrixn0",
+   "1tmrjmp0",
+   "1tmrjmp1",
+   "1tmrlan0",
+   "1tmrlos10",
+   "1tmrlos11",
+   "1tmrnut0",
+   "1tmrnut0f",
+   "1tmrnut1f",
+   "1tmrnxi0",
+   "1tmrout0",
+   "1tmrpur10",
+   "1tmrpur11",
+   "1tmrrun0",
+   "1tmrrun1",
+   "1tmrspk0f",
+   "1tmrstr10",
+   "1tmrtra0e",
+   "1tmrtra0l",
+   "1tmrtrn1",
+   "1tmrwin10",
+   "1tmrwin11"
+  ],
+  "anim_groups": {
+   "airborne": [
+    "FALL0",
+    "FALL1"
+   ],
+   "combo": [
+    "CMB00",
+    "CMB01",
+    "CMB02",
+    "CMB03",
+    "CMB04",
+    "CMB05",
+    "CMB06",
+    "CMB07",
+    "CMB08",
+    "CMB09",
+    "CMB10",
+    "CMB11",
+    "CMB12",
+    "CMB13",
+    "CMB14",
+    "CMB15"
+   ],
+   "entrance": [
+    "ENTRY"
+   ],
+   "exit": [
+    "EXIT"
+   ],
+   "in": [
+    "INN0"
+   ],
+   "jump": [
+    "JMP0",
+    "JMP1"
+   ],
+   "landing": [
+    "LAN"
+   ],
+   "next_jump": [
+    "NXJ0"
+   ],
+   "nutada": [
+    "NUT"
+   ],
+   "out": [
+    "IXN0"
+   ],
+   "reaction": [
+    "RXN0"
+   ],
+   "run": [
+    "RUN0",
+    "RUN1"
+   ],
+   "turn": [
+    "TRN1"
+   ]
+  },
+  "anim_total": 31
+ },
+ "1tnd": {
+  "subtables": [
+   "etc",
+   "mot",
+   "skl",
+   "spl"
+  ],
+  "files": [
+   "data_spc_1tndeff1.xfbin",
+   "data_spc_1tndprm.bin.xfbin",
+   "data_spc_1tndskl1.xfbin",
+   "data_spc_1tndskl2.xfbin"
+  ],
+  "asset_ids": [
+   "1tnd00t0",
+   "1tndbre00",
+   "1tndcat10",
+   "1tndcha10",
+   "1tndcha20",
+   "1tndcha21",
+   "1tndcha23",
+   "1tndcha26",
+   "1tndcha27",
+   "1tndcha2cut1",
+   "1tndchd10",
+   "1tndchd11",
+   "1tndchd20",
+   "1tndcma00",
+   "1tnddmg0f",
+   "1tnddow0",
+   "1tnddow1",
+   "1tnddsc00",
+   "1tnddsf0",
+   "1tnddwa00",
+   "1tndent0",
+   "1tndgat0",
+   "1tndgda0",
+   "1tndghf0",
+   "1tndghl0",
+   "1tndghr0",
+   "1tndght1",
+   "1tndgit0",
+   "1tndgit1",
+   "1tndgit2",
+   "1tndgit3",
+   "1tndhola0",
+   "1tndhold0",
+   "1tndinn0",
+   "1tnditl0",
+   "1tnditma0",
+   "1tnditmg0",
+   "1tndixn0",
+   "1tndjmp0",
+   "1tndjmp1",
+   "1tndlan0",
+   "1tndlos10",
+   "1tndlos11",
+   "1tndnut0",
+   "1tndnut0f",
+   "1tndnut1f",
+   "1tndnxi0",
+   "1tndout0",
+   "1tndpnc00",
+   "1tndpur10",
+   "1tndpur11",
+   "1tndrun0",
+   "1tndrun1",
+   "1tndspk0f",
+   "1tndstr10",
+   "1tndstr11",
+   "1tndtra0e",
+   "1tndtra0l",
+   "1tndtrn1",
+   "1tndwin10",
+   "1tndwin11"
+  ],
+  "anim_groups": {
+   "airborne": [
+    "FALL0",
+    "FALL1"
+   ],
+   "combo": [
+    "CMB00",
+    "CMB01",
+    "CMB02",
+    "CMB03",
+    "CMB04",
+    "CMB05",
+    "CMB06",
+    "CMB07",
+    "CMB08",
+    "CMB09",
+    "CMB10",
+    "CMB11",
+    "CMB12",
+    "CMB13",
+    "CMB14",
+    "CMB15",
+    "CMB16",
+    "CMB17"
+   ],
+   "entrance": [
+    "ENTRY"
+   ],
+   "exit": [
+    "EXIT"
+   ],
+   "in": [
+    "INN0"
+   ],
+   "jump": [
+    "JMP0",
+    "JMP1"
+   ],
+   "landing": [
+    "LAN"
+   ],
+   "next_jump": [
+    "NXJ0"
+   ],
+   "nutada": [
+    "NUT"
+   ],
+   "other": [
+    "HUGE00"
+   ],
+   "out": [
+    "IXN0"
+   ],
+   "plea": [
+    "PLEASED"
+   ],
+   "reaction": [
+    "RXN0"
+   ],
+   "run": [
+    "RUN0",
+    "RUN1"
+   ],
+   "turn": [
+    "TRN1"
+   ]
+  },
+  "anim_total": 35
+ },
+ "1tyo": {
+  "subtables": [
+   "etc",
+   "mot",
+   "skl",
+   "spl"
+  ],
+  "files": [
+   "data_spc_1tyoeff1.xfbin",
+   "data_spc_1tyoop.xfbin",
+   "data_spc_1tyoprm.bin.xfbin",
+   "data_spc_1tyoskl1.xfbin",
+   "data_spc_1tyoskl2.xfbin"
+  ],
+  "asset_ids": [
+   "1tyoop"
+  ],
+  "anim_groups": {
+   "airborne": [
+    "FALL0",
+    "FALL1"
+   ],
+   "combo": [
+    "CMB00",
+    "CMB01",
+    "CMB02",
+    "CMB03",
+    "CMB04",
+    "CMB05",
+    "CMB06",
+    "CMB07",
+    "CMB08",
+    "CMB09",
+    "CMB10",
+    "CMB11",
+    "CMB12",
+    "CMB13",
+    "CMB14",
+    "CMB15",
+    "CMB16",
+    "CMB17",
+    "CMB18",
+    "CMB19",
+    "CMB20"
+   ],
+   "entrance": [
+    "ENTRY"
+   ],
+   "exit": [
+    "EXIT"
+   ],
+   "in": [
+    "INN0"
+   ],
+   "jump": [
+    "JMP0",
+    "JMP1"
+   ],
+   "landing": [
+    "LAN"
+   ],
+   "next_jump": [
+    "NXJ0"
+   ],
+   "nutada": [
+    "NUT"
+   ],
+   "out": [
+    "IXN0"
+   ],
+   "reaction": [
+    "RXN0"
+   ],
+   "run": [
+    "RUN0",
+    "RUN1"
+   ],
+   "turn": [
+    "TRN1"
+   ]
+  },
+  "anim_total": 36
+ },
+ "1tyy": {
+  "subtables": [
+   "etc",
+   "mot",
+   "skl",
+   "spl"
+  ],
+  "files": [
+   "data_spc_1tyyeff1.xfbin",
+   "data_spc_1tyyprm.bin.xfbin",
+   "data_spc_1tyyskl1.xfbin"
+  ],
+  "asset_ids": [
+   "1tyycat10",
+   "1tyycha10",
+   "1tyycha12",
+   "1tyycha13",
+   "1tyycha14",
+   "1tyycha15",
+   "1tyycha16",
+   "1tyycha1cut",
+   "1tyydmg0f",
+   "1tyydow1",
+   "1tyydsc00",
+   "1tyyent0",
+   "1tyylan0",
+   "1tyynut0",
+   "1tyynut0f",
+   "1tyyout0",
+   "1tyypur10",
+   "1tyypur11",
+   "1tyywin10",
+   "1tyywin11"
+  ],
+  "anim_groups": {
+   "airborne": [
+    "FALL1"
+   ],
+   "entrance": [
+    "ENTRY"
+   ],
+   "exit": [
+    "EXIT"
+   ],
+   "landing": [
+    "LAN"
+   ],
+   "nutada": [
+    "NUT"
+   ]
+  },
+  "anim_total": 5
+ }
+}

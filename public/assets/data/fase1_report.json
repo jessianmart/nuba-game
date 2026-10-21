@@ -1,0 +1,17 @@
+{
+  "combat_params": {
+    "files": 173,
+    "bytes": 27374110,
+    "skipped": 0
+  },
+  "sfx_banks": {
+    "files": 9,
+    "bytes": 15102512,
+    "skipped": 0
+  },
+  "stage_meta": {
+    "files": 19,
+    "bytes": 462984,
+    "skipped": 0
+  }
+}

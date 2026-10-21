@@ -1,0 +1,225 @@
+{
+ "source": "assets/data/sim/stage1.awb -> StageAreaInfo.bin.xfbin",
+ "areasInGame": 9,
+ "default": "sd03b",
+ "arenas": [
+  {
+   "id": "sd00a",
+   "area": "AREA_TRAINING",
+   "label": "Campo de Treinamento (Konoha)",
+   "short": "Konoha",
+   "shape": "box",
+   "radius": 88,
+   "cameraLimit": 92,
+   "sanctuaryBlue": {
+    "x": -74,
+    "z": -74
+   },
+   "sanctuaryRed": {
+    "x": 74,
+    "z": 74
+   },
+   "bounds": {
+    "minX": -88,
+    "maxX": 88,
+    "minZ": -88,
+    "maxZ": 88
+   },
+   "built": true,
+   "map": "stage/arena/sd00a.json",
+   "mesh": "assets/stage/arena/sd00a.json",
+   "verts": 63180,
+   "tris": 40111,
+   "meshes": 122
+  },
+  {
+   "id": "sd03b",
+   "area": "AREA_COLOSSEUM",
+   "label": "Coliseu (Exame Chūnin)",
+   "short": "Coliseu",
+   "shape": "circle",
+   "radius": 78,
+   "cameraLimit": 81,
+   "sanctuaryBlue": {
+    "x": -45,
+    "z": -45
+   },
+   "sanctuaryRed": {
+    "x": 45,
+    "z": 45
+   },
+   "bounds": {
+    "minX": -78,
+    "maxX": 78,
+    "minZ": -78,
+    "maxZ": 78
+   },
+   "lighting": {
+    "ambient": "0xffffff",
+    "ambientIntensity": 0.45,
+    "directional": "0xfff6e8",
+    "dirIntensity": 1.75,
+    "hemiIntensity": 1.4
+   },
+   "built": true,
+   "map": "stage/arena/sd03b.json",
+   "mesh": "assets/stage/arena/sd03b.json",
+   "verts": 139887,
+   "tris": 94002,
+   "meshes": 297
+  },
+  {
+   "id": "sd05a",
+   "area": "AREA_PLAIN",
+   "label": "Planície",
+   "short": "Planície",
+   "radius": 92,
+   "built": true,
+   "map": "stage/arena/sd05a.json",
+   "mesh": "assets/stage/arena/sd05a.json",
+   "verts": 93103,
+   "tris": 42056,
+   "meshes": 310
+  },
+  {
+   "id": "sd01b",
+   "area": "AREA_TOWER",
+   "label": "Torre Preliminar (Exame Chūnin)",
+   "short": "Torre",
+   "shape": "box",
+   "radius": 62,
+   "cameraMaxY": 26.0,
+   "sanctuaryBlue": {
+    "x": 0,
+    "z": -52
+   },
+   "sanctuaryRed": {
+    "x": 0,
+    "z": 52
+   },
+   "bounds": {
+    "minX": -58,
+    "maxX": 58,
+    "minZ": -58,
+    "maxZ": 58
+   },
+   "lighting": {
+    "ambient": "0xfff0dd",
+    "ambientIntensity": 1.15,
+    "directional": "0xffe8c0",
+    "dirIntensity": 1.45,
+    "hemiIntensity": 0.85
+   },
+   "built": true,
+   "map": "stage/arena/sd01b.json",
+   "mesh": "assets/stage/arena/sd01b.json",
+   "verts": 69132,
+   "tris": 69155,
+   "meshes": 108
+  },
+  {
+   "id": "sd01a",
+   "area": "AREA_DEATH",
+   "label": "Vale do Fim (Estátuas de Hashirama e Madara)",
+   "short": "Vale do Fim",
+   "radius": 46,
+   "built": true,
+   "map": "stage/arena/sd01a.json",
+   "mesh": "assets/stage/arena/sd01a.json",
+   "verts": 75464,
+   "tris": 55987,
+   "meshes": 175,
+   "shape": "box",
+   "cameraLimit": 50,
+   "playerLimit": 45,
+   "sanctuaryBlue": {
+    "x": -22,
+    "z": -22
+   },
+   "sanctuaryRed": {
+    "x": 22,
+    "z": 22
+   },
+   "bounds": {
+    "minX": -36,
+    "maxX": 36,
+    "minZ": -36,
+    "maxZ": 36
+   },
+   "lighting": {
+    "ambient": "0xf1f5f9",
+    "ambientIntensity": 1.25,
+    "directional": "0xffedd5",
+    "directionalIntensity": 1.5,
+    "dirPosition": [
+     50,
+     120,
+     60
+    ],
+    "ground": "0x1e3a5f"
+   }
+  },
+  {
+   "id": "sd03a",
+   "area": "AREA_FOREST",
+   "label": "Floresta",
+   "short": "Floresta",
+   "radius": 80,
+   "built": true,
+   "map": "stage/arena/sd03a.json",
+   "mesh": "assets/stage/arena/sd03a.json",
+   "verts": 27305,
+   "tris": 32102,
+   "meshes": 66
+  },
+  {
+   "id": "sd04a",
+   "area": "AREA_WILD",
+   "label": "Estádio Selvagem (Platô)",
+   "short": "Selvagem",
+   "shape": "box",
+   "radius": 75,
+   "cameraLimit": 78,
+   "sanctuaryBlue": {
+    "x": -36,
+    "z": -50
+   },
+   "sanctuaryRed": {
+    "x": 20,
+    "z": 50
+   },
+   "bounds": {
+    "minX": -48,
+    "maxX": 40,
+    "minZ": -72,
+    "maxZ": 72
+   },
+   "lighting": {
+    "ambient": "0xffffff",
+    "ambientIntensity": 0.4,
+    "directional": "0xfff8ee",
+    "dirIntensity": 1.7,
+    "hemiIntensity": 1.35
+   },
+   "built": true,
+   "map": "stage/arena/sd04a.json",
+   "mesh": "assets/stage/arena/sd04a.json",
+   "verts": 49300,
+   "tris": 63085,
+   "meshes": 149
+  },
+  {
+   "id": "sd03c",
+   "area": "AREA_YAGURA",
+   "label": "Yagura (telhados)",
+   "short": "Yagura",
+   "radius": 58,
+   "built": true,
+   "map": "stage/arena/sd03c.json",
+   "mesh": "assets/stage/arena/sd03c.json",
+   "verts": 23673,
+   "tris": 23333,
+   "meshes": 48
+  }
+ ]
+}

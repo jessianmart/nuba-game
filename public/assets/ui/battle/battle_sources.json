@@ -1,0 +1,63 @@
+{
+  "battle": {
+    "source": "data/interface/battle/eng/ANDROID/battle.xfbin",
+    "textures": [
+      "battle_cmn_button00.png",
+      "battle_cmn_button01.png",
+      "battle_xbattle_combo00.png",
+      "battle_xbattle_combo01.png",
+      "battle_xbattle_combo02.png",
+      "battle_xbattle_combo03.png",
+      "battle_xbattle_combo04.png",
+      "battle_xbattle_free_fd.png",
+      "battle_xbattle_free_fd2.png",
+      "battle_xbattle_ougi00.png",
+      "battle_xbattle_ougi01.png",
+      "battle_xbattle_s-eff.png",
+      "battle_xbattle_s-eff01.png",
+      "battle_xbattle_s-eff02.png",
+      "battle_xbattle_s-eff03.png",
+      "battle_xbattle_s-eff04.png",
+      "battle_xbattle_s-eff05.png",
+      "battle_xbattle_s-eff06.png",
+      "battle_xbattle_s-eff07.png",
+      "battle_xbattle_s-eff08.png",
+      "battle_xbattle_sousai.png",
+      "battle_xbattle_spoiuchi.png",
+      "battle_xcmn_playere_fd.png"
+    ]
+  },
+  "bigbat": {
+    "source": "data/interface/battle/eng/ANDROID/bigbat.xfbin",
+    "textures": [
+      "bigbat_xbattle_actb00.png",
+      "bigbat_xbattle_actb02.png",
+      "bigbat_xbattle_actb05.png",
+      "bigbat_xbattle_actb10.png",
+      "bigbat_xbattle_actb11.png",
+      "bigbat_xbattle_actb13.png",
+      "bigbat_xbattle_actb_button01.png",
+      "bigbat_xbattle_actb_eff01.png",
+      "bigbat_xbattle_action00_fd.png",
+      "bigbat_xbattle_big_gauge02.png",
+      "bigbat_xbattle_big_gbt.png",
+      "bigbat_xbattle_big_mnd.png",
+      "bigbat_xbattle_big_name.png",
+      "bigbat_xbattle_big_skk.png",
+      "bigbat_xbattle_bigb00.png",
+      "bigbat_xbattle_brndg00.png",
+      "bigbat_xbattle_btg00.png",
+      "bigbat_xbattle_site.png"
+    ]
+  },
+  "startmenu": {
+    "source": "data/interface/battle/eng/ANDROID/xbattle_startmenu.xfbin",
+    "textures": [
+      "startmenu_xbattle_startmenu.png",
+      "startmenu_xbattle_startmenu_fd.png",
+      "startmenu_xbattle_startmenu_win01.png",
+      "startmenu_xbattle_startmenu_win02.png",
+      "startmenu_xbattle_startmenu_win03.png"
+    ]
+  }
+}
