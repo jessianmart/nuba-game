@@ -375,3 +375,26 @@ contract changed.
 - Rollbacks: `public/*.bak_spp` + `public/*.bak_sppexp`
 
 **Verdict: SPP v1 DONE — Kage Bunshin invoca clones 3D de verdade e as 40 skills têm anim + direção.**
+
+---
+
+## PV — Pivot Mobile (PV0 + PV1) — 2026-10-21
+
+**Escopo**: fundação mobile (input/viewport/device) + Combate 3v3 + controles touch, conforme `docs/PIVOT_MOBILE.md`.
+
+**Baseline pré-PV** (regra do repo: verde antes de editar): verify 0 erros + suite 38/38 (`baseline_verify_pv.log` / `baseline_suite_pv.log`).
+
+**Baterias por fase** (logs no repo):
+- PV0: `pv0_verify.log` / `pv0_suite.log` — verify 0 erros + SUITE EXIT: 0.
+- PV1-A (configs+3v3+picker): `pv1a_verify.log` / `pv1a_suite.log` — idem.
+- PV1-B (touch): `pv1b_verify.log` / `pv1b_suite.log` — idem (3 baterias consecutivas verdes).
+
+**Probes dedicados** (fora da suite, CDP próprio, porta livre):
+- `probe_pv1a.py`: dm_3v3 → 6 unidades, retratos 3+3, `META: 15 ABATES`, tempo 180s; `start5v5Match()` (alias legacy) → 10 unidades, 5+5, `META: 30 ABATES`, 300s; `#mode-picker` 3 chips com dm_3v3 default e BR desabilitado; 0 erros de console.
+- `probe_pv1b.py`: com `body.touch` + dm_3v3 — gate CSS (`#touch-controls` visível só com touch), joystick sintético via `Input.dispatchTouchEvent` gera `INPUT.moveX/moveZ` (0.75/0.66) e desloca a unidade (+X real), release zera; ATK hold seta/limpa `INPUT.fire` e executa `cds.atk`; tap em Q dispara `executeSkill` (cd.q 0→5.7); chakra hold carrega (79→100); 0 erros de console.
+- **Pitfall registrado**: HUD overlays usam `pointer-events:none` (pass-through) e a herança matava a zona do joystick — fix `#touch-controls, #touch-joystick, #touch-cluster, .tbtn { pointer-events: auto; }` (bak `styles.css.bak_pv1b2`). Qualquer nova camada de input DOM dentro do HUD precisa reativar pointer-events explicitamente.
+- **Pitfall registrado**: `#match-timer` usa skin-digits PNG — `textContent` só contém ':'; asserts de tempo devem ler `window.__matchState.time`.
+
+**Contratos preservados**: nenhum ID removido/renomeado (só aditivos: `#rotate-overlay`, `#mode-picker`, `#touch-controls/*`, `.tbtn*`); `window.start5v5Match`/`__matchState`/`JUICE`/`units` intactos; teclado/mouse intocados (F08–F17 verdes); timers em dt real; câmera clamp intacto.
+
+**Pendências Tier 5 (PV1.6)**: integrar probes como testes formais da suite (Tier 5 Mobile) + `Emulation.setDeviceMetricsOverride` mobile + testes de drag-aim.

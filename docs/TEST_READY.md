@@ -55,3 +55,26 @@ NO SINAL de readiness do smoke — (1) flag top-level roda no parse, prova nada;
 da função de boot (~L1504) ainda é cedo — `initLobbyNav()` só roda em ~L5521; (3) um "smoke
 local" rodou contra o proxy de produção (:8080) sem ninguém perceber. Fix final: `__ajustesReady`
 setado logo APÓS `initLobbyNav();` — smoke 9/9 local E prod. Lição documentada na skill §6.7.
+
+## §17 — PV1 Touch Controls: mobile jogável end-to-end (2026-10-21)
+
+Controles touch completos (docs/PIVOT_MOBILE.md PV1.3/PV1.4/PV1.5), retomando o trabalho
+parado dos agentes paralelos: joystick flutuante (44vw×52vh, r56, dead-zone .18 → INPUT.moveX/Z),
+cluster .tbtn com ícones do skin (ATK hold → INPUT.fire, Q/W/R com auto-aim via findAimTarget
++ rotação do mesh, kawarimi, chakra hold → INPUT.chakra consumido no charging), vibrate(12),
+.pressed, câmera thirdperson auto em touch (PV1.5a), pan de câmera off em touch (PV1.5b),
+gate de touch fantasma no pointerdown global (PV1.4c — touch nunca simula mouseDown).
+
+| Verificação | Resultado |
+|---|---|
+| Smoke PV1 Tier 5 (CDP touch 915×412 landscape, 8 grupos de asserts) | PASS — player ANDA via joystick, Q gasta chakra + cooldown |
+| verify + suite desktop | (ver bateria abaixo) |
+
+**Lições duras desta integração**: (1) os agentes paralelos deixaram DOM/CSS touch órfãos
+( #touch-controls com .tbtn) que COLIDIAM de ID com meu bloco (#touch-joystick/#touch-cluster) —
+meu JS wireou no DOM deles (estrutura filha diferente) e abortou; auditoria de colisão de IDs
+antes de inserir DOM paralelo. (2) overlay "gire o dispositivo" (@media portrait + body.touch)
+intercepta TODOS os toques em portrait — emular LANDSCAPE (915×412) no Tier 5; probe forense
+com event-log global (tgt=rotate-overlay) encontrou em 1 rodada. (3) meu initTouchControls
+duplicado foi REMOVIDO (a IIFE L~5911 deles é superior — auto-aim com rotação + vibrate);
+window.__cameraMode preservado como leitura E2E.

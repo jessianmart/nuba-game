@@ -1,0 +1,18 @@
+{
+ "meshes": 9,
+ "verts": 12920,
+ "tris": 15123,
+ "textures": [
+  "textures/1orc_1orcbody_0.png",
+  "textures/1orc_1orcbody_1.png",
+  "textures/1orc_1orcbody_t1.png",
+  "textures/1orc_1orceye.png",
+  "textures/1orc_1orckng.png",
+  "textures/1orc_1orcsej1.png",
+  "textures/1orc_1orcsej2.png",
+  "textures/1orc_1orcsej3.png",
+  "textures/1orc_1orcsej4.png",
+  "textures/1orc_1orctail.png"
+ ],
+ "t_s": 1.2349095344543457
+}

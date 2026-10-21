@@ -33,6 +33,43 @@
    "meshes": 122
   },
   {
+   "id": "sa00z",
+   "area": "AREA_KONOHA_ACT",
+   "label": "Vila Oculta da Folha (Konoha)",
+   "short": "Vila",
+   "shape": "box",
+   "radius": 140,
+   "cameraLimit": 146,
+   "playerLimit": 148,
+   "sanctuaryBlue": {
+    "x": -95,
+    "z": -95
+   },
+   "sanctuaryRed": {
+    "x": 95,
+    "z": 95
+   },
+   "bounds": {
+    "minX": -140,
+    "maxX": 140,
+    "minZ": -140,
+    "maxZ": 140
+   },
+   "lighting": {
+    "ambient": "0xffffff",
+    "ambientIntensity": 0.4,
+    "directional": "0xfff6e8",
+    "dirIntensity": 1.7,
+    "hemiIntensity": 1.4
+   },
+   "built": true,
+   "map": "stage/arena/sa00z.json",
+   "mesh": "assets/stage/arena/sa00z.json",
+   "verts": 162992,
+   "tris": 128573,
+   "meshes": 261
+  },
+  {
    "id": "sd03b",
    "area": "AREA_COLOSSEUM",
    "label": "Coliseu (Exame Chūnin)",

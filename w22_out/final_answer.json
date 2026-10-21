@@ -1,0 +1,409 @@
+{
+ "hero_id": "1orc",
+ "hero_name": "Orochimaru",
+ "files_extracted": [
+  {
+   "path": "w22_out/assets/data/animations.json",
+   "bytes": 153665
+  },
+  {
+   "path": "w22_out/assets/models/1orc.json",
+   "bytes": 1208811
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_bbl01.png",
+   "bytes": 5880
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_blur.png",
+   "bytes": 225
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_board01.png",
+   "bytes": 124
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_board02.png",
+   "bytes": 25809
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_brk01.png",
+   "bytes": 1332
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_chakra00.png",
+   "bytes": 24074
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_chakra01.png",
+   "bytes": 8852
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_chakra02.png",
+   "bytes": 14830
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_chakra03.png",
+   "bytes": 11816
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_chakra04.png",
+   "bytes": 36187
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_chakra05.png",
+   "bytes": 23410
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_chakra06.png",
+   "bytes": 29737
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_chakra07.png",
+   "bytes": 30153
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_chakra10.png",
+   "bytes": 21336
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_falloff01.png",
+   "bytes": 723
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_falloff02.png",
+   "bytes": 400
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_falloff03.png",
+   "bytes": 747
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_falloff04.png",
+   "bytes": 352
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_falloff05.png",
+   "bytes": 584
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_fire01.png",
+   "bytes": 2818
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_fire02.png",
+   "bytes": 8447
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_fire03.png",
+   "bytes": 3310
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_fire04.png",
+   "bytes": 3678
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_grd01.png",
+   "bytes": 2077
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_grd02.png",
+   "bytes": 1854
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_grd03.png",
+   "bytes": 1898
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_grd04.png",
+   "bytes": 2370
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_leaf01.png",
+   "bytes": 92
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_light01.png",
+   "bytes": 4513
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_line_eff01.png",
+   "bytes": 20106
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_line_eff02.png",
+   "bytes": 19158
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_log01.png",
+   "bytes": 13126
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_mon01.png",
+   "bytes": 3316
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_mon02.png",
+   "bytes": 3027
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_mon03.png",
+   "bytes": 3499
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_nor_dst01.png",
+   "bytes": 105257
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_nor_rpl01.png",
+   "bytes": 82597
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_nor_rpl02.png",
+   "bytes": 97665
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_nor_water01.png",
+   "bytes": 21905
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_part01.png",
+   "bytes": 3186
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_part02.png",
+   "bytes": 758
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_part03.png",
+   "bytes": 606
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_part04.png",
+   "bytes": 1018
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_part05.png",
+   "bytes": 4932
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_part06.png",
+   "bytes": 1128
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_part07.png",
+   "bytes": 640
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_part08a.png",
+   "bytes": 5681
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_part08b.png",
+   "bytes": 6270
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_pnt01.png",
+   "bytes": 12031
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_ring01.png",
+   "bytes": 353
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_rpl01.png",
+   "bytes": 1190
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_shadow01.png",
+   "bytes": 225
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_shadow02.png",
+   "bytes": 49212
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_shock01.png",
+   "bytes": 8223
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_shock02.png",
+   "bytes": 7663
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_shock03.png",
+   "bytes": 4952
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_shock04.png",
+   "bytes": 387
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_shock05.png",
+   "bytes": 5582
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_smk01.png",
+   "bytes": 13559
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_smk02.png",
+   "bytes": 21139
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_smk06.png",
+   "bytes": 13190
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_smk07.png",
+   "bytes": 3663
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_smk08.png",
+   "bytes": 5242
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_smk09.png",
+   "bytes": 5846
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_smk10.png",
+   "bytes": 5020
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_spk01.png",
+   "bytes": 6655
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_spk02.png",
+   "bytes": 6487
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_spk03.png",
+   "bytes": 9252
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_stn01.png",
+   "bytes": 410
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_strk01.png",
+   "bytes": 4362
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_trl01.png",
+   "bytes": 5207
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_trl02.png",
+   "bytes": 15686
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_trl03.png",
+   "bytes": 4290
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_wav01.png",
+   "bytes": 10498
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_wav02.png",
+   "bytes": 11022
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_wav03.png",
+   "bytes": 5200
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_wav04.png",
+   "bytes": 10773
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_wav05.png",
+   "bytes": 13156
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_wav06.png",
+   "bytes": 1001
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_wind01.png",
+   "bytes": 1577
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_wind02.png",
+   "bytes": 4552
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_wind03.png",
+   "bytes": 22542
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_wind04.png",
+   "bytes": 23827
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_wtr01.png",
+   "bytes": 2300
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_wtr02.png",
+   "bytes": 1826
+  },
+  {
+   "path": "w22_out/assets/skills/1efc_wtr03.png",
+   "bytes": 1889
+  },
+  {
+   "path": "w22_out/assets/skills/1orc_1orceff1_01.png",
+   "bytes": 58567
+  },
+  {
+   "path": "w22_out/assets/skills/skill_vfx.json",
+   "bytes": 552339
+  },
+  {
+   "path": "w22_out/assets/textures/1orc_1orcbody_0.png",
+   "bytes": 8417
+  },
+  {
+   "path": "w22_out/assets/textures/1orc_1orcbody_1.png",
+   "bytes": 8417
+  },
+  {
+   "path": "w22_out/assets/textures/1orc_1orcbody_t1.png",
+   "bytes": 12680
+  },
+  {
+   "path": "w22_out/assets/textures/1orc_1orceye.png",
+   "bytes": 10523
+  },
+  {
+   "path": "w22_out/assets/textures/1orc_1orckng.png",
+   "bytes": 8438
+  },
+  {
+   "path": "w22_out/assets/textures/1orc_1orcsej1.png",
+   "bytes": 12457
+  },
+  {
+   "path": "w22_out/assets/textures/1orc_1orcsej2.png",
+   "bytes": 3222
+  },
+  {
+   "path": "w22_out/assets/textures/1orc_1orcsej3.png",
+   "bytes": 8379
+  },
+  {
+   "path": "w22_out/assets/textures/1orc_1orcsej4.png",
+   "bytes": 6286
+  },
+  {
+   "path": "w22_out/assets/textures/1orc_1orctail.png",
+   "bytes": 151
+  }
+ ],
+ "validation": "passed",
+ "issues": [],
+ "report_json_path": "C:/Users/jessi/Documents/antigravity/fearless-davinci/w22_out/report.json"
+}

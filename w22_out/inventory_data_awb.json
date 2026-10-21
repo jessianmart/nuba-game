@@ -1,0 +1,354 @@
+{
+ "1sik": {
+  "bod1": 4,
+  "prm": 1,
+  "skl1": 1,
+  "skl2": 1,
+  "eff1": 1,
+  "files": [
+   "1sikbod1.xfbin",
+   "1sikbod1c.xfbin",
+   "1sikbod1l.xfbin",
+   "1sikbod1s.xfbin",
+   "1sikeff1.xfbin",
+   "1sikhola_test.xfbin",
+   "1sikprm.bin.xfbin",
+   "1sikskl1.xfbin",
+   "1sikskl2.xfbin"
+  ],
+  "complete": true
+ },
+ "1tnd": {
+  "bod1": 4,
+  "prm": 1,
+  "skl1": 1,
+  "skl2": 1,
+  "eff1": 1,
+  "files": [
+   "1tndbod1.xfbin",
+   "1tndbod1c.xfbin",
+   "1tndbod1l.xfbin",
+   "1tndbod1s.xfbin",
+   "1tndeff1.xfbin",
+   "1tndprm.bin.xfbin",
+   "1tndskl1.xfbin",
+   "1tndskl2.xfbin"
+  ],
+  "complete": true
+ },
+ "1knk": {
+  "bod1": 4,
+  "prm": 1,
+  "skl1": 1,
+  "skl2": 1,
+  "eff1": 1,
+  "files": [
+   "1knkbod1.xfbin",
+   "1knkbod1c.xfbin",
+   "1knkbod1l.xfbin",
+   "1knkbod1s.xfbin",
+   "1knkeff1.xfbin",
+   "1knkprm.bin.xfbin",
+   "1knkskl1.xfbin",
+   "1knkskl2.xfbin"
+  ],
+  "complete": true
+ },
+ "1tyo": {
+  "bod1": 4,
+  "prm": 1,
+  "skl1": 1,
+  "skl2": 1,
+  "eff1": 1,
+  "files": [
+   "1tyobod1.xfbin",
+   "1tyobod1c.xfbin",
+   "1tyobod1l.xfbin",
+   "1tyobod1s.xfbin",
+   "1tyobod2.xfbin",
+   "1tyoeff1.xfbin",
+   "1tyoop.xfbin",
+   "1tyoprm.bin.xfbin",
+   "1tyoskl1.xfbin",
+   "1tyoskl2.xfbin"
+  ],
+  "complete": true
+ },
+ "1kib": {
+  "bod1": 4,
+  "prm": 1,
+  "skl1": 1,
+  "skl2": 1,
+  "eff1": 1,
+  "files": [
+   "1kibbod1.xfbin",
+   "1kibbod1c.xfbin",
+   "1kibbod1l.xfbin",
+   "1kibbod1s.xfbin",
+   "1kibeff1.xfbin",
+   "1kibprm.bin.xfbin",
+   "1kibskl1.xfbin",
+   "1kibskl2.xfbin"
+  ],
+  "complete": true
+ },
+ "1sin": {
+  "bod1": 4,
+  "prm": 1,
+  "skl1": 1,
+  "skl2": 1,
+  "eff1": 1,
+  "files": [
+   "1sinbod1.xfbin",
+   "1sinbod1c.xfbin",
+   "1sinbod1l.xfbin",
+   "1sinbod1s.xfbin",
+   "1sineff1.xfbin",
+   "1sinprm.bin.xfbin",
+   "1sinskl1.xfbin",
+   "1sinskl2.xfbin"
+  ],
+  "complete": true
+ },
+ "1hkg": {
+  "bod1": 4,
+  "prm": 1,
+  "skl1": 1,
+  "skl2": 1,
+  "eff1": 1,
+  "files": [
+   "1hkgbod1.xfbin",
+   "1hkgbod1c.xfbin",
+   "1hkgbod1l.xfbin",
+   "1hkgbod1s.xfbin",
+   "1hkgeff1.xfbin",
+   "1hkgprm.bin.xfbin",
+   "1hkgskl1.xfbin",
+   "1hkgskl2.xfbin"
+  ],
+  "complete": true
+ },
+ "1ino": {
+  "bod1": 4,
+  "prm": 1,
+  "skl1": 1,
+  "skl2": 1,
+  "eff1": 1,
+  "files": [
+   "1inobod1.xfbin",
+   "1inobod1c.xfbin",
+   "1inobod1l.xfbin",
+   "1inobod1s.xfbin",
+   "1inoeff1.xfbin",
+   "1inoflower.xfbin",
+   "1inoflower1.xfbin",
+   "1inoprm.bin.xfbin",
+   "1inoskl1.xfbin",
+   "1inoskl2.xfbin"
+  ],
+  "complete": true
+ },
+ "1ten": {
+  "bod1": 4,
+  "prm": 1,
+  "skl1": 1,
+  "skl2": 1,
+  "eff1": 1,
+  "files": [
+   "1tenbod1.xfbin",
+   "1tenbod1c.xfbin",
+   "1tenbod1l.xfbin",
+   "1tenbod1s.xfbin",
+   "1teneff1.xfbin",
+   "1tenprm.bin.xfbin",
+   "1tenskl1.xfbin",
+   "1tenskl2.xfbin"
+  ],
+  "complete": true
+ },
+ "1szn": {
+  "bod1": 3,
+  "prm": 1,
+  "skl1": 1,
+  "skl2": 0,
+  "eff1": 1,
+  "files": [
+   "1sznbod1.xfbin",
+   "1sznbod1c.xfbin",
+   "1sznbod1s.xfbin",
+   "1szneff1.xfbin",
+   "1sznprm.bin.xfbin",
+   "1sznskl1.xfbin"
+  ],
+  "complete": false
+ },
+ "1guy": {
+  "bod1": 4,
+  "prm": 1,
+  "skl1": 1,
+  "skl2": 1,
+  "eff1": 1,
+  "files": [
+   "1guyawa.xfbin",
+   "1guybod1.xfbin",
+   "1guybod1c.xfbin",
+   "1guybod1l.xfbin",
+   "1guybod1s.xfbin",
+   "1guyeff1.xfbin",
+   "1guyprm.bin.xfbin",
+   "1guyskl1.xfbin",
+   "1guyskl2.xfbin"
+  ],
+  "complete": true
+ },
+ "1orc": {
+  "bod1": 4,
+  "prm": 1,
+  "skl1": 1,
+  "skl2": 1,
+  "eff1": 1,
+  "files": [
+   "1orcbod1.xfbin",
+   "1orcbod1c.xfbin",
+   "1orcbod1l.xfbin",
+   "1orcbod1s.xfbin",
+   "1orceff1.xfbin",
+   "1orcprm.bin.xfbin",
+   "1orcskl1.xfbin",
+   "1orcskl2.xfbin"
+  ],
+  "complete": true
+ },
+ "1dea": {
+  "bod1": 1,
+  "prm": 0,
+  "skl1": 0,
+  "skl2": 0,
+  "eff1": 0,
+  "files": [
+   "1deabod1.xfbin",
+   "1dealhand.xfbin",
+   "1deawep1.xfbin",
+   "1deawep2.xfbin"
+  ],
+  "complete": false
+ },
+ "1kmm": {
+  "bod1": 4,
+  "prm": 1,
+  "skl1": 1,
+  "skl2": 1,
+  "eff1": 1,
+  "files": [
+   "1kmmawa.xfbin",
+   "1kmmbod1.xfbin",
+   "1kmmbod1c.xfbin",
+   "1kmmbod1l.xfbin",
+   "1kmmbod1s.xfbin",
+   "1kmmeff1.xfbin",
+   "1kmmprm.bin.xfbin",
+   "1kmmskl1.xfbin",
+   "1kmmskl2.xfbin"
+  ],
+  "complete": true
+ },
+ "1ank": {
+  "bod1": 3,
+  "prm": 1,
+  "skl1": 1,
+  "skl2": 0,
+  "eff1": 1,
+  "files": [
+   "1ankbod1.xfbin",
+   "1ankbod1c.xfbin",
+   "1ankbod1s.xfbin",
+   "1ankeff1.xfbin",
+   "1ankprm.bin.xfbin",
+   "1ankskl1.xfbin"
+  ],
+  "complete": false
+ },
+ "1kdm": {
+  "bod1": 3,
+  "prm": 1,
+  "skl1": 1,
+  "skl2": 0,
+  "eff1": 1,
+  "files": [
+   "1kdmbod1.xfbin",
+   "1kdmbod1c.xfbin",
+   "1kdmbod1s.xfbin",
+   "1kdmeff1.xfbin",
+   "1kdmprm.bin.xfbin",
+   "1kdmskl1.xfbin"
+  ],
+  "complete": false
+ },
+ "1jrb": {
+  "bod1": 3,
+  "prm": 1,
+  "skl1": 1,
+  "skl2": 0,
+  "eff1": 1,
+  "files": [
+   "1jrbbod1.xfbin",
+   "1jrbbod1c.xfbin",
+   "1jrbbod1s.xfbin",
+   "1jrbeff1.xfbin",
+   "1jrbprm.bin.xfbin",
+   "1jrbskl1.xfbin"
+  ],
+  "complete": false
+ },
+ "1krs": {
+  "bod1": 4,
+  "prm": 1,
+  "skl1": 1,
+  "skl2": 1,
+  "eff1": 1,
+  "files": [
+   "1krsbod1.xfbin",
+   "1krsbod1c.xfbin",
+   "1krsbod1l.xfbin",
+   "1krsbod1s.xfbin",
+   "1krseff1.xfbin",
+   "1krsprm.bin.xfbin",
+   "1krsskl1.xfbin",
+   "1krsskl2.xfbin"
+  ],
+  "complete": true
+ },
+ "1krn": {
+  "bod1": 3,
+  "prm": 1,
+  "skl1": 1,
+  "skl2": 0,
+  "eff1": 1,
+  "files": [
+   "1krnbod1.xfbin",
+   "1krnbod1c.xfbin",
+   "1krnbod1s.xfbin",
+   "1krneff1.xfbin",
+   "1krnprm.bin.xfbin",
+   "1krnskl1.xfbin"
+  ],
+  "complete": false
+ },
+ "1kmv": {
+  "bod1": 3,
+  "prm": 1,
+  "skl1": 1,
+  "skl2": 0,
+  "eff1": 1,
+  "files": [
+   "1kmvawa.xfbin",
+   "1kmvbod1.xfbin",
+   "1kmvbod1c.xfbin",
+   "1kmvbod1l.xfbin",
+   "1kmveff1.xfbin",
+   "1kmvprm.bin.xfbin",
+   "1kmvskl1.xfbin"
+  ],
+  "complete": false
+ }
+}

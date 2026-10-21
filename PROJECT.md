@@ -62,6 +62,10 @@ NUBA is a 5v5 3D WebGL MOBA Deathmatch built on Three.js (v0.169.0), Web Audio A
 | 36 | 0 Console Errors & Async Loading Contract | 100% async loading of meshes/textures, 0 console errors, 0 runtime exceptions, no NaN coordinates | M7 (Validation) | Follow-up R3 / Testing Survey |
 | 37 | Comprehensive E2E Verification & Forensic Audit | Full automated E2E test suite pass on localhost:8080 and clean forensic integrity audit | M7 (Validation) | Follow-up R3 / Acceptance Criteria |
 
+| 39 | PV0 Fundação Mobile: viewport-fit + safe-area + rotate overlay + INPUT state | Meta `viewport-fit=cover`, `touch-action:none` no canvas, `overscroll-behavior:none`, CSS vars de safe-area (`--safe-*`), overlay `#rotate-overlay` "GIRE O DISPOSITIVO" (portrait+touch via `@media (orientation: portrait)`), `window.__DEVICE` (isTouch/isMobile/dpr) + `body.touch`, e `window.INPUT` (moveX/moveZ/aim/fire/chakra) — estado único de input consumido pelo loop (teclado E touch escrevem nele; merge aditivo nos pontos de leitura: movimento clampa teclas+joystick, `mouseDown || INPUT.fire`, `keys... || INPUT.chakra`) | PV0 (Mobile) | docs/PIVOT_MOBILE.md §PV0 |
+| 40 | PV1-A Modos de Partida: MATCH_CONFIGS + Combate 3v3 | `MATCH_CONFIGS` (dm_3v3: 3+3, 15 abates, 3:00, respawn 5s, prorrogação 30s · dm_legacy_5v5: comportamento anterior byte-a-byte · br_vila: placeholder PV2) + `startMatch(configId)`; `window.start5v5Match` vira ALIAS legacy (contrato E2E preservado: suite chama o alias e continua vendo 5+5/META 30/5:00); roster/círculo de spawn/tempo/prorrogação/respawn/meta dinâmicos por config; `#mode-picker` no lobby (3v3 DEFAULT por decisão do usuário, CLÁSSICO 5v5, REALEZA NA VILA "em breve"); revanche reusa o modo anterior (`lastMatchConfigId`) | PV1 (Mobile MVP) | docs/PIVOT_MOBILE.md §PV1 |
+| 41 | PV1-B Controles Touch: joystick + cluster + auto-aim | `#touch-controls` (aditivo no `#hud-screen`, visível SÓ com `body.touch` + partida via CSS gate): joystick flutuante esquerdo (`#touch-joystick`, spawn-on-touch, raio 56px, dead-zone 0.18, escreve `INPUT.moveX/moveZ`) + cluster direito 6 botões (`tbtn-atk/q/w/e/r/c` com os mesmos ícones de skin dos slots desktop; ATK hold = `INPUT.fire`, skills tap = `executeSkill` com auto-aim `findAimTarget` range 46 + facing lock, chakra hold); `pointer-events:auto` explícito na camada (HUD ancestors usam none pass-through); haptics `navigator.vibrate(12)`; câmera MOBA follow-cam mantida (estilo Brawl); `.ability-key` oculto em body.touch | PV1 (Mobile MVP) | docs/PIVOT_MOBILE.md §PV1 |
+
 ## Milestones
 | # | Name | Scope | Dependencies | Status |
 |---|------|-------|-------------|--------|
@@ -81,6 +85,9 @@ NUBA is a 5v5 3D WebGL MOBA Deathmatch built on Three.js (v0.169.0), Web Audio A
 | M5 | Chunin Arenas Extraction & Map Selector Sync | F24, F25, F26, F27, F28: High-fidelity sd01b (Giant Hands Statue + authentic diffuse textures), sd03b (zero spikes + stone wall), sd04a (rock cliff + foliage alphaTest), arenas.json sanctuary coords, camera clamping profiles, map selector | Survey complete | DONE |
 | M6 | 3D Animations & Storm VFX for 10 Ninjas | F29, F30, F31, F32, F33, F34: Eliminate wireframes, gyroscopic Rasengan, Chidori lightning arcs, Kirin, Kaiten, Sand Hand, Lion Fists, Amaterasu, Lee cyclone; 5 action slots animated on 20-bone rigs, hand bone binding | M5 | IN_PROGRESS |
 | M7 | Final Milestone: Photographic Validation & 0 Console Errors | F35, F36, F37: Headless Edge high-res screenshots of 3 arenas and signature VFX, 0 console errors, 100% async loading, full E2E pass, Forensic Integrity Audit | M5, M6 | PLANNED |
+
+| PV0 | Mobile Foundation | Viewport/safe-area/touch-action + `__DEVICE`/`body.touch` + `window.INPUT` (merge aditivo: zero mudança desktop) | M9 | DONE |
+| PV1 | Mobile MVP: Combate 3v3 + Touch | MATCH_CONFIGS + startMatch(id) + alias legacy + mode picker + joystick/cluster/auto-aim; validação: probe_pv1a (3v3 3+3/META 15/180s + legacy 5+5/META 30/300s) + probe_pv1b (touch: joystick move unidade, ATK hold, Q tap cd, chakra hold) + bateria 38/38 + 0 erros | PV0 | DONE |
 
 ## Interface Contracts
 ### DOM HUD & Map Selector ↔ Client Engine (`index.html` / `styles.css` ↔ `game.js`)
@@ -131,3 +138,7 @@ NUBA is a 5v5 3D WebGL MOBA Deathmatch built on Three.js (v0.169.0), Web Audio A
     low/med/high), game feel (gate JUICE.enabled nas 4 juice fns), controles (keymap real);
     persistência no perfil local; smoke 9/9 com reload; bateria 38/38 zero console errors.
     + recuperação do incidente W1.1 (revert paralelo) via session_search.
+38. **PV1 Touch Controls (mobile jogável)** — joystick flutuante + cluster .tbtn com ícones do
+    skin e auto-aim, chakra hold, câmera thirdperson auto, gate de atk fantasma; smoke Tier 5
+    CDP landscape PASS (player anda, jutsu executa); 3v3 default já ativo no lobby (PV1.1/PV1.2
+    dos agentes); desktop intacto.

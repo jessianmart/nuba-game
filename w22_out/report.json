@@ -1,0 +1,235 @@
+{
+ "heroId": "1orc",
+ "nome": "Orochimaru (Part I, Storm 1) - Legendary Sannin",
+ "criterio": "Heroi #12 do roster de 46 (combat_params.json), sequencia do pipeline W2.1 (Temari #11). Primeiro candidato: 1sik (Shikamaru) - modelo+FK+texturas OK, mas 1sikeff1.xfbin e um stub de 422 bytes (0 modelos/0 texturas VFX; jutsus de sombra sao shader-driven) -> descartado por assets de skill incompletos (parcial preservado em attempt_1sik_partial/). Sonda de eff1 em todos os candidatos: 1sik/1tnd/1tyo/1hkg/1kib = stubs; 1sin=5 modelos, 1ten=33, 1ino=4, 1orc=3, 1krs=6, 1kmm=2, 1guy=4. Escolhido 1orc (Orochimaru): mais iconico com assets completos (Sannin Lendivelario, antagonista principal do arco 1, par do Jiraiya 1jry ja jogavel), cobertura completa bod1x4/prm/skl1/skl2/eff1 no TOC de data.awb. Identidade confirmada: Storm 1 ID Sheet (Scribd): '1orcbod1 Orochimaru - Evil Giant Blade Dance, Orochimaru's Group'; 'Orochimaru' presente em public/assets/data/so_strings.json.",
+ "fonte": "assets/data/sim/data.awb (APK naruto-ultimate-ninja-storm-mod_129_working_1791703630.apk) -> 1orcbod1.xfbin (417 chunks, 3.5MB decomprimido), 1orcprm.bin.xfbin, 1orcskl1/2.xfbin, 1orceff1.xfbin; assets/data/sim/installTime.awb -> 1efcmn.xfbin (VFX comum)",
+ "artefatos": [
+  {
+   "tipo": "model_rigged_3d",
+   "path": "assets/models/1orc.json",
+   "bytes": 1208811,
+   "formatoOk": true,
+   "meshes": 9,
+   "verts": 12920,
+   "tris": 15123,
+   "bones": 20,
+   "normalizedHeight": 5.4,
+   "databookHeightCm": 179.4,
+   "worldHeight": 5.98
+  },
+  {
+   "tipo": "animations",
+   "path": "assets/data/animations.json",
+   "bytes": 153665,
+   "formatoOk": true,
+   "clips": [
+    "idle",
+    "run",
+    "dash",
+    "attack",
+    "attack2",
+    "attack3",
+    "jutsu",
+    "jutsu2",
+    "ult",
+    "down",
+    "charge"
+   ],
+   "numClips": 11,
+   "format": "FK-quaternion local-rotation curves + pelvisPos (same as 1nrt)"
+  },
+  {
+   "tipo": "skill_vfx",
+   "path": "assets/skills/skill_vfx.json",
+   "bytes": 552339,
+   "formatoOk": true,
+   "entries": [
+    "common",
+    "1orc"
+   ],
+   "hero_models": [
+    "1orceff1_01",
+    "1orceff1_02",
+    "1orceff1_03"
+   ],
+   "hero_mesh_parts": 3,
+   "hero_textures": [
+    "skills/1orc_1orceff1_01.png"
+   ],
+   "common_models": 101,
+   "common_textures": 86
+  },
+  {
+   "tipo": "texture",
+   "path": "assets/textures/1orc_1orcbody_0.png",
+   "bytes": 8417,
+   "formatoOk": true
+  },
+  {
+   "tipo": "texture",
+   "path": "assets/textures/1orc_1orcbody_1.png",
+   "bytes": 8417,
+   "formatoOk": true
+  },
+  {
+   "tipo": "texture",
+   "path": "assets/textures/1orc_1orcbody_t1.png",
+   "bytes": 12680,
+   "formatoOk": true
+  },
+  {
+   "tipo": "texture",
+   "path": "assets/textures/1orc_1orceye.png",
+   "bytes": 10523,
+   "formatoOk": true
+  },
+  {
+   "tipo": "texture",
+   "path": "assets/textures/1orc_1orckng.png",
+   "bytes": 8438,
+   "formatoOk": true
+  },
+  {
+   "tipo": "texture",
+   "path": "assets/textures/1orc_1orcsej1.png",
+   "bytes": 12457,
+   "formatoOk": true
+  },
+  {
+   "tipo": "texture",
+   "path": "assets/textures/1orc_1orcsej2.png",
+   "bytes": 3222,
+   "formatoOk": true
+  },
+  {
+   "tipo": "texture",
+   "path": "assets/textures/1orc_1orcsej3.png",
+   "bytes": 8379,
+   "formatoOk": true
+  },
+  {
+   "tipo": "texture",
+   "path": "assets/textures/1orc_1orcsej4.png",
+   "bytes": 6286,
+   "formatoOk": true
+  },
+  {
+   "tipo": "texture",
+   "path": "assets/textures/1orc_1orctail.png",
+   "bytes": 151,
+   "formatoOk": true
+  },
+  {
+   "tipo": "skill_texture",
+   "path": "assets/skills/1orc_1orceff1_01.png",
+   "bytes": 58567,
+   "formatoOk": true
+  },
+  {
+   "tipo": "skill_textures_common",
+   "path": "assets/skills/1efc_*.png",
+   "bytes": 981492,
+   "count": 85,
+   "formatoOk": true
+  }
+ ],
+ "arquivos_extraidos_total": 100,
+ "bytes_total": 3033844,
+ "passos_do_pipeline": [
+  "1. Inventário do TOC de data.awb (w22_inventory.py): 611 entradas; cobertura bod1/prm/skl1/skl2/eff1 por candidato; probe de eff1 (w22_probe_eff1_all.py) revelou stubs VFX em 1sik/1tnd/1tyo/1hkg/1kib",
+  "2. Candidato inicial 1sik (Shikamaru): estágios A-C OK (modelo 8 meshes/12133 verts, 11 clips FK) mas estágio D = 0 partes VFX herói (eff1 stub) -> descartado; parcial em attempt_1sik_partial/",
+  "3. Escolha final 1orc (Orochimaru): estágio A modelo rigado 20 bones + 10 texturas (réplica da seção 3 de tools/extract_moba_assets.py) -> w22_driver.py A",
+  "4. Normalização 5.4m (tools/fix_and_normalize_models) -> w22_driver.py B (591 verts de clavícula corrigidos)",
+  "5. FK fiel + databook 179.4cm (tools/extract_faithful_fk_animations) -> w22_driver.py C (11 clips: idle 20f, run 17f, dash 16f, attack 21f, attack2 21f, attack3 21f, jutsu 32f, jutsu2 32f, ult 36f, down 21f, charge 20f)",
+  "6. VFX de skill (tools/extract_all_storm_skills) -> w22_driver.py D (comum 101 modelos/86 texturas + 1orc 3 modelos: 1orceff1_01/02/03)",
+  "7. Validação estrutural vs 1nrt.json (w22_validate.py): modelo/animações/vfx/texturas -> 0 problemas"
+ ],
+ "ferramentas_rodadas": [
+  "tools/apk_inspect.py (parse_utf TOC + decompress_crilayla)",
+  "tools/extract_moba_assets.py (parsers NUCC/NDP3/NTP3, replicados via w22_driver.py)",
+  "tools/fix_and_normalize_models.py (estágio B)",
+  "tools/extract_faithful_fk_animations.py (estágio C)",
+  "tools/extract_all_storm_skills.py (estágio D)",
+  "w22_validate.py (validação estrutural)"
+ ],
+ "tempo_total_min": 1.5,
+ "obstaculos": [
+  "Pacote 'tools' do hermes-agent (C:/Users/jessi/AppData/Local/hermes/hermes-agent/tools/__init__.py) sombreia o namespace package 'tools' do repo (pacote regular vence namespace) -> resolvido com shim w22_out/runtime/tools/__init__.py redirecionando __path__",
+  "extract_faithful_fk_animations não cria OUT_DIR/data (FileNotFoundError na 1a execução) -> mkdir manual; re-execução idempotente (escala mede altura atual)",
+  "1sikeff1.xfbin é stub (422 bytes): sem VFX herói para Shikamaru -> fallback para 1orc"
+ ],
+ "sanity_checks": {
+  "modelo_altura_m": 5.98,
+  "bones_iguais_1nrt": true,
+  "clip_set_igual_1nrt": true,
+  "texturas_referenciadas_existem": true,
+  "nenhuma_escrita_em_public": true
+ },
+ "validacao": {
+  "model": {
+   "keysOk": true,
+   "holes": [],
+   "meshes": 9,
+   "verts": 12920,
+   "tris": 15123,
+   "bones": 20,
+   "databookHeightCm": 179.4,
+   "normalizedHeight": 5.4,
+   "worldHeight": 5.98,
+   "id": "1orc",
+   "name": "Orochimaru"
+  },
+  "animations": {
+   "clips": [
+    "idle",
+    "run",
+    "dash",
+    "attack",
+    "attack2",
+    "attack3",
+    "jutsu",
+    "jutsu2",
+    "ult",
+    "down",
+    "charge"
+   ],
+   "prod_clips": [
+    "idle",
+    "run",
+    "dash",
+    "attack",
+    "attack2",
+    "attack3",
+    "jutsu",
+    "jutsu2",
+    "ult",
+    "down",
+    "charge"
+   ],
+   "problem": [],
+   "keysOk": true
+  },
+  "skill_vfx": {
+   "keys": [
+    "common",
+    "1orc"
+   ],
+   "heroKeysOk": true,
+   "source": "1orceff1.xfbin",
+   "n_models": 3,
+   "n_meshes_total": 3,
+   "model_names": [
+    "1orceff1_01",
+    "1orceff1_02",
+    "1orceff1_03"
+   ],
+   "problem": [],
+   "keysOk": true
+  },
+  "textures_ok": true,
+  "problems": []
+ },
+ "validacao_resultado": "passed",
+ "validacao_problemas": [],
+ "recomendacao_de_integracao": "1orc pronto para integrar: copiar assets/models/1orc.json, assets/data/animations.json (merge), assets/skills/skill_vfx.json (merge entradas common+1orc), assets/skills/1efc_*.png + 1orc_*.png, assets/textures/1orc_*.png para public/assets/; adicionar entrada em roster_meta.json com model=assets/models/1orc.json, heightCm=179.4, worldHeight=5.98. Skills: jutsu=Snake Bearer Jutsu (skl1), jutsu2/ult=Evil Giant Blade Dance (skl2). Nota: herói é vilão - role sugerido 'Assassin / Zone Control'."
+}

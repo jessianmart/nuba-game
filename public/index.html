@@ -2,10 +2,10 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>NUBA: Arena de Batalha Ninja (5v5 MOBA Combate Mortal)</title>
   <link rel="icon" href="assets/logo/logo.png" />
-  <link rel="stylesheet" href="styles.css?v=27" />
+  <link rel="stylesheet" href="styles.css?v=35" />
   <script type="importmap">
     {
       "imports": {
@@ -15,6 +15,12 @@
   </script>
 </head>
 <body>
+  <!-- PV0: aviso de orientacao (landscape-only) — ver docs/PIVOT_MOBILE.md decisao #3 -->
+  <div id="rotate-overlay" aria-hidden="true">
+    <div class="rotate-phone"></div>
+    <span class="rotate-text">GIRE O DISPOSITIVO</span>
+    <span class="rotate-sub">O NUBA joga na horizontal — a vila e as arenas foram feitas para telas largas</span>
+  </div>
   <!-- 3D WebGL Canvas -->
   <canvas id="game-canvas"></canvas>
 
@@ -94,6 +100,13 @@
         </div>
 
         <div class="pedestal-hint">Arraste para girar o ninja em 360°</div>
+
+        <!-- PV1.1: seletor de modo (docs/PIVOT_MOBILE.md decisao #1) -->
+        <div id="mode-picker" role="tablist" aria-label="Modo de jogo">
+          <button type="button" class="mode-chip selected" data-mode="dm_3v3">COMBATE 3v3<small>15 abates · 3 min</small></button>
+          <button type="button" class="mode-chip" data-mode="dm_legacy_5v5">CLÁSSICO 5v5<small>30 abates · 5 min</small></button>
+          <button type="button" class="mode-chip" data-mode="br_vila" disabled>REALEZA NA VILA<small>em breve · PV2</small></button>
+        </div>
 
         <div class="hero-stage-cta">
           <div class="queue-status">
@@ -516,6 +529,19 @@
         </div>
       </div>
 
+          <!-- PV1.3/PV1.4: controles touch (docs/PIVOT_MOBILE.md §2.4) — visível só em body.touch + partida -->
+          <div id="touch-controls">
+            <div id="touch-joystick"><div id="joystick-base"></div><div id="joystick-knob"></div></div>
+            <div id="touch-cluster">
+              <button type="button" class="tbtn tbtn-r" id="tbtn-r" aria-label="Ougi Supremo"><img src="assets/ui/skin/icon_r.png" alt="R"></button>
+              <button type="button" class="tbtn tbtn-c" id="tbtn-c" aria-label="Concentrar Chakra"><img src="assets/ui/skin/icon_c.png" alt="F"></button>
+              <button type="button" class="tbtn tbtn-q" id="tbtn-q" aria-label="Ninjutsu Primário"><img src="assets/ui/skin/icon_q.png" alt="Q"></button>
+              <button type="button" class="tbtn tbtn-e" id="tbtn-e" aria-label="Kawarimi"><img src="assets/ui/skin/icon_e.png" alt="ESPAÇO"></button>
+              <button type="button" class="tbtn tbtn-w" id="tbtn-w" aria-label="Ninjutsu Secundário"><img src="assets/ui/skin/icon_w.png" alt="E"></button>
+              <button type="button" class="tbtn tbtn-atk" id="tbtn-atk" aria-label="Ataque Básico"><img src="assets/ui/skin/icon_atk.png" alt="ATK"></button>
+            </div>
+          </div>
+
       <!-- Right: Discreet Controls Drawer Toggle / Helper -->
       <div id="controls-drawer" class="controls-cheat-sheet hidden">
         <div class="cheat-header">
@@ -684,6 +710,6 @@
     </div>
 
   <script src="vendor/gsap.min.js"></script>
-  <script type="module" src="game.js?v=34"></script>
+  <script type="module" src="game.js?v=35"></script>
 </body>
 </html>

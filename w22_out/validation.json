@@ -1,0 +1,64 @@
+{
+ "model": {
+  "keysOk": true,
+  "holes": [],
+  "meshes": 9,
+  "verts": 12920,
+  "tris": 15123,
+  "bones": 20,
+  "databookHeightCm": 179.4,
+  "normalizedHeight": 5.4,
+  "worldHeight": 5.98,
+  "id": "1orc",
+  "name": "Orochimaru"
+ },
+ "animations": {
+  "clips": [
+   "idle",
+   "run",
+   "dash",
+   "attack",
+   "attack2",
+   "attack3",
+   "jutsu",
+   "jutsu2",
+   "ult",
+   "down",
+   "charge"
+  ],
+  "prod_clips": [
+   "idle",
+   "run",
+   "dash",
+   "attack",
+   "attack2",
+   "attack3",
+   "jutsu",
+   "jutsu2",
+   "ult",
+   "down",
+   "charge"
+  ],
+  "problem": [],
+  "keysOk": true
+ },
+ "skill_vfx": {
+  "keys": [
+   "common",
+   "1orc"
+  ],
+  "heroKeysOk": true,
+  "source": "1orceff1.xfbin",
+  "n_models": 3,
+  "n_meshes_total": 3,
+  "model_names": [
+   "1orceff1_01",
+   "1orceff1_02",
+   "1orceff1_03"
+  ],
+  "problem": [],
+  "keysOk": true
+ },
+ "textures_ok": true,
+ "problems": []
+}

@@ -2,6 +2,28 @@ import * as THREE from 'three';
 window.THREE = THREE;
 
 // ============================================================================
+// PV0.2 DEVICE DETECTION + PV0.3 INPUT STATE (Mobile Foundation — docs/PIVOT_MOBILE.md)
+// ============================================================================
+window.__DEVICE = {
+  isTouch: ('ontouchstart' in window) || (navigator.maxTouchPoints || 0) > 0,
+  isMobile: /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) ||
+            ((navigator.maxTouchPoints || 0) > 0 && Math.min(screen.width, screen.height) < 820),
+  dpr: window.devicePixelRatio || 1
+};
+if (window.__DEVICE.isTouch) document.body.classList.add('touch');
+
+// PV0.3: estado unico de input analogico — teclado E touch escrevem aqui (§2.4 do plano)
+window.INPUT = {
+  moveX: 0, moveZ: 0,                 // joystick analogico -1..1 (moveZ +1 = frente)
+  aimX: 0, aimZ: 0, aimActive: false, // drag-aim manual (vetor unitario)
+  fire: false,                        // botao ATK touch segurado
+  chakra: false                       // botao de concentrar chakra segurado (PV1.4)
+};
+
+// ============================================================================
+// PV1.3/PV1.4 TOUCH CONTROLS (docs/PIVOT_MOBILE.md §2.4) — joystick + cluster
+// ============================================================================
+window.__cameraMode = () => cameraMode; // PV1.5a: leitura E2E do modo de câmera
 // CHARACTER SKILL KITS (Authentic Naruto Ultimate Ninja Storm Movesets)
 // ============================================================================
 const HERO_KITS = {
@@ -255,6 +277,18 @@ const basePos = team => {
 };
 
 const TARGET_KILLS = 30;
+
+// ============================================================================
+// PV1.1 MATCH CONFIGS (docs/PIVOT_MOBILE.md §2.2 — decisao #1: dm_3v3 e' o default)
+// ============================================================================
+const MATCH_CONFIGS = {
+  dm_3v3:        { label: 'COMBATE 3v3', teamSize: 3, killTarget: 15, time: 180, respawn: 5,  overtime: 30, mode: 'dm' },
+  dm_legacy_5v5: { label: 'COMBATE 5v5', teamSize: 5, killTarget: 30, time: 300, respawn: 6,  overtime: 60, mode: 'dm' },
+  br_vila:       { label: 'REALEZA NA VILA', mode: 'br', arena: 'sd00a', players: 10, squad: 1 } // PV2 (§2.3)
+};
+let activeMatchCfg = MATCH_CONFIGS.dm_legacy_5v5;   // modo atual (global — playMatchIntro/tick leem)
+let lastMatchConfigId = 'dm_legacy_5v5';           // revanche reusa o modo da partida anterior
+let selectedModeId = 'dm_3v3';                      // default do lobby (decisao #1 do plano)
 let scoreBlue = 0;
 let scoreRed = 0;
 let matchTimeRemaining = 300; // 5:00
@@ -1462,7 +1496,7 @@ function initLobbyNav() {
     btnArenaPlay.addEventListener('click', () => {
       sfx.init();
       sfx.click();
-      start5v5Match();
+      startMatch(selectedModeId);
     });
   }
 
@@ -1612,7 +1646,11 @@ function buildMOBA3DArena() {
 // ============================================================================
 // SPAWN 10 NINJAS (5 BLUE vs 5 RED) WITH REAL 3D SKINNED MODELS
 // ============================================================================
-async function start5v5Match() {
+async function startMatch(configId) {
+  const CFG = MATCH_CONFIGS[configId] || MATCH_CONFIGS.dm_legacy_5v5;
+  activeMatchCfg = CFG;
+  lastMatchConfigId = MATCH_CONFIGS[configId] ? configId : 'dm_legacy_5v5';
+  if (window.__DEVICE.isTouch && cameraMode !== 'thirdperson') toggleCameraMode(); // PV1.5a: câmera mobile
   // BOOT-GUARD (cold-load race): window.start5v5Match e exposto antes do fetch do boot
   // popular rosterMeta — sem esperar: TypeError reading 'id' + spawn incompleto (flake P2)
   for (let _bg = 0; _bg < 100 && (!Array.isArray(rosterMeta) || rosterMeta.length === 0); _bg++) {
@@ -1630,9 +1668,11 @@ async function start5v5Match() {
   matchRecorded = false;
   renderSkinDigits(document.getElementById('score-blue'), 0);
   renderSkinDigits(document.getElementById('score-red'), 0);
-  matchTimeRemaining = 300;
+  matchTimeRemaining = CFG.time;
   matchOvertime = false; // T5
   matchSuddenDeath = false; // T5
+  const _goalEl = document.querySelector('.match-goal-txt');
+  if (_goalEl) _goalEl.textContent = `META: ${CFG.killTarget} ABATES`;
   const _mtReset = document.getElementById('match-timer');
   if (_mtReset) _mtReset.classList.remove('overtime', 'sudden');
   projectiles = [];
@@ -1664,8 +1704,8 @@ async function start5v5Match() {
 
   const playerHero = rosterMeta.find(h => h.id === selectedHeroId) || rosterMeta[0];
   const others = rosterMeta.filter(h => h.id !== playerHero.id);
-  const blueRoster = [playerHero, ...others.slice(0, 4)];
-  const redRoster = others.slice(4, 9);
+  const blueRoster = [playerHero, ...others.slice(0, CFG.teamSize - 1)];
+  const redRoster = others.slice(CFG.teamSize - 1, 2 * CFG.teamSize - 1);
 
   const spawnTeam = async (teamRoster, teamName, baseX, baseZ) => {
     const meshes = await Promise.all(teamRoster.map(h => loadCharacter3DModel(h.id)));
@@ -1687,7 +1727,7 @@ async function start5v5Match() {
       auraMesh.visible = false;
       mesh.add(auraMesh);
 
-      const offsetAngle = (i / 5) * Math.PI * 2;
+      const offsetAngle = (i / teamRoster.length) * Math.PI * 2;
       const sx = baseX + Math.cos(offsetAngle) * 8;
       const sz = baseZ + Math.sin(offsetAngle) * 8;
       mesh.position.set(sx, 0, sz);
@@ -1802,10 +1842,10 @@ function playMatchIntro(blueRoster, redRoster) {
   const countDigit = document.getElementById('intro-count-digit');
   const finishIntro = () => {
     if (introEl) { introEl.classList.remove('show'); introEl.classList.add('hidden'); }
-    showBanner(`COMBATE 5v5 EM ${ARENA.label.toUpperCase()} INICIADO! META: ${TARGET_KILLS} ABATES`);
+    showBanner(`${activeMatchCfg.label} EM ${ARENA.label.toUpperCase()} INICIADO! META: ${activeMatchCfg.killTarget} ABATES`);
   };
   if (!introEl || !blueSlots || !redSlots) {
-    showBanner(`COMBATE 5v5 EM ${ARENA.label.toUpperCase()} INICIADO! META: ${TARGET_KILLS} ABATES`);
+    showBanner(`${activeMatchCfg.label} EM ${ARENA.label.toUpperCase()} INICIADO! META: ${activeMatchCfg.killTarget} ABATES`);
     return;
   }
   const fillSlots = (container, roster) => {
@@ -3427,7 +3467,7 @@ function dealDamage(attacker, target, amount, skillName) {
   target.z = clampPush(target.z + (dz / len) * 1.4);
 
   if (target.hp <= 0) {
-    target.deadTimer = 6.0; // 6s respawn countdown total
+    target.deadTimer = activeMatchCfg.respawn; // respawn por modo (legacy 6s, 3v3 5s)
     AUTH_SFX.play('down', { vol: 0.8 }); AUTH_SFX.play('ko', { vol: 0.9 }); // W1.1
     target.state = 'down'; // Authentic knockdown fall animation
     target.animDuration = 2.0; // Lie on ground for 2.0s before vanishing
@@ -3516,8 +3556,8 @@ function dealDamage(attacker, target, amount, skillName) {
 
     if (matchSuddenDeath) {
       endMatch(scoreBlue > scoreRed ? 'MORTE SÚBITA — VITÓRIA TIME AZUL!' : 'MORTE SÚBITA — VITÓRIA TIME VERMELHO!'); // T5
-    } else if (scoreBlue >= TARGET_KILLS || scoreRed >= TARGET_KILLS) {
-      endMatch(scoreBlue >= TARGET_KILLS ? 'VITÓRIA DO TIME KONOHA AZUL!' : 'VITÓRIA DO TIME RIVAL VERMELHO!');
+    } else if (scoreBlue >= activeMatchCfg.killTarget || scoreRed >= activeMatchCfg.killTarget) {
+      endMatch(scoreBlue >= activeMatchCfg.killTarget ? 'VITÓRIA DO TIME KONOHA AZUL!' : 'VITÓRIA DO TIME RIVAL VERMELHO!');
     }
   }
 }
@@ -4515,7 +4555,7 @@ function showMatchResults(winner, bannerTextFallback) {
   ov.setAttribute('aria-hidden', 'false');
 
   const btnRematch = document.getElementById('btn-rematch');
-  if (btnRematch) btnRematch.onclick = () => { hideMatchResults(); matchEnding = false; start5v5Match(); };
+  if (btnRematch) btnRematch.onclick = () => { hideMatchResults(); matchEnding = false; startMatch(lastMatchConfigId); };
   const btnLobby = document.getElementById('btn-results-lobby');
   if (btnLobby) btnLobby.onclick = () => { hideMatchResults(); matchEnding = false; returnToLobby(); };
 }
@@ -4660,7 +4700,7 @@ function updateMatch(dt, elapsed) {
   } else if (matchTimeRemaining <= 0) {
     if (scoreBlue === scoreRed && !matchOvertime) {
       matchOvertime = true;
-      matchTimeRemaining = 60; // T5: prorrogacao de 1 minuto
+      matchTimeRemaining = activeMatchCfg.overtime; // T5: prorrogacao por modo (legacy 60s, 3v3 30s)
       AUTH_SFX.play('time_up', { vol: 0.9 }); // W1.1
       showBanner('PRORROGAÇÃO! 1 MINUTO PARA DESEMPATAR', 2400);
       const _mt = document.getElementById('match-timer');
@@ -5024,7 +5064,7 @@ function updateMatch(dt, elapsed) {
 function updatePlayerUnit(u, dt) {
   if (u.animTimer > 0) return;
 
-  const charging = keys['ShiftLeft'] || keys['ShiftRight'] || keys['KeyF'];
+  const charging = keys['ShiftLeft'] || keys['ShiftRight'] || keys['KeyF'] || (window.INPUT && window.INPUT.chakra);
   if (charging && u.animTimer <= 0) {
     u.state = 'charge';
     u.chakra = Math.min(u.maxChakra, u.chakra + dt * 32);
@@ -5045,6 +5085,9 @@ function updatePlayerUnit(u, dt) {
   if (keys['KeyS'] || keys['ArrowDown']) inputForward -= 1;
   if (keys['KeyD'] || keys['ArrowRight']) inputRight += 1;
   if (keys['KeyA'] || keys['ArrowLeft']) inputRight -= 1;
+  // PV0.3: joystick analogico soma com as teclas digitais e clampa em [-1, 1]
+  inputForward = Math.max(-1, Math.min(1, inputForward + (window.INPUT ? window.INPUT.moveZ : 0)));
+  inputRight = Math.max(-1, Math.min(1, inputRight + (window.INPUT ? window.INPUT.moveX : 0)));
 
   let mx = 0, mz = 0;
 
@@ -5116,7 +5159,7 @@ function updatePlayerUnit(u, dt) {
   }
 
   // Left mouse click for basic combo attack (Space is reserved for Kawarimi)
-  if (mouseDown) executeSkill(u, 'atk');
+  if (mouseDown || (window.INPUT && window.INPUT.fire)) executeSkill(u, 'atk');
 }
 
 function updateAIBotUnit(u, dt) {
@@ -5531,6 +5574,7 @@ async function init() {
   });
 
   window.addEventListener('pointerdown', (e) => {
+    if (e.pointerType === 'touch') return; // PV1.4c: touch tem controles proprios (joystick/cluster)
     if (e.button === 2) {
       rightMouseDown = true;
     } else if (e.button === 0) {
@@ -5550,7 +5594,7 @@ async function init() {
   window.addEventListener('pointermove', (e) => {
     if (!matchActive && mouseDown && lobbyHeroMesh) {
       lobbyHeroMesh.rotation.y += e.movementX * 0.012;
-    } else if (matchActive && cameraMode === 'thirdperson' && (rightMouseDown || mouseDown)) {
+    } else if (matchActive && cameraMode === 'thirdperson' && !window.__DEVICE.isTouch && (rightMouseDown || mouseDown)) {
       tpCamYaw -= e.movementX * 0.005;
       tpCamPitch = THREE.MathUtils.clamp(tpCamPitch + e.movementY * 0.003, 0.05, 0.75);
     }
@@ -5584,7 +5628,17 @@ async function init() {
   });
 
   document.getElementById('btn-start-match').addEventListener('click', () => {
-    start5v5Match();
+    startMatch(selectedModeId);
+  });
+
+  // PV1.1: seletor de modo (#mode-picker) — decisao #1: 3v3 default
+  document.querySelectorAll('#mode-picker .mode-chip').forEach(ch => {
+    ch.addEventListener('click', () => {
+      if (ch.disabled) return;
+      selectedModeId = ch.dataset.mode;
+      document.querySelectorAll('#mode-picker .mode-chip').forEach(c => c.classList.toggle('selected', c === ch));
+      sfx.click();
+    });
   });
 
   document.getElementById('btn-back-lobby').addEventListener('click', () => {
@@ -5690,7 +5744,8 @@ async function init() {
 }
 
 // Expose runtime hooks for inspection & testing
-window.start5v5Match = start5v5Match;
+window.startMatch = startMatch;                           // PV1.1: API por modo
+window.start5v5Match = () => startMatch('dm_legacy_5v5'); // alias legacy — contrato E2E (F02/F04)
 window.setLobbyPage = setLobbyPage;
 window.__lobbyPage = () => lobbyPage;
 window.__pedestalVisible = () => lobbyPedestalGroup.visible;
@@ -5790,3 +5845,108 @@ Object.defineProperty(window, 'arenaGroup', { get: () => arenaGroup });
 
 init().catch(err => { console.error('[NUBA] BOOT FALHOU:', err); }); // P0 hardening
 
+
+// ============================================================================
+// PV1.3/PV1.4 TOUCH CONTROLS (docs/PIVOT_MOBILE.md §2.4) — escreve em window.INPUT
+// ============================================================================
+(function initTouchControls() {
+  const clamp1 = (v) => Math.max(-1, Math.min(1, v));
+  const joy = document.getElementById('touch-joystick');
+  const base = document.getElementById('joystick-base');
+  const knob = document.getElementById('joystick-knob');
+
+  if (joy && base && knob) {
+    let joyId = null, cx = 0, cy = 0;
+    const R = 56, DEAD = 0.18;
+    const place = (x, y) => {
+      base.style.left = (x - 60) + 'px'; base.style.top = (y - 60) + 'px';
+      knob.style.left = (x - 30) + 'px'; knob.style.top = (y - 30) + 'px';
+    };
+    joy.addEventListener('pointerdown', (e) => {
+      if (joyId !== null) return;
+      joyId = e.pointerId;
+      try { joy.setPointerCapture(joyId); } catch (err) {}
+      cx = e.clientX; cy = e.clientY;
+      place(cx, cy);
+      joy.classList.add('active');
+      e.preventDefault();
+    });
+    joy.addEventListener('pointermove', (e) => {
+      if (e.pointerId !== joyId) return;
+      const dx = e.clientX - cx, dy = e.clientY - cy;
+      const len = Math.hypot(dx, dy) || 1;
+      const cl = Math.min(len, R);
+      const nx = dx / len, ny = dy / len;
+      knob.style.transform = 'translate(' + (nx * cl).toFixed(1) + 'px,' + (ny * cl).toFixed(1) + 'px)';
+      const mag = cl / R;
+      if (mag < DEAD) { window.INPUT.moveX = 0; window.INPUT.moveZ = 0; }
+      else { window.INPUT.moveX = clamp1(nx * mag); window.INPUT.moveZ = clamp1(-ny * mag); }
+      e.preventDefault();
+    });
+    const joyEnd = (e) => {
+      if (e.pointerId !== joyId) return;
+      joyId = null;
+      window.INPUT.moveX = 0; window.INPUT.moveZ = 0;
+      knob.style.transform = 'translate(0,0)';
+      joy.classList.remove('active');
+    };
+    joy.addEventListener('pointerup', joyEnd);
+    joy.addEventListener('pointercancel', joyEnd);
+  }
+
+  // PV1.4: auto-aim — alvo inimigo mais próximo em alcance (teste/inspeção: window.findAimTarget)
+  function findAimTarget(unit, range) {
+    let best = null, bestD = Infinity;
+    for (const t of units) {
+      if (t === unit || t.team === unit.team || t.deadTimer > 0) continue;
+      const d = Math.hypot(t.x - unit.x, t.z - unit.z);
+      if (d <= range && d < bestD) { best = t; bestD = d; }
+    }
+    return best;
+  }
+  window.findAimTarget = findAimTarget;
+
+  const SLOT_BTNS = [['tbtn-atk', 'atk'], ['tbtn-q', 'q'], ['tbtn-w', 'w'], ['tbtn-e', 'e'], ['tbtn-r', 'r']];
+  for (const [id, slot] of SLOT_BTNS) {
+    const btn = document.getElementById(id);
+    if (!btn) continue;
+    btn.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      if (!matchActive) return;
+      const player = units.find(u => u.isPlayer);
+      if (!player) return;
+      if (slot === 'atk') {
+        window.INPUT.fire = true;
+      } else {
+        const tgt = findAimTarget(player, 46);
+        if (tgt) {
+          player.rotY = Math.atan2(tgt.x - player.x, tgt.z - player.z);
+          player.mesh.rotation.y = player.rotY;
+        }
+        executeSkill(player, slot);
+      }
+      if (navigator.vibrate) { try { navigator.vibrate(12); } catch (err) {} }
+      btn.classList.add('pressed');
+    });
+    const up = () => {
+      if (slot === 'atk') window.INPUT.fire = false;
+      btn.classList.remove('pressed');
+    };
+    btn.addEventListener('pointerup', up);
+    btn.addEventListener('pointercancel', up);
+    btn.addEventListener('pointerleave', up);
+  }
+
+  const btnC = document.getElementById('tbtn-c');
+  if (btnC) {
+    btnC.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      window.INPUT.chakra = true;
+      btnC.classList.add('pressed');
+    });
+    const upc = () => { window.INPUT.chakra = false; btnC.classList.remove('pressed'); };
+    btnC.addEventListener('pointerup', upc);
+    btnC.addEventListener('pointercancel', upc);
+    btnC.addEventListener('pointerleave', upc);
+  }
+})();

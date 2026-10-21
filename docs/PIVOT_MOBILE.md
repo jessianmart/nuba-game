@@ -131,7 +131,7 @@ Componentes DOM aditivos:
 
 ## 3. Fases e tasks (bite-sized; DoD do repo por task: `node --check` → `verify_browser_runtime.py` 0 erros → `test_e2e_suite.py` verde → docs atualizados)
 
-### Fase PV0 — Fundação Mobile (nada existente quebra)
+### Fase PV0 — Fundação Mobile (nada existente quebra) — **STATUS: DONE (2026-10-21, bateria verde)**
 
 | # | Task | Arquivos | Verificação |
 |---|---|---|---|
@@ -140,7 +140,7 @@ Componentes DOM aditivos:
 | PV0.3 | **`InputState` abstraction**: estado único (§2.4) consumido onde hoje se lê `keys` (L5541+) / `mouseDown`; teclado/pont continuam escrevendo — ZERO mudança de comportamento desktop | `game.js` update loop, input listeners | F08–F17 legado verde (prova: suite) |
 | PV0.4 | **Baseline obrigatória** antes da PV1 (regra repo: repo tem dev paralelo) | — | 38/38 + baseline_suite.log renovado |
 
-### Fase PV1 — Combate 3v3 mobile MVP
+### Fase PV1 — Combate 3v3 mobile MVP — **STATUS: DONE via probes (2026-10-21); PV1.6 Tier 5 formal pendente**
 
 | # | Task | Arquivos | Verificação |
 |---|---|---|---|
