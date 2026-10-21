@@ -47,3 +47,11 @@ cobre AUTH_SFX — só o smoke W1.1 cobre). Recuperação: patcher reconstituíd
 (session_search) + âncora level-up re-grepada (indent 4 espaços). Reaplicado, smoke 9/9,
 bateria 38/38. **Lição: commit imediato após verde; checar marcadores de milestone antes de
 qualquer trabalho novo no repo paralelo.**
+
+### Addendum W1.2.1→W1.2.3: o saga da flag de readiness (2026-10-21)
+O smoke W1.2 falhava só em produção. Forense (probe CDP c/ console hook) provou prod saudável:
+game.js?v=34 200, zero erros, click funciona pós-boot (~11s via proxy). Causa: 3 bugs seguidos
+NO SINAL de readiness do smoke — (1) flag top-level roda no parse, prova nada; (2) flag no fim
+da função de boot (~L1504) ainda é cedo — `initLobbyNav()` só roda em ~L5521; (3) um "smoke
+local" rodou contra o proxy de produção (:8080) sem ninguém perceber. Fix final: `__ajustesReady`
+setado logo APÓS `initLobbyNav();` — smoke 9/9 local E prod. Lição documentada na skill §6.7.
