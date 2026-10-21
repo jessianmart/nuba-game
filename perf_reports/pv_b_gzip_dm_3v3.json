@@ -1,0 +1,198 @@
+{
+  "mode": "dm_3v3",
+  "window": [
+    1280,
+    720
+  ],
+  "startedAt": 1792611152.3800983,
+  "boot": {
+    "totalMb": 4.43,
+    "entries": 45,
+    "top": [
+      {
+        "path": "stage/arena",
+        "mb": 1.386
+      },
+      {
+        "path": "logo/logo.webp",
+        "mb": 0.813
+      },
+      {
+        "path": "data/animations.json",
+        "mb": 0.478
+      },
+      {
+        "path": "https:/",
+        "mb": 0.308
+      },
+      {
+        "path": "models/1nrt.json",
+        "mb": 0.222
+      },
+      {
+        "path": "ui/skin",
+        "mb": 0.202
+      },
+      {
+        "path": "http:/",
+        "mb": 0.113
+      },
+      {
+        "path": "skills/skill_vfx.json",
+        "mb": 0.105
+      },
+      {
+        "path": "ui/xcmn_vs.png",
+        "mb": 0.088
+      },
+      {
+        "path": "ui/lobby",
+        "mb": 0.085
+      },
+      {
+        "path": "portraits/1jry.png",
+        "mb": 0.073
+      },
+      {
+        "path": "portraits/1orc.png",
+        "mb": 0.067
+      }
+    ]
+  },
+  "lobby": {
+    "ts": 1792611152415,
+    "matchActive": false,
+    "fps": {
+      "samples": 4,
+      "avg": 31.1,
+      "min": 0.8,
+      "p5": 0.8,
+      "max": 50
+    },
+    "frameMs": {
+      "worst": 1196.37,
+      "last": 16.7,
+      "avg": 40.13,
+      "p95": 33.4,
+      "samples": 73
+    },
+    "drawCalls": 13,
+    "triangles": 16091,
+    "geometries": 13,
+    "textures": 4,
+    "programs": 3,
+    "pixelRatio": 1,
+    "drawBuffer": [
+      1254,
+      627
+    ],
+    "units": 0,
+    "vfx": 0,
+    "projectiles": 0,
+    "payload": {
+      "bytes": 1367860,
+      "entries": 23,
+      "mb": 1.3
+    },
+    "device": {
+      "isTouch": false,
+      "isMobile": false,
+      "dpr": 1
+    },
+    "viewport": {
+      "w": 1254,
+      "h": 627
+    }
+  },
+  "match": {
+    "start": {
+      "units": 6,
+      "cfg": null
+    },
+    "samples": 25,
+    "drawCalls": {
+      "avg": 434.6,
+      "min": 378,
+      "max": 523,
+      "p5": 385,
+      "n": 25
+    },
+    "triangles": {
+      "avg": 166834.24,
+      "min": 151182,
+      "max": 186914,
+      "p5": 153600,
+      "n": 25
+    },
+    "textures": {
+      "avg": 45.32,
+      "min": 39,
+      "max": 48,
+      "p5": 39,
+      "n": 25
+    },
+    "geometries": {
+      "avg": 1250.84,
+      "min": 379,
+      "max": 1954,
+      "p5": 379,
+      "n": 25
+    },
+    "programs": {
+      "avg": 13.2,
+      "min": 9,
+      "max": 14,
+      "p5": 9,
+      "n": 25
+    },
+    "fps": {
+      "avg": 14.42,
+      "min": 0,
+      "max": 48,
+      "p5": 4,
+      "n": 125
+    },
+    "cpuFrameMs": {
+      "avg": 60.02,
+      "min": 33.3,
+      "max": 133.4,
+      "p95": 100.1,
+      "n": 25
+    },
+    "worstFrameMs": {
+      "avg": 140.58,
+      "min": 66.7,
+      "max": 149.9,
+      "p95": 149.9,
+      "n": 25
+    },
+    "vfxMax": 83,
+    "projectilesMax": 0,
+    "units": 6,
+    "pixelRatio": 1,
+    "drawBuffer": [
+      1254,
+      627
+    ],
+    "viewport": {
+      "w": 1254,
+      "h": 627
+    }
+  },
+  "screenshot": "C:\\Users\\jessi\\Documents\\antigravity\\goofy-mendeleev\\perf_reports\\perf_dm_3v3.png",
+  "payloadAfterMatch": {
+    "totalMb": 6.67,
+    "requests": 143,
+    "byExt": {
+      "json": 3.15,
+      "webp": 1.68,
+      "png": 1.05,
+      "ogg": 0.37,
+      "js": 0.34,
+      "css2": 0.06,
+      "css": 0.02
+    }
+  },
+  "consoleErrors": [],
+  "endedAt": 1792611187.1033905
+}

@@ -708,7 +708,25 @@ async def test_page(port=9333):
         # Close Scoreboard
         await call_cdp("Runtime.evaluate", {"expression": "window.toggleScoreboard(false)", "returnByValue": True})
 
+        # PV-B.6: sanidade de ASSETS carregados — pega corrupcao silenciosa de JSON
+        # (ex.: skill_vfx.json com NaN -> r.json() falha -> catch {} mata os VFX
+        #  extraidos sem nenhum console error; mesmo padrao do revert W1.1)
+        assets_probe = """
+        (() => ({
+          vfxKeys: Object.keys(window.skillVfxData || {}).length,
+          rosterLen: (window.rosterMeta || []).length,
+          animKeys: Object.keys(window.animationsData || {}).length
+        }))()
+        """
+        res_as = await call_cdp("Runtime.evaluate", {"expression": assets_probe, "returnByValue": True})
+        assets_val = res_as.get("result", {}).get("value")
+        print("Assets Sanity Result:", json.dumps(assets_val))
+
         return (len(errors) == 0 and
+                assets_val is not None and
+                assets_val.get("vfxKeys", 0) >= 11 and
+                assets_val.get("rosterLen", 0) >= 12 and
+                assets_val.get("animKeys", 0) >= 12 and
                 lobby_val is not None and
                 combat_val.get("matchActive") is True and
                 skills_val.get("botSkillsVerified") is True and

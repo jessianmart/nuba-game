@@ -1198,8 +1198,11 @@ async function applyArena(arenaId, opts = {}) {
   const mapAsset = (entry.mapMobile && window.__DEVICE && window.__DEVICE.isMobile) ? entry.mapMobile : entry.map;
   if (mapAsset) {
     try {
-      const res = await fetch(`assets/${mapAsset}?v=9`).then(r => r.json());
+      const res = await fetch(`assets/${mapAsset}?v=10`).then(r => r.json());
       if (res && res.meshes) {
+        // PV3.2: telemetria de qual variante entrou (full vs .mobile.json)
+        window.__ARENA_LOADED = { asset: String(mapAsset), meshes: res.meshes.length,
+          isMobile: !!(window.__DEVICE && window.__DEVICE.isMobile), at: performance.now() };
         // PV-B.3: texturas da arena nova sao preservadas ao descartar o palco antigo
         const keepUrls = new Set();
         for (const sm of res.meshes) if (sm.texture) keepUrls.add(`assets/${sm.texture}`);
@@ -5737,9 +5740,9 @@ async function init() {
   buildLobbyPedestal();
 
   const [metaRes, anmRes, vfxRes, arenasRes] = await Promise.all([
-    fetch('assets/data/roster_meta.json?v=8').then(r => r.json()).catch(() => ({})), // P0 hardening
-    fetch('assets/data/animations.json?v=8').then(r => r.json()).catch(() => ({})),
-    fetch('assets/skills/skill_vfx.json?v=8').then(r => r.json()).catch(() => ({})),
+    fetch('assets/data/roster_meta.json?v=9').then(r => r.json()).catch(() => ({})), // P0 hardening
+    fetch('assets/data/animations.json?v=9').then(r => r.json()).catch(() => ({})),
+    fetch('assets/skills/skill_vfx.json?v=9').then(r => r.json()).catch(() => ({})),
     // PV-B.1: stage_3d.json (7,29 MB) saiu do boot — o mapa da arena e a fonte da verdade
     fetch('assets/data/arenas.json?v=9').then(r => r.json()).catch(() => null)
   ]);

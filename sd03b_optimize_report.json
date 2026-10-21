@@ -1,0 +1,30 @@
+{
+  "arena": "sd03b",
+  "src": {
+    "meshes": 294,
+    "verts": 139349,
+    "tris": 93164,
+    "bytes": 8411746,
+    "mb": 8.02
+  },
+  "out": {
+    "meshes": 17,
+    "verts": 86708,
+    "tris": 49714,
+    "bytes": 5741328,
+    "mb": 5.48
+  },
+  "reducao_meshes": "94%",
+  "reducao_tris": "47%",
+  "reducao_bytes": "32%",
+  "classes": [
+    "alfa",
+    "allalfa",
+    "bac",
+    "bacalfa",
+    "flo",
+    "ha",
+    "obj"
+  ],
+  "segundos": 3.5
+}

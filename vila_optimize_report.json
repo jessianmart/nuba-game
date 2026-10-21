@@ -1,0 +1,18 @@
+{
+  "src": {
+    "meshes": 261,
+    "verts": 162992,
+    "tris": 128573,
+    "bytes": 10397432
+  },
+  "out": {
+    "meshes": 32,
+    "verts": 103342,
+    "tris": 60799,
+    "bytes": 7052656
+  },
+  "reducao_meshes": "88%",
+  "reducao_tris": "53%",
+  "reducao_bytes": "32%",
+  "segundos": 7.0
+}

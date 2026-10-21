@@ -113,7 +113,8 @@ def main():
         if not os.path.isfile(rp):
             print(f"ABORTADO — {h}/report.json ausente"); return 1
         reps[h] = json.load(io.open(rp, "r", encoding="utf-8"))
-    hid = {reps["w22_out"].get("hero_id"): "w22_out", reps["w23_out"].get("hero_id"): "w23_out"}
+    hid = {reps["w22_out"].get("hero_id") or reps["w22_out"].get("heroId"): "w22_out",
+           reps["w23_out"].get("hero_id") or reps["w23_out"].get("heroId"): "w23_out"}
     if "1orc" not in hid or "1tnd" not in hid:
         print("ABORTADO — hero_ids inesperados:", hid); return 1
     print("[0] reports OK:", {k: v.get("hero_id") for k, v in reps.items()})
@@ -124,6 +125,8 @@ def main():
     if tnd_pngs:
         VFX["1tnd"][0] = tnd_pngs[0][:-4]  # q = maior PNG especifico
         if len(tnd_pngs) > 1: VFX["1tnd"][1] = tnd_pngs[1][:-4]
+    else:
+        VFX["1tnd"][0] = "1efc_chakra04"  # fallback: pool comum (impacto de chakra)
     print("[1] VFX 1tnd:", VFX["1tnd"])
 
     # (2) DRY-RUN: valida TODAS as ancoras antes de gravar

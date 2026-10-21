@@ -27,6 +27,7 @@
    },
    "built": true,
    "map": "stage/arena/sd00a.json",
+   "mapMobile": "stage/arena/sd00a.mobile.json",
    "mesh": "assets/stage/arena/sd00a.json",
    "verts": 63180,
    "tris": 40111,

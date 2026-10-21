@@ -1,0 +1,28 @@
+{
+  "src": {
+    "meshes": 122,
+    "verts": 63180,
+    "tris": 40111,
+    "bytes": 3754743,
+    "mb": 3.58
+  },
+  "out": {
+    "meshes": 33,
+    "verts": 40749,
+    "tris": 22228,
+    "bytes": 2655098,
+    "mb": 2.53
+  },
+  "reducao_meshes": "73%",
+  "reducao_tris": "45%",
+  "reducao_bytes": "29%",
+  "classes": [
+    "bac",
+    "bug",
+    "flo",
+    "ha",
+    "obj",
+    "river"
+  ],
+  "segundos": 2.4
+}
