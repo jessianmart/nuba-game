@@ -109,16 +109,17 @@ async def main(port):
             return r.get("result", {}).get("value")
         await call("Page.enable")
         await call("Page.navigate", {"url": BASE})
-        for _ in range(30):
+        # readiness determinístico: __ajustesReady só existe com listeners attached (W1.2.1)
+        for _ in range(40):
             await asyncio.sleep(2.0)
-            if await ev("typeof window.AUTH_SFX === 'object' && typeof window.JUICE === 'object' && !!document.getElementById('aj-sound')"): break
+            if await ev("window.__ajustesReady === true"): break
         v = await ev(PROBE1)
         print("PROBE1:", json.dumps(v, indent=1, ensure_ascii=False))
         # reload para validar persistencia
         await call("Page.navigate", {"url": BASE})
-        for _ in range(30):
+        for _ in range(40):
             await asyncio.sleep(2.0)
-            if await ev("typeof window.AUTH_SFX === 'object' && typeof window.JUICE === 'object' && !!document.getElementById('aj-sound')"): break
+            if await ev("window.__ajustesReady === true"): break
         w = await ev(PROBE2)
         print("PROBE2:", json.dumps(w, indent=1, ensure_ascii=False))
         va, qa, pa, sa = v.get('volumeApplies') or {}, v.get('qualityApplies') or {}, v.get('persisted') or {}, v.get('soundToggle') or {}
