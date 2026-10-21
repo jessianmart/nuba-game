@@ -5503,6 +5503,17 @@ function updateCameraAndHUD() {
     }
   }
 
+  // PV4: espelha o CD dos slots nos botoes touch (mesma fonte de verdade #cd-*)
+  for (const _s of ['atk', 'q', 'w', 'e', 'r']) {
+    const _src = document.getElementById(`cd-${_s}`);
+    const _dst = document.getElementById(`cdt-${_s}`);
+    if (_src && _dst) {
+      _dst.style.display = _src.style.display;
+      _dst.style.background = _src.style.background;
+      _dst.textContent = _src.textContent;
+    }
+  }
+
   // Synchronize 5v5 Top Team Mini-Portraits (Alive dot & Respawn Countdown)
   for (const u of units) {
     const topIcon = document.getElementById(`top-icon-${u.id}`);

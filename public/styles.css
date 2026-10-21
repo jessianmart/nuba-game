@@ -4934,3 +4934,42 @@ body.br-mode #hud-screen.active #br-hud .br-phase { color: #c4b5fd; font-size: 1
 body.br-mode #hud-screen.active .team-group.blue,
 body.br-mode #hud-screen.active .team-group.red { display: none; } /* BR e solo — sem placar de times */
 body.br-mode #player-death-overlay { display: none !important; } /* BR: sem overlay de respawn */
+
+/* ==== PV4: TOUCH HUD V2 (docs/PIVOT_MOBILE.md §PV4) ====
+   Pedido: mapa no topo; HP/chakra cada um de um lado; base APENAS joystick
+   (esq) + skills (dir) com CD; banners discretos. Gate: body.touch + partida.
+   Zero componente novo — reposiciona/esconde o que ja existe. */
+body.touch #hud-screen.active .hud-brand-pill,
+body.touch #hud-screen.active .team-group,
+body.touch #hud-screen.active .match-goal-txt,
+body.touch #hud-screen.active .player-avatar-ring,
+body.touch #hud-screen.active .sub-status-line,
+body.touch #hud-screen.active .abilities-ribbon { display: none; }
+
+/* top bar: so o cluster central (timer/BR) + ações compactas */
+body.touch #hud-screen.active .hud-top-bar { justify-content: center; }
+body.touch #hud-screen.active .match-center-cluster { transform: scale(0.82); }
+body.touch #hud-screen.active .hud-actions-pill { position: fixed; top: calc(4px + var(--safe-top, 0px)); right: calc(4px + var(--safe-right, 0px)); z-index: 62; gap: 4px; }
+body.touch #hud-screen.active .hud-top-btn { padding: 4px 7px; font-size: 9px; letter-spacing: 0.5px; }
+
+/* footer neutro: filhos (minimapa + deck) posicionam sozinhos no viewport */
+body.touch #hud-screen.active .hud-bottom-moba { display: contents; }
+
+/* MAPA no topo (esquerda) */
+body.touch #hud-screen.active .minimap-bezel { position: fixed; top: calc(4px + var(--safe-top, 0px)); left: calc(4px + var(--safe-left, 0px)); z-index: 60; pointer-events: none; transform: scale(0.6); transform-origin: top left; }
+
+/* HP um lado / CHAKRA o outro (faixa abaixo do mapa) */
+body.touch #hud-screen.active .player-command-deck { position: fixed; top: calc(104px + var(--safe-top, 0px)); left: calc(6px + var(--safe-left, 0px)); right: calc(6px + var(--safe-right, 0px)); z-index: 60; pointer-events: none; background: none; border: none; box-shadow: none; padding: 0; width: auto; }
+body.touch #hud-screen.active .vitals-strip { gap: 6px; width: 100%; }
+body.touch #hud-screen.active .vital-gauges-col { flex-direction: row; flex: 1; gap: 6px; }
+body.touch #hud-screen.active .hp-gauge { flex: 1 1 0; }
+body.touch #hud-screen.active .chakra-gauge { flex: 1 1 0; }
+body.touch #hud-screen.active .gauge-num { font-size: 10px; }
+
+/* banners de sequencia/ulti: discretos, padrao APK (escala menor) */
+body.touch #hud-screen.active .streak-banner,
+body.touch #hud-screen.active .ougi-banner { transform: scale(0.55); top: 140px; }
+
+/* CD visivel nos botoes touch (espelhado de #cd-* pelo game.js) */
+.tbtn { position: relative; }
+.tbtn-cd { position: absolute; inset: 0; border-radius: 50%; display: none; align-items: center; justify-content: center; font-family: 'Storm Title', 'Poppins', sans-serif; font-size: 13px; font-weight: 700; color: #fff; text-shadow: 0 1px 3px #000; pointer-events: none; }
