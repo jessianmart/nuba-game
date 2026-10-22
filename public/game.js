@@ -250,7 +250,7 @@ const SKILL_SFX_MAP = {
 };
 const AUTH_SFX = {
   bank: {}, log: [], volume: 0.85, _last: {},
-  THROTTLE: { ko: 450, down: 250, dash: 220, hit_s: 90, punch_hit: 110, kick_hit: 110, menu_slct: 60 },
+  THROTTLE: { ko: 450, down: 250, dash: 220, hit_s: 90, punch_hit: 110, kick_hit: 110, menu_slct: 60, kunai_swing: 90, shuriken: 110, kunai_hit: 60, ground_hit: 240, box_open: 1200, awake_off: 1500 },
   preload(name) {
     if (this.bank[name]) return this.bank[name];
     try { const a = new Audio('assets/audio/decoded/' + name + '.ogg'); a.preload = 'auto'; this.bank[name] = a; } catch (e) {}
@@ -267,7 +267,19 @@ const AUTH_SFX = {
     this._last[name] = now;
     this.log.push(name); if (this.log.length > 14) this.log.shift();
     return true;
-  }
+  },
+  playAt(name, x, z, opts) { // W5: SFX autêntico posicionado — volume obedece à distância da câmera
+    const cam = window.__camera;
+    if (!cam) return this.play(name, opts);
+    const d = Math.hypot(cam.position.x - (x || 0), cam.position.z - (z || 0));
+    const base = (opts && opts.vol) || 1;
+    const v = Math.pow(1 - Math.min(d / 60, 1), 1.2) * 1.4 * base;
+    if (v < 0.06) return false;
+    const played = this.play(name, { vol: Math.min(v, 1), min: opts && opts.min });
+    if (played) { this.lastPlays = this.lastPlays || []; this.lastPlays.push({ n: name, v: Math.round(Math.min(v, 1) * 100) / 100, d: Math.round(d) }); if (this.lastPlays.length > 24) this.lastPlays.shift(); }
+    return played;
+  },
+  pick(a, b) { this._alt = this._alt || {}; this._alt[a] = !this._alt[a]; return this._alt[a] ? a : b; } // W5: variação hit1/hit2
 };
 window.AUTH_SFX = AUTH_SFX; // W1.1: validação E2E
 window.SKILL_SFX_MAP = SKILL_SFX_MAP;
@@ -693,7 +705,7 @@ function animateCharacterRig(rig, state, time, animTimer = 0, animDuration = 0.4
     const progress = THREE.MathUtils.clamp(1.0 - (animTimer / duration), 0.0, 1.0);
     const heroAnms = animationsData[heroId] || animationsData['1nrt'];
     const clip = heroAnms ? heroAnms[clipKey] : null;
-    const totalClipDuration = clip ? (clip.numFrames / 24) : duration;
+    const totalClipDuration = clip ? (clip.numFrames / (clip.fps || 24)) : duration;
     if (clipKey === 'down' && progress >= 1.0) {
       // Freeze at final frame lying flat on the ground
       timeVal = Math.max(0, totalClipDuration - 0.001);
@@ -1286,7 +1298,7 @@ function renderArenaPicker() {
   host.querySelectorAll('.arena-chip').forEach(btn => {
     btn.addEventListener('click', async () => {
       sfx.init();
-      sfx.click ? sfx.click() : sfx.hit();
+      sfx.click(); // W5: sem fallback genérico
       AUTH_SFX.play('stage_change', { vol: 0.75 }); // W1.1
       await applyArena(btn.dataset.arena);
       renderArenaPicker();
@@ -3614,8 +3626,8 @@ function dealDamage(attacker, target, amount, skillName) {
   target.recentAttackers.set(attacker, performance.now());
 
   // Synchronized SFX on damage impact
-  sfx.hit();
-  AUTH_SFX.play('hit_s', { vol: 0.55 }); // W1.1
+  AUTH_SFX.playAt('hit_s', target.x, target.z, { vol: 0.55 }); // W5: impacto posicionado
+  if (dmg >= 180) AUTH_SFX.playAt(AUTH_SFX.pick('ground_hit', 'ground_hit2'), target.x, target.z, { vol: 0.85, min: 260 }); // W5: tombo pesado autêntico
 
   // Cel-shaded impact hit spark burst on damage impact
   // P1 JUICE: hitstop + shake + zoom scaled by damage weight, player
@@ -3650,7 +3662,7 @@ function dealDamage(attacker, target, amount, skillName) {
   if (target.hp <= 0) {
     if (window.__GOV && window.__GOV.mobile && target.isPlayer) haptic([40, 60, 40]); // PV3.3: morri
     target.deadTimer = activeMatchCfg.respawn != null ? activeMatchCfg.respawn : 6.0; // respawn por modo (legacy 6s, 3v3 5s; PV2: BR = anim down normal, rebirth gate torna permanente)
-    AUTH_SFX.play('down', { vol: 0.8 }); AUTH_SFX.play('ko', { vol: 0.9 }); // W1.1
+    AUTH_SFX.playAt('down', target.x, target.z, { vol: 0.8 }); AUTH_SFX.playAt('ko', target.x, target.z, { vol: 0.9 }); // W5: KO posicionado
     target.state = 'down'; // Authentic knockdown fall animation
     target.animDuration = 2.0; // Lie on ground for 2.0s before vanishing
     target.animTimer = 2.0;
@@ -3665,8 +3677,7 @@ function dealDamage(attacker, target, amount, skillName) {
       `;
     }
 
-    // SFX: Dramatic KO defeat audio
-    sfx.ko();
+    // W5: genérico removido — 'down'+'ko' autênticos tocam posicionados acima
 
     // P1 JUICE: kill drama — deep slow-mo + hitstop + heavy shake.
     // Full drama when the player is involved; distant bot kills stay subtle.
@@ -3689,7 +3700,7 @@ function dealDamage(attacker, target, amount, skillName) {
     // Attacker progression rewards
     attacker.kills++;
     attacker.level = Math.min(10, attacker.level + 1);
-    AUTH_SFX.play('level_up', { vol: 0.75 }); // W1.1
+    AUTH_SFX.playAt('level_up', attacker.x, attacker.z, { vol: 0.75 }); // W5: level up posicionado
     attacker.maxHp += 80;
     attacker.hp = Math.min(attacker.maxHp, attacker.hp + 250);
 
@@ -3806,8 +3817,8 @@ function executeSkill(unit, slot) {
   activeSkillVfxModel = ((SKILL_VFX_MAP[unit.heroId] || {})[slot]) || null; // M7: identidade por skill
   activeSkillVfxAnim = ((SKILL_VFX_ANIM[unit.heroId] || {})[slot]) || null; // SPP: anim por skill
   const _authSfx = ((SKILL_SFX_MAP[unit.heroId] || {})[slot]) || null; // W1.1
-  if (_authSfx) AUTH_SFX.play(_authSfx, { vol: 0.8 });
-  else if (slot === 'atk') AUTH_SFX.play('punch_swing', { vol: 0.5 });
+  if (_authSfx) AUTH_SFX.playAt(_authSfx, unit.x, unit.z, { vol: 0.8 }); // W5: voz do herói posicionada
+  else if (slot === 'atk') AUTH_SFX.playAt(AUTH_SFX.pick('punch_swing', 'kick_swing'), unit.x, unit.z, { vol: 0.5 }); // W5: swing alternado
   activeSkillVfxFaceY = unit.rotY; // SPP: VFX encara a direcao do caster
 
   if (unit.deadTimer > 0) return;
@@ -3847,9 +3858,7 @@ function executeSkill(unit, slot) {
     if (meleeTarget) {
       // MELEE TAIJUTSU: Authentic Punches and Kicks!
       if (unit.isPlayer) {
-        if (hitIdx === 2) sfx.kick();
-        else { sfx.hit(); if (hitIdx === 3) sfx.kick(); }
-        AUTH_SFX.play(hitIdx === 2 ? 'kick_hit' : 'punch_hit', { vol: 0.6 }); // W1.1
+        AUTH_SFX.playAt(hitIdx === 2 ? AUTH_SFX.pick('kick_hit', 'kick_hit2') : AUTH_SFX.pick('punch_hit', 'punch_hit2'), meleeTarget.x, meleeTarget.z, { vol: 0.62 }); // W5: soco/chute autêntico com variação
       }
 
       const baseComboDmg = hitIdx === 1 ? 82 : (hitIdx === 2 ? 105 : 150);
@@ -3876,7 +3885,7 @@ function executeSkill(unit, slot) {
       }
     } else {
       // RANGED NINJA TOOLS: 3D Steel Kunais & Spinning Shurikens!
-      if (unit.isPlayer) sfx.shuriken();
+      AUTH_SFX.playAt(hitIdx === 1 ? 'kunai_swing' : 'shuriken', unit.x, unit.z, { vol: hitIdx === 1 ? 0.7 : 0.75 }); // W5: arremesso autêntico por golpe
 
       if (hitIdx === 1) {
         // Hit 1: 1 High-velocity steel Kunai point-first!
@@ -3953,12 +3962,7 @@ function executeSkill(unit, slot) {
     return;
   }
 
-  // Ninjutsu / Kawarimi / Ultimate Audio
-  if (unit.isPlayer) {
-    if (slot === 'r') sfx.ultimate();
-    else if (slot === 'e') sfx.kawarimi();
-    else sfx.jutsu();
-  }
+  // W5: genéricos de cast removidos — vozes autênticas do herói tocam via SKILL_SFX_MAP
 
   // Skin HUD hooks (Ougi ultimate / Kawarimi substitution)
   if (unit.isPlayer) {
@@ -4529,7 +4533,7 @@ function executeSkill(unit, slot) {
     }
   } else if (sk.type === 'kawarimi') {
     unit.state = 'dash';
-    AUTH_SFX.play('dash', { vol: 0.5 }); // W1.1
+    AUTH_SFX.playAt('dash', unit.x, unit.z, { vol: 0.5 }); // W5: dash posicionado
     unit.animDuration = 0.35;
     unit.animTimer = unit.animDuration;
     const extLog = buildExtractedVfxMeshGroup('common', 0x78350f, 0.055, '1efc_log01');
@@ -4560,7 +4564,7 @@ function executeSkill(unit, slot) {
     unit.animDuration = 1.15;
     unit.animTimer = unit.animDuration;
     unit.awakenedTimer = 14.0; // 14 seconds of Awakening Mode!
-    AUTH_SFX.play('awake_open', { vol: 0.9 }); AUTH_SFX.play('awake_flash', { vol: 0.8 }); // W1.1
+    AUTH_SFX.playAt('awake_open', unit.x, unit.z, { vol: 0.9 }); AUTH_SFX.playAt('awake_flash', unit.x, unit.z, { vol: 0.8 }); // W5: awakening posicionado
     unit.auraMesh.visible = true;
 
     const maxReach = 9.5;
@@ -5008,6 +5012,9 @@ function updateMatch(dt, elapsed) {
       if (u.cds[k] > 0) u.cds[k] = Math.max(0, u.cds[k] - dt);
     }
     u.chakra = Math.min(u.maxChakra, u.chakra + dt * 5.5);
+    const _ultReady = u.isPlayer && u.chakra >= u.maxChakra && u.cds.r <= 0; // W5: ult pronto (anuncia 1x)
+    if (_ultReady && !u._ultReadyAnnounced) AUTH_SFX.playAt('max_gauge', u.x, u.z, { vol: 0.85, min: 2500 });
+    u._ultReadyAnnounced = _ultReady;
 
     // Base Sanctuary Healing (-74,-74 for Blue, +74,+74 for Red)
     const _bp = basePos(u.team);
@@ -5091,8 +5098,8 @@ function updateMatch(dt, elapsed) {
         spawnVFX(u.x, 7.0, u.z, u.team === 'blue' ? 0x38bdf8 : 0xf87171, 12.0, 1.2, 'pillar');
         spawnVFX(u.x, 1.2, u.z, 0xfde047, 10.0, 0.8, 'ring');
 
-        // Resurrect Audio SFX
-        sfx.resurrect();
+        // W5: ressurreição autêntica posicionada
+        AUTH_SFX.playAt(AUTH_SFX.pick('stand_up1', 'stand_up2'), u.x, u.z, { vol: 0.85, min: 900 });
 
         // Hide player death overlay
         if (u.isPlayer) {
@@ -5124,7 +5131,7 @@ function updateMatch(dt, elapsed) {
         r2.scale.set(s2, s2, s2);
         if (r2.material) r2.material.opacity = 0.3 + 0.35 * Math.cos(elapsed * 6);
       }
-      if (u.awakenedTimer <= 0) u.auraMesh.visible = false;
+      if (u.awakenedTimer <= 0) { u.auraMesh.visible = false; AUTH_SFX.playAt('awake_off', u.x, u.z, { vol: 0.7, min: 1500 }); } // W5: fim do awakening
     }
 
     if (u.comboResetTimer > 0) {
@@ -5187,8 +5194,8 @@ function updateMatch(dt, elapsed) {
       if (target.team !== p.owner.team && target.deadTimer <= 0) {
         if (Math.hypot(target.x - p.x, target.z - p.z) <= p.radius) {
           dealDamage(p.owner, target, p.dmg, p.skillName);
-          if (p.owner.isPlayer && (p.type === 'shuriken' || p.type === 'kunai')) {
-            sfx.clink(); // Metallic ninja weapon impact clink!
+          if (p.type === 'shuriken' || p.type === 'kunai') {
+            AUTH_SFX.playAt(AUTH_SFX.pick('kunai_hit', 'kunai_hit2'), target.x, target.z, { vol: 0.7, min: 60 }); // W5: impacto metálico autêntico
           }
           spawnVFX(p.x, 2.6, p.z, p.color, p.radius * 1.4, 0.35, 'sphere', p.owner.heroId);
           hit = true;
@@ -5197,6 +5204,7 @@ function updateMatch(dt, elapsed) {
       }
     }
     if (hit || p.life <= 0) {
+      if (!hit && (p.type === 'kunai' || p.type === 'shuriken')) AUTH_SFX.playAt('kunai_hit_wall', p.x, p.z, { vol: 0.4, min: 400 }); // W5: crava no chão
       arenaGroup.remove(p.mesh);
       projectiles.splice(i, 1);
     }
@@ -5821,7 +5829,7 @@ async function init() {
 
   const [metaRes, anmRes, vfxRes, arenasRes] = await Promise.all([
     fetch('assets/data/roster_meta.json?v=9').then(r => r.json()).catch(() => ({})), // P0 hardening
-    fetch('assets/data/animations.json?v=9').then(r => r.json()).catch(() => ({})),
+    fetch('assets/data/animations.json?v=10').then(r => r.json()).catch(() => ({})),
     fetch('assets/skills/skill_vfx.json?v=10').then(r => r.json()).catch(() => ({})),
     // PV-B.1: stage_3d.json (7,29 MB) saiu do boot — o mapa da arena e a fonte da verdade
     fetch('assets/data/arenas.json?v=9').then(r => r.json()).catch(() => null)
@@ -5852,7 +5860,7 @@ async function init() {
   gridEl.querySelectorAll('.roster-card').forEach(card => {
     card.addEventListener('click', () => {
       sfx.init();
-      sfx.hit();
+      AUTH_SFX.play('menu_slct', { vol: 0.6 }); // W5: UI autêntica
       selectLobbyHero(card.dataset.id);
     });
   });
@@ -5923,7 +5931,7 @@ async function init() {
     lobbyPreviewPose = poses[poseIdx].key;
     e.target.textContent = `Animar: ${poses[poseIdx].label}`;
     sfx.init();
-    sfx.jutsu();
+    AUTH_SFX.play('menu_fix', { vol: 0.7 }); // W5: UI autêntica
   });
 
   document.getElementById('btn-start-match').addEventListener('click', () => {
@@ -5985,7 +5993,7 @@ async function init() {
       const slot = btn.dataset.slot;
       if (slot === 'c') {
         player.chakra = Math.min(player.maxChakra, player.chakra + 25);
-        sfx.jutsu();
+        AUTH_SFX.play('chakura_use', { vol: 0.7 }); // W5: chakra autêntico
       } else {
         executeSkill(player, slot);
       }
@@ -6420,6 +6428,7 @@ function updateBR(dt) {
       if (Math.hypot(u.x - ch.x, u.z - ch.z) < 2.6) {
         ch.taken = true;
         ch.mesh.visible = false;
+        AUTH_SFX.playAt('box_open', ch.x, ch.z, { vol: 0.9, min: 1200 }); AUTH_SFX.playAt('chakura_get', ch.x, ch.z, { vol: 0.8, min: 1200 }); // W5: baú BR autêntico
         spawnSmokePuff(ch.x, 1.2, ch.z, 2.5);
         u.hp = Math.min(u.maxHp, u.hp + 35);
         u.chakra = Math.min(u.maxChakra, u.chakra + 50);

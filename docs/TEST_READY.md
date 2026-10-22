@@ -194,3 +194,48 @@ extraídos spawnando (extents world 2.5–8u; Sen'nejashu 16×23u de chão — �
 grande temática), `__HAND_VFX` nos binds (chidori hand=2, raikiri hand=2,
 lion fists hand=4, chou hand=1). Frame do kaiten: +4.297 px ciano / +4.3k brilho
 vs baseline das outras shots. `node --check` OK.
+
+## 21. W-SKL — coreografias FK completas das skills (2026-10-22)
+
+### Diagnóstico
+
+Os clips `jutsu`/`jutsu2`/`ult` vinham do pipeline com **concatenação de segs
+misturados** (`cha10`+`cha11`+cuts) e truncagem — resultado: 32 frames com
+canais congelados em identidade (frames 12–19 dos bones 7–19), tocados a
+`numFrames/24` (FPS errado; os Anm do Storm são 60fps) e percorridos a ~56%
+da janela de cast. A execução aparecia como "um pedaço de pose + freeze".
+
+### W-SKL — execução autêntica por skill
+
+`tools/extract_skill_choreo.py`: por herói, **clip limpo** (um único Anm, sem
+concatenação) e **completo** (frames reais, sem truncagem):
+
+| slot | Anm | conteúdo |
+|---|---|---|
+| `jutsu` (Q) | `{cid}cha10` (skl1) | coreografia da skill 1 |
+| `jutsu2` (W) | `{cid}cha20` (skl2) | coreografia da skill 2 |
+| `ult` (R) | `{cid}cha14` ou fallback pesado | ult cinematográfico |
+
+Fallbacks de ult (Anm mais pesado dos skl, ≥100KB, coreografia de corpo):
+1roc→cha24 (167f/2,78s), 1gar→cha24 (REJEITADO — <12 canais de corpo: é anim
+da areia/câmera, Gaara fica parado no ult mesmo), 1hnt→cha21 (101f/1,68s),
+1tnd→cha24 (81f/1,35s), 1orc→cha11 (146f/2,43s, com Camera chunk).
+1ssk/1itc: sem candidato claro — mantêm clip anterior.
+
+Bind pose (Clump/Coords/parents) do `{cid}bod1.xfbin` no data.awb do APK;
+Anm dos `data_spc_{cid}skl{1,2}.xfbin` do repo (cada xfbin com sci/smaps
+próprios). 39 clips re-bakeados com `fps: 60` no JSON.
+
+### Patches de runtime
+
+- `game.js` L708: `numFrames / 24` → `numFrames / (clip.fps || 24)` — clips
+  antigos (idle/run/attack, sem fps) continuam a 24fps: zero regressão;
+  clips de skill a 60fps reais.
+- `animations.json?v=10`, `game.js?v=38`.
+
+### Probe (`tools/wskl_probe.py`)
+
+Player 1nrt casta Q/W/R; troca pra 1orc via lobby, casta W (119f/2s) e R.
+Amostra de quats dos braços (bones 13/9) em 3 instantes do animTimer:
+**anima=SIM nos 5 casts**, 0 console errors. (Nos ults a 2ª amostra tardia
+congela legitimamente: o dash de impacto muda o state.)
