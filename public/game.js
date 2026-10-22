@@ -2290,6 +2290,7 @@ function buildExtractedVfxMeshGroup(heroId, colorHex, targetScale = 0.08, modelN
 
   const grp = new THREE.Group();
   grp.scale.setScalar(targetScale);
+  let _bx0 = 1e9, _bx1 = -1e9, _by0 = 1e9, _by1 = -1e9, _bz0 = 1e9, _bz1 = -1e9; // W-VIS-ALL bbox
 
   for (const sm of meshesToUse) {
     const geom = new THREE.BufferGeometry();
@@ -2327,7 +2328,19 @@ function buildExtractedVfxMeshGroup(heroId, colorHex, targetScale = 0.08, modelN
     });
     const m = new THREE.Mesh(geom, mat);
     grp.add(m);
+    const _pos = geom.getAttribute('position');
+    for (let _i = 0; _i < _pos.count; _i++) {
+      const _vx = _pos.getX(_i), _vy = _pos.getY(_i), _vz = _pos.getZ(_i);
+      if (_vx < _bx0) _bx0 = _vx; if (_vx > _bx1) _bx1 = _vx;
+      if (_vy < _by0) _by0 = _vy; if (_vy > _by1) _by1 = _vy;
+      if (_vz < _bz0) _bz0 = _vz; if (_vz > _bz1) _bz1 = _vz;
+    }
   }
+  // W-VIS-ALL: bbox raw dos modelos extraidos varia de ~17u a ~472u — escala
+  // fixa deixava rasengan gigante e caco micro. Normaliza: extent final do
+  // grupo ~ targetScale * 250u (chakra medio), proporcional em TODAS as skills.
+  const _ext = Math.max(_bx1 - _bx0, _by1 - _by0, _bz1 - _bz0);
+  if (_ext > 1) grp.scale.setScalar(targetScale * (250 / _ext));
   return grp;
 }
 
@@ -2449,7 +2462,7 @@ function findNearestEnemy(unit, maxDist = 45) {
 function spawnVFX(x, y, z, color, radius = 3.5, duration = 0.45, style = 'sphere', heroId = null) {
   // Spawn 3D VFX mesh alongside procedural shockwave
   if (heroId && (style === 'sphere' || style === 'pillar' || style === 'ring')) {
-    const extGrp = buildExtractedVfxMeshGroup(heroId, color, radius * 0.022, activeSkillVfxModel); // M7
+    const extGrp = buildExtractedVfxMeshGroup(heroId, color, radius * 0.006, activeSkillVfxModel); // M7 // W-VIS-ALL: extent ~ radius*1.5u
     if (extGrp) {
       extGrp.position.set(x, y, z);
       arenaGroup.add(extGrp);
@@ -3745,7 +3758,7 @@ const SKILL_VFX_MAP = {
   '1nej': { q: 'kaiten_dome',         w: 'air_palm',          e: 'kaiten_dome',         r: 'kaiten_dome' },
   '1jry': { q: 'toad_fire',           w: '1jryeff01',         e: '1efc_log01',          r: 'chou_rasengan' },
   '1tnd': { q: '1efc_chakra04', w: '1efc_chakra00', e: '1efc_log01', r: '1efc_nor_dst01' },
-  '1orc': { q: '1orc_1orceff1_01', w: '1efc_strk01', e: '1efc_log01', r: '1efc_nor_rpl02' }
+  '1orc': { q: '1orceff1_01', w: '1efc_strk01', e: '1efc_log01', r: '1efc_nor_rpl02' }
 };
 let activeSkillVfxModel = null; // M7: modelo extraido do cast atual (spawnVFX le daqui)
 let activeSkillVfxAnim = null; // SPP: anim procedural do cast atual
@@ -4026,6 +4039,15 @@ function executeSkill(unit, slot) {
       arenaGroup.add(chiMesh);
       vfxList.push({ mesh: chiMesh, age: 0, duration: 0.7, style: 'compound', bindUnit: unit, bindBoneIdx: 9 });
 
+      // W-VIS-ALL: chidori_spark EXTRAIDO do APK bound na mao esquerda (bone 9)
+      // durante todo o cast (~2.6u) — autentico junto ao procedural core
+      const chiGrp = buildExtractedVfxMeshGroup(unit.heroId, 0x60a5fa, 0.0105, 'chidori_spark');
+      if (chiGrp) {
+        chiGrp.position.set(unit.x + dirX * 2.0, 2.5, unit.z + dirZ * 2.0);
+        arenaGroup.add(chiGrp);
+        vfxList.push({ mesh: chiGrp, age: 0, duration: 0.75, style: 'compound', bindUnit: unit, bindBoneIdx: 9 });
+      }
+
       unit.x = clampArena(unit.x + dirX * 12.5);
       unit.z = clampArena(unit.z + dirZ * 12.5);
       spawnVFX(unit.x, 1.8, unit.z, 0x60a5fa, 3.2, 0.45, 'ring', unit.heroId);
@@ -4108,6 +4130,14 @@ function executeSkill(unit, slot) {
       rkMesh.position.set(unit.x + dirX * 2.0, 2.5, unit.z + dirZ * 2.0);
       arenaGroup.add(rkMesh);
       vfxList.push({ mesh: rkMesh, age: 0, duration: 0.75, style: 'compound', bindUnit: unit, bindBoneIdx: 13 });
+
+      // W-VIS-ALL: raikiri_spark EXTRAIDO do APK bound na mao direita (bone 13)
+      const rkGrp = buildExtractedVfxMeshGroup(unit.heroId, 0x38bdf8, 0.0105, 'raikiri_spark');
+      if (rkGrp) {
+        rkGrp.position.set(unit.x + dirX * 2.0, 2.5, unit.z + dirZ * 2.0);
+        arenaGroup.add(rkGrp);
+        vfxList.push({ mesh: rkGrp, age: 0, duration: 0.75, style: 'compound', bindUnit: unit, bindBoneIdx: 13 });
+      }
 
       unit.x = clampArena(unit.x + dirX * 12.0);
       unit.z = clampArena(unit.z + dirZ * 12.0);
@@ -4303,6 +4333,20 @@ function executeSkill(unit, slot) {
       arenaGroup.add(lf2);
       vfxList.push({ mesh: lf1, age: 0, duration: 0.75, style: 'compound', bindUnit: unit, bindBoneIdx: 9, directional: true });
       vfxList.push({ mesh: lf2, age: 0, duration: 0.75, style: 'compound', bindUnit: unit, bindBoneIdx: 13, directional: true });
+
+      // W-VIS-ALL: lion_chakra EXTRAIDO do APK nos dois punhos (bones 9 e 13)
+      const lfGrp1 = buildExtractedVfxMeshGroup(unit.heroId, 0x8b5cf6, 0.008, 'lion_chakra');
+      const lfGrp2 = buildExtractedVfxMeshGroup(unit.heroId, 0x8b5cf6, 0.008, 'lion_chakra');
+      if (lfGrp1) {
+        lfGrp1.position.set(unit.x - dirZ * 1.4, 2.5, unit.z + dirX * 1.4);
+        arenaGroup.add(lfGrp1);
+        vfxList.push({ mesh: lfGrp1, age: 0, duration: 0.75, style: 'compound', bindUnit: unit, bindBoneIdx: 9 });
+      }
+      if (lfGrp2) {
+        lfGrp2.position.set(unit.x + dirZ * 1.4, 2.5, unit.z - dirX * 1.4);
+        arenaGroup.add(lfGrp2);
+        vfxList.push({ mesh: lfGrp2, age: 0, duration: 0.75, style: 'compound', bindUnit: unit, bindBoneIdx: 13 });
+      }
 
       unit.x = clampArena(unit.x + dirX * 10.5);
       unit.z = clampArena(unit.z + dirZ * 10.5);
@@ -4628,6 +4672,13 @@ function executeSkill(unit, slot) {
       vfxList.push({ mesh: kaiten, age: 0, duration: 1.35, style: 'compound' });
     } else if (unit.heroId === '1jry') {
       const giantRas = createRasenganMesh(2.4, 0xef4444);
+      // W-VIS-ALL: chou_rasengan EXTRAIDO do APK bound a mao direita (~4.75u)
+      const chouGrp = buildExtractedVfxMeshGroup(unit.heroId, 0xf43f5e, 0.019, 'chou_rasengan');
+      if (chouGrp) {
+        chouGrp.position.set(unit.x + dirX * 2.0, 2.8, unit.z + dirZ * 2.0);
+        arenaGroup.add(chouGrp);
+        vfxList.push({ mesh: chouGrp, age: 0, duration: 1.25, style: 'compound', bindUnit: unit, bindBoneIdx: 13 });
+      }
       giantRas.position.set(ux, 3.0, uz);
       arenaGroup.add(giantRas);
       vfxList.push({ mesh: giantRas, age: 0, duration: 1.35, style: 'compound' });
@@ -5771,7 +5822,7 @@ async function init() {
   const [metaRes, anmRes, vfxRes, arenasRes] = await Promise.all([
     fetch('assets/data/roster_meta.json?v=9').then(r => r.json()).catch(() => ({})), // P0 hardening
     fetch('assets/data/animations.json?v=9').then(r => r.json()).catch(() => ({})),
-    fetch('assets/skills/skill_vfx.json?v=9').then(r => r.json()).catch(() => ({})),
+    fetch('assets/skills/skill_vfx.json?v=10').then(r => r.json()).catch(() => ({})),
     // PV-B.1: stage_3d.json (7,29 MB) saiu do boot — o mapa da arena e a fonte da verdade
     fetch('assets/data/arenas.json?v=9').then(r => r.json()).catch(() => null)
   ]);

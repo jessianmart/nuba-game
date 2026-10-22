@@ -155,3 +155,42 @@ setup de cast zera `hitstun` do caster (player q/w/e/r + loop de bots) e o
 compositor virou dict `_checks` que imprime `VERIFY FAILURE DETAIL` com o que
 falhou — a classe de falha silenciosa morre aqui. Verify: **EXIT 0**,
 Assets Sanity 11/12/12, zero console errors.
+
+## 20. W-ORC + W-VIS-ALL — VFX do APK em TODAS as skills dos 12 heróis (2026-10-22)
+
+### Estado prévio
+
+`SKILL_VFX_MAP` (12 heróis × 4 slots) + `activeSkillVfxModel` já existiam (M7):
+toda skill tenta spawnar o modelo extraído via `spawnVFX`. Furos: `skill_vfx_data['1orc']`
+NÃO existia (ROSTER do pipeline tinha só 10 — Tsunade/Orochimaru fora), o nome no MAP
+(`1orc_1orceff1_01`) não bateria com o nome de chunk, e a escala fixa
+`radius * 0.022` com bbox raw de 17–472u deixava um efeito gigante e outro invisível.
+
+### W-ORC — extração autêntica de Orochimaru
+
+`tools/extract_orc_vfx.py`: decodifica `data_spc_1orceff1.xfbin` direto do repo
+(sem abrir APK): textura `1orc_1orceff1_01.png` (256×256) + 3 modelos
+(`1orceff1_01` 68v plano no chão — Sen'nejashu; `_02` 74v blob; `_03` 8v).
+MERGE cirúrgico no `skill_vfx.json` (11 → 12 heróis + common), `allow_nan=False`,
+sem regressão. MAP fix: `q: '1orceff1_01'` (nome de chunk limpo).
+Tsunade: `eff1` dela é VAZIO (422B, 5 chunks sem modelos) — skills dela apontam
+commons autênticos (chakra04/log01/nor_dst01) que resolvem via lookup common ✓.
+
+### W-VIS-ALL — calibração global
+
+1. `buildExtractedVfxMeshGroup` agora NORMALIZA o tamanho aparente: computa a
+   bbox do grupo no build e ajusta a escala para extent final ≈ `targetScale × 250u`
+   (chakra médio). Uma correção → as 48 skills ficam proporcionais.
+2. `spawnVFX` extraído: multiplicador `0.022 → 0.006` (extent ≈ radius × 1.5u).
+3. Binds de mão (padrão W-VIS) nas skills icônicas: 1ssk Q `chidori_spark` (bone 9),
+   1kks Q `raikiri_spark` (13), 1hnt W `lion_chakra` (9+13), 1jry R `chou_rasengan` (13).
+4. `skill_vfx.json?v=10`, `game.js?v=37`.
+
+### Probes (jogo vivo, 0 console errors)
+
+`tools/wvis_all_probe.py` (bots, 10 heróis) + `tools/wvis_player_probe.py`
+(seleção de lobby → player, 1tnd/1orc): 12/12 heróis castando Q/W/R com grupos
+extraídos spawnando (extents world 2.5–8u; Sen'nejashu 16×23u de chão — área
+grande temática), `__HAND_VFX` nos binds (chidori hand=2, raikiri hand=2,
+lion fists hand=4, chou hand=1). Frame do kaiten: +4.297 px ciano / +4.3k brilho
+vs baseline das outras shots. `node --check` OK.
