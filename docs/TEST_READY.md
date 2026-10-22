@@ -112,3 +112,46 @@ errors (mesmo padrao do revert W1.1). Restaurado do HEAD; backup forense no scra
 
 **Nota de flake**: verify com EXIT 1 por 4x `net::ERR_INSUFFICIENT_RESOURCES` (audio .ogg)
 com a suite/probes concorrentes — re-run ISOLADO deu EXIT 0. Bateria roda sozinha.
+
+
+## 19. W-HS hitstun do APK + W-VIS VFX de mão + fix verify EXIT 1 (2026-10-22)
+
+### W-HS — engine de hitstun decodificado do APK e aplicado
+
+Forense do `data_spc_1nrtprm.bin.xfbin` (`parse_nucc_chunks`: mot/skl/etc/spl) +
+frame data real via `parse_full_anm` no bod1c (7 heróis): **FACE_DAMAGE_NORMAL
+(dmg0f) = hitstun 11–31f (média 21f = 0.35s)**; hsta0 = 36f = 0.60s (pesado,
+dano>=180); dow 16–31f; get00 51f; rxn0 11f. FPS = 60. Engine do Storm: levar hit
+PRENDE a vítima na anim de reação; hit novo REINICIA o timer (juggle);
+**kawarimi é a única saída** (custa chakra). Movimento livre — kiting é core MOBA.
+
+Aplicado via `tools/whs_hitstun_patcher.py` (5 pontos idempotentes): `dealDamage`
+aplica 0.35s/0.60s conforme dano; guard em `executeSkill` bloqueia cast no hitstun
+EXCETO kawarimi; telemetria `window.__HITSTUN`; decaimento em dt de parede;
+spawns com `hitstun: 0`. Smoke `tools/whs_hitstun_smoke.py` **10/10 PASS**
+(juggle, kawarimi livre, hit letal mata, monotonia em dt real, 0 console errors).
+
+### W-VIS — VFX autêntico do APK visível na mão durante o cast
+
+Probe provou: rig FK anima (boneHash muda frame a frame), `state='jutsu'` segura
+o clip 0.75s, mas os VFX extraídos morriam em ~0.5s LONGE do corpo e o
+procedural era sliver de 104×8 px (câmera MOBA ~50u vs modelos 207×253u raw).
+`tools/wvis_patcher.py`: Q 1nrt binda o modelo `rasengan` extraído no bone 13
+(mão direita) por todo o cast (escala 0.0105); R 1nrt binda `giant_rasengan`
+(escala 0.019, 1.25s); `duration * 1.7` no path extracted; telemetria
+`window.__HAND_VFX`. A/B pós-patch (jogo vivo): câmera segue o dash em lerp,
+mão world anatômica (1.3u do corpo), handVfx=2, pixels ciano-brilhante
+**Q 29→616 / R 545→2425**. Lição de flake: o PRIMEIRO browser-run pós-write em
+game.js novo congela (Defender escaneia) — a "câmera morta na origem" do
+primeiro forense era isso; runs aquecidos fluem normais.
+
+### Fix verify EXIT 1 (2 sessões de mistério)
+
+Causa raiz: o hitstun NOVO bloqueava os casts sequenciais do verify numa
+partida viva (bots acertam o player entre casts → `w_state: 'idle'` stale →
+compositor silencioso EXIT 1; o print "ZERO CONSOLE ERRORS" do banner confundiu
+o diagnóstico). Fix em `verify_browser_runtime.py` (backup `.bak_wvis`):
+setup de cast zera `hitstun` do caster (player q/w/e/r + loop de bots) e o
+compositor virou dict `_checks` que imprime `VERIFY FAILURE DETAIL` com o que
+falhou — a classe de falha silenciosa morre aqui. Verify: **EXIT 0**,
+Assets Sanity 11/12/12, zero console errors.

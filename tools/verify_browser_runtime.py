@@ -283,7 +283,7 @@ async def test_page(port=9333):
         skills_q_eval = """
         (() => {
             const p = window.units[0];
-            p.cds.q = 0; p.chakra = 100;
+            p.hitstun = 0; p.cds.q = 0; p.chakra = 100;
             window.executeSkill(p, 'q');
             return {
                 heroId: p.heroId,
@@ -310,7 +310,7 @@ async def test_page(port=9333):
         skills_w_eval = """
         (() => {
             const p = window.units[0];
-            p.cds.w = 0; p.chakra = 100;
+            p.hitstun = 0; p.cds.w = 0; p.chakra = 100;
             window.executeSkill(p, 'w');
             return {
                 heroId: p.heroId,
@@ -337,7 +337,7 @@ async def test_page(port=9333):
         skills_e_eval = """
         (() => {
             const p = window.units[0];
-            p.cds.e = 0; p.chakra = 100;
+            p.hitstun = 0; p.cds.e = 0; p.chakra = 100;
             window.executeSkill(p, 'e');
             return {
                 heroId: p.heroId,
@@ -355,7 +355,7 @@ async def test_page(port=9333):
         skills_r_eval = """
         (() => {
             const p = window.units[0];
-            p.cds.r = 0; p.chakra = 100;
+            p.hitstun = 0; p.cds.r = 0; p.chakra = 100;
             window.executeSkill(p, 'r');
             return {
                 heroId: p.heroId,
@@ -385,7 +385,7 @@ async def test_page(port=9333):
             const results = {};
             const testUnits = window.units.filter(u => !u.isPlayer);
             for (const bot of testUnits) {
-                bot.deadTimer = 0;
+                bot.deadTimer = 0; bot.hitstun = 0;
                 bot.hp = bot.maxHp;
                 bot.chakra = 100;
                 bot.cds.q = 0;
@@ -722,43 +722,28 @@ async def test_page(port=9333):
         assets_val = res_as.get("result", {}).get("value")
         print("Assets Sanity Result:", json.dumps(assets_val))
 
-        return (len(errors) == 0 and
-                assets_val is not None and
-                assets_val.get("vfxKeys", 0) >= 11 and
-                assets_val.get("rosterLen", 0) >= 12 and
-                assets_val.get("animKeys", 0) >= 12 and
-                lobby_val is not None and
-                combat_val.get("matchActive") is True and
-                skills_val.get("botSkillsVerified") is True and
-                skills_val.get("q_state") == "jutsu" and
-                skills_val.get("w_state") == "jutsu2" and
-                skills_val.get("e_state") == "dash" and
-                skills_val.get("r_state") == "ult" and
-                skills_val.get("awakened") is True and
-                tools_val is not None and
-                tools_val.get("kunaiSpawned") is True and
-                tools_val.get("twinShurikensSpawned") is True and
-                tools_val.get("tripleShurikensSpawned") is True and
-                tools_val.get("meleePunch", {}).get("dealtDamage") is True and
-                tp_val.get("camClamped") is True and
-                tp_val.get("playerClamped") is True and
-                all(tp_val.get("movementTested", {}).values()) and
-                elim_val is not None and
-                elim_val.get("isDead") is True and
-                elim_val.get("stateIsDown") is True and
-                elim_val.get("meshStillVisible") is True and
-                elim_val.get("killCounted") is True and
-                elim_val.get("deathCounted") is True and
-                elim_val.get("assistCounted") is True and
-                pdeath_val is not None and
-                pdeath_val.get("overlayShown") is True and
-                pdeath_val.get("meshInvisibleAfter2s") is True and
-                sb_val is not None and
-                sb_val.get("isOpen") is True and
-                sb_val.get("totalPlayers") == 10 and
-                sb_val.get("hasPlayerHighlight") is True and
-                sb_val.get("hasKdaRatio") is True and
-                sb_val.get("hasSubtotals") is True)
+        # W-VIS-GATE: compositor com diagnostico — imprime EXATAMENTE o que falhou
+        _checks = {
+            "errors_empty": len(errors) == 0,
+            "assets_sanity": assets_val is not None and assets_val.get("vfxKeys", 0) >= 11 and assets_val.get("rosterLen", 0) >= 12 and assets_val.get("animKeys", 0) >= 12,
+            "lobby": lobby_val is not None,
+            "match_active": combat_val.get("matchActive") is True,
+            "bot_skills": skills_val.get("botSkillsVerified") is True,
+            "q_jutsu": skills_val.get("q_state") == "jutsu",
+            "w_jutsu2": skills_val.get("w_state") == "jutsu2",
+            "e_dash": skills_val.get("e_state") == "dash",
+            "r_ult": skills_val.get("r_state") == "ult",
+            "awakened": skills_val.get("awakened") is True,
+            "tools": tools_val is not None and tools_val.get("kunaiSpawned") is True and tools_val.get("twinShurikensSpawned") is True and tools_val.get("tripleShurikensSpawned") is True and tools_val.get("meleePunch", {}).get("dealtDamage") is True,
+            "tp_clamps": tp_val.get("camClamped") is True and tp_val.get("playerClamped") is True and all(tp_val.get("movementTested", {}).values()),
+            "elim": elim_val is not None and elim_val.get("isDead") is True and elim_val.get("stateIsDown") is True and elim_val.get("meshStillVisible") is True and elim_val.get("killCounted") is True and elim_val.get("deathCounted") is True and elim_val.get("assistCounted") is True,
+            "pdeath": pdeath_val is not None and pdeath_val.get("overlayShown") is True and pdeath_val.get("meshInvisibleAfter2s") is True,
+            "scoreboard": sb_val is not None and sb_val.get("isOpen") is True and sb_val.get("totalPlayers") == 10 and sb_val.get("hasPlayerHighlight") is True and sb_val.get("hasKdaRatio") is True and sb_val.get("hasSubtotals") is True,
+        }
+        _failed = sorted(k for k, v in _checks.items() if not v)
+        if _failed:
+            print("VERIFY FAILURE DETAIL:", __import__("json").dumps(_failed))
+        return len(_failed) == 0
 
 def main():
     import tempfile

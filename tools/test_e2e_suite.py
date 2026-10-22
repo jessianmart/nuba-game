@@ -936,7 +936,7 @@ class E2ETestRunner:
         await self.cdp.eval_js("""
             (() => {
                 const p = window.units.find(u => u.isPlayer);
-                p.chakra = 100; p.cds.q = 0;
+                p.hitstun = 0; p.chakra = 100; p.cds.q = 0;
             })()
         """)
 
@@ -1123,7 +1123,7 @@ class E2ETestRunner:
         res = await self.cdp.eval_js("""
             (() => {
                 const p = window.units.find(u => u.isPlayer);
-                p.chakra = 100;
+                p.hitstun = 0; p.chakra = 100;
                 p.cds = { atk: 0, q: 0, w: 0, e: 0, r: 0 };
 
                 // 1. Melee Combo 1-2-3
@@ -1176,7 +1176,7 @@ class E2ETestRunner:
                 enemy.x = player.x + 1.5;
                 enemy.z = player.z;
                 enemy.hp = 5;
-                player.cds.atk = 0;
+                player.hitstun = 0; player.cds.atk = 0;
 
                 // Execute attack to deal lethal damage naturally
                 window.executeSkill(player, 'atk');
@@ -1217,7 +1217,7 @@ class E2ETestRunner:
         res = await self.cdp.eval_js("""
             (() => {
                 const p = window.units.find(u => u.isPlayer);
-                p.chakra = 100;
+                p.hitstun = 0; p.chakra = 100;
                 p.cds.r = 0;
 
                 window.executeSkill(p, 'r');

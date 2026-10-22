@@ -303,6 +303,7 @@ scene.background = new THREE.Color(0x0c1626);
 scene.fog = new THREE.FogExp2(0x0c1626, 0.0016);
 
 const camera = new THREE.PerspectiveCamera(48, window.innerWidth / window.innerHeight, 0.5, 4000);
+window.__camera = camera; // PV4.2: telemetria E2E da distancia da camera
 
 // Lighting (Anime Cel-Shade bright sun + warm ambient fill)
 const hemiLight = new THREE.HemisphereLight(0xfffaed, 0x334155, 1.35);
@@ -2453,7 +2454,7 @@ function spawnVFX(x, y, z, color, radius = 3.5, duration = 0.45, style = 'sphere
       extGrp.position.set(x, y, z);
       arenaGroup.add(extGrp);
       if (activeSkillVfxFaceY !== null) extGrp.rotation.y = activeSkillVfxFaceY; // SPP: direcao do cast
-      vfxList.push({ mesh: extGrp, age: 0, duration: duration * 1.15, style: 'extracted', anim: activeSkillVfxAnim, faceDir: activeSkillVfxFaceY !== null ? { x: Math.sin(activeSkillVfxFaceY), z: Math.cos(activeSkillVfxFaceY) } : null }); // SPP
+      vfxList.push({ mesh: extGrp, age: 0, duration: duration * 1.7, style: 'extracted', anim: activeSkillVfxAnim, faceDir: activeSkillVfxFaceY !== null ? { x: Math.sin(activeSkillVfxFaceY), z: Math.cos(activeSkillVfxFaceY) } : null }); // SPP
     }
   }
 
@@ -3626,6 +3627,13 @@ function dealDamage(attacker, target, amount, skillName) {
   target.x = clampPush(target.x + (dx / len) * 1.4);
   target.z = clampPush(target.z + (dz / len) * 1.4);
 
+  // APK HITSTUN (engine de dano do Storm, medido do APK: dmg0f FACE_DAMAGE_NORMAL
+  // 21f = 0.35s hit normal / hsta0 hit-stagger 36f = 0.60s hit pesado): alvo VIVO
+  // fica preso na reacao — hit novo reinicia (juggle de combo); kawarimi escapa.
+  if (target.hp > 0) {
+    target.hitstun = dmg >= 180 ? 0.60 : 0.35;
+  }
+
   if (target.hp <= 0) {
     if (window.__GOV && window.__GOV.mobile && target.isPlayer) haptic([40, 60, 40]); // PV3.3: morri
     target.deadTimer = activeMatchCfg.respawn != null ? activeMatchCfg.respawn : 6.0; // respawn por modo (legacy 6s, 3v3 5s; PV2: BR = anim down normal, rebirth gate torna permanente)
@@ -3793,6 +3801,7 @@ function executeSkill(unit, slot) {
   const sk = unit.kit[slot];
   if (!sk || unit.cds[slot] > 0) return;
   if (unit.chakra < sk.cost) return;
+  if (unit.hitstun > 0 && sk.type !== 'kawarimi') return; // APK: preso na reacao de dano; kawarimi = escape autentico
 
   unit.chakra -= sk.cost;
   unit.cds[slot] = sk.cd;
@@ -3963,6 +3972,16 @@ function executeSkill(unit, slot) {
       rasMesh.position.set(unit.x + dirX * 2.2, 2.5, unit.z + dirZ * 2.2);
       arenaGroup.add(rasMesh);
       vfxList.push({ mesh: rasMesh, age: 0, duration: 0.75, style: 'compound', bindUnit: unit, bindBoneIdx: 13 });
+
+      // W-VIS: modelo EXTRAIDO do APK ('rasengan', eff1) bound a mao direita
+      // durante TODO o cast (~2.65u, proporcao Storm) — o visual autentico
+      // junto ao casting; procedural vira o core glow interno
+      const rasGrp = buildExtractedVfxMeshGroup(unit.heroId, 0x00d4ff, 0.0105, activeSkillVfxModel || 'rasengan');
+      if (rasGrp) {
+        rasGrp.position.set(unit.x, 2.5, unit.z);
+        arenaGroup.add(rasGrp);
+        vfxList.push({ mesh: rasGrp, age: 0, duration: 0.75, style: 'compound', bindUnit: unit, bindBoneIdx: 13 });
+      }
 
       unit.x = clampArena(unit.x + dirX * 11.5);
       unit.z = clampArena(unit.z + dirZ * 11.5);
@@ -4507,10 +4526,19 @@ function executeSkill(unit, slot) {
     spawnVFX(ux, 1.2, uz, sk.color, 6.0, 0.65, 'ring', unit.heroId);
 
     if (unit.heroId === '1nrt') {
-      const giantRas = createRasenganMesh(2.2, 0xff3b00);
-      giantRas.position.set(ux, 2.8, uz);
-      arenaGroup.add(giantRas);
-      vfxList.push({ mesh: giantRas, age: 0, duration: 1.25, style: 'compound' });
+      // W-VIS: giant_rasengan EXTRAIDO do APK bound a mao (forma na mao e explode,
+      // ~5.5u) — fallback procedural plantado se o extraido nao existir
+      const giantGrp = buildExtractedVfxMeshGroup(unit.heroId, 0xff3b00, 0.019, activeSkillVfxModel || 'giant_rasengan');
+      if (giantGrp) {
+        giantGrp.position.set(ux, 2.8, uz);
+        arenaGroup.add(giantGrp);
+        vfxList.push({ mesh: giantGrp, age: 0, duration: 1.25, style: 'compound', bindUnit: unit, bindBoneIdx: 13 });
+      } else {
+        const giantRas = createRasenganMesh(2.2, 0xff3b00);
+        giantRas.position.set(ux, 2.8, uz);
+        arenaGroup.add(giantRas);
+        vfxList.push({ mesh: giantRas, age: 0, duration: 1.25, style: 'compound' });
+      }
 
       // Authentic Kyuubi awakening explosion ground shockwave disc with 1efc_shock02.png
       const shockTex = loadTex('assets/skills/1efc_shock02.png');
@@ -4935,6 +4963,7 @@ function updateMatch(dt, elapsed) {
     const bx = _bp.x;
     const bz = _bp.z;
     if (u.spawnShield > 0) u.spawnShield = Math.max(0, u.spawnShield - dt); // SPAWN GUARD
+    if (u.hitstun > 0) u.hitstun = Math.max(0, u.hitstun - dt); // APK HITSTUN (dt real — tempo de parede)
     if (u.deadTimer <= 0 && Math.hypot(u.x - bx, u.z - bz) < 14.5) {
       u.hp = Math.min(u.maxHp, u.hp + dt * 95 * ((HERO_STATS[u.heroId] || HERO_STATS.__d).reg)); // P2
       u.chakra = Math.min(u.maxChakra, u.chakra + dt * 25);
@@ -5456,7 +5485,7 @@ function updateCameraAndHUD() {
     camera.lookAt(player.x, 1.5, player.z - 2);
   } else {
     // 3rd-Person Action Camera with stage clipping & glitch prevention
-    const camDist = 13.5;
+    const camDist = 16; // PV4.2: zoom afastado a pedido (era 13.5)
     const camPitchOffset = Math.sin(tpCamPitch) * camDist;
     const camHorizDist = Math.cos(tpCamPitch) * camDist;
 
@@ -6050,6 +6079,8 @@ Object.defineProperty(window, 'units', { get: () => units });
 Object.defineProperty(window, 'matchActive', { get: () => matchActive });
 Object.defineProperty(window, 'selectedHeroId', { get: () => selectedHeroId });
 Object.defineProperty(window, 'lobbyHeroMesh', { get: () => lobbyHeroMesh });
+window.__HITSTUN = { normal: 0.35, heavy: 0.60, source: 'APK storm: dmg0f media 21f, hsta0 36f' }; // telemetria E2E (W-HS)
+window.__HAND_VFX = () => vfxList.filter(v => v.style === 'compound' && v.bindUnit).length; // telemetria E2E (W-VIS)
 Object.defineProperty(window, 'rosterMeta', { get: () => rosterMeta });
 Object.defineProperty(window, 'animationsData', { get: () => animationsData });
 Object.defineProperty(window, 'skillVfxData', { get: () => skillVfxData });
@@ -6253,7 +6284,7 @@ async function startBRMatch(CFG, playerHero, others) {
       level: 1, kills: 0, deaths: 0, assists: 0, killStreak: 0, lastKillAt: 0,
       speed: (isPlayer ? 21.5 : 19.5) * hs.spd,
       state: 'idle', animTimer: 0, animDuration: 0,
-      comboStep: 0, comboResetTimer: 0, awakenedTimer: 0, deadTimer: 0, spawnShield: 3.0,
+      comboStep: 0, comboResetTimer: 0, awakenedTimer: 0, deadTimer: 0, spawnShield: 3.0, hitstun: 0,
       cds: { atk: 0, q: 0, w: 0, e: 0, r: 0 },
       aiTarget: null, aiStrafeDir: Math.random() < 0.5 ? 1 : -1
     });
