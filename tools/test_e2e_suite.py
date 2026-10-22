@@ -1219,6 +1219,7 @@ class E2ETestRunner:
                 const p = window.units.find(u => u.isPlayer);
                 p.hitstun = 0; p.chakra = 100;
                 p.cds.r = 0;
+                p.deadTimer = 0; p.awakenedTimer = 0; // PV4.2-race: player morto bloqueia cast; awakening stale mascara
 
                 window.executeSkill(p, 'r');
 

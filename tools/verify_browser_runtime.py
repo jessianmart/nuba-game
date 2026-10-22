@@ -355,7 +355,7 @@ async def test_page(port=9333):
         skills_r_eval = """
         (() => {
             const p = window.units[0];
-            p.hitstun = 0; p.cds.r = 0; p.chakra = 100;
+            p.hitstun = 0; p.cds.r = 0; p.chakra = 100; p.deadTimer = 0; p.awakenedTimer = 0; // PV4.2-race
             window.executeSkill(p, 'r');
             return {
                 heroId: p.heroId,
