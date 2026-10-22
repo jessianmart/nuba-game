@@ -1198,7 +1198,7 @@ async function applyArena(arenaId, opts = {}) {
   const mapAsset = (entry.mapMobile && window.__DEVICE && window.__DEVICE.isMobile) ? entry.mapMobile : entry.map;
   if (mapAsset) {
     try {
-      const res = await fetch(`assets/${mapAsset}?v=10`).then(r => r.json());
+      const res = await fetch(`assets/${mapAsset}?v=11`).then(r => r.json());
       if (res && res.meshes) {
         // PV3.2: telemetria de qual variante entrou (full vs .mobile.json)
         window.__ARENA_LOADED = { asset: String(mapAsset), meshes: res.meshes.length,

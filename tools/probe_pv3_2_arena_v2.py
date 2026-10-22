@@ -115,11 +115,13 @@ async def main():
 
     a_m, a_d = mob['arena'], desk['arena']
     checks = {
-        'mobile-carrega-variante': bool(a_m) and a_m['asset'].endswith('sd00a.mobile.json'),
-        'mobile-meshes-33': bool(a_m) and a_m['meshes'] == 33,
+        # generico: a partida roda na arena DEFAULT do lobby (sd03b) — o probe nao
+        # hardcoda o id; exige que mobile pegue a VARIANTE e desktop o FULL.
+        'mobile-carrega-variante': bool(a_m) and a_m['asset'].endswith('.mobile.json'),
+        'desktop-carrega-full': bool(a_d) and not a_d['asset'].endswith('.mobile.json'),
+        'mesma-arena-nas-duas': bool(a_m) and bool(a_d) and a_m['asset'].replace('.mobile', '') == a_d['asset'],
+        'mobile-menos-meshes': bool(a_m) and bool(a_d) and a_m['meshes'] < a_d['meshes'],
         'mobile-detectado': mob['isMobile'] is True,
-        'desktop-carrega-full': bool(a_d) and a_d['asset'].endswith('stage/arena/sd00a.json'),
-        'desktop-meshes-122': bool(a_d) and a_d['meshes'] == 122,
         'desktop-nao-e-mobile': desk['isMobile'] is False,
         'mobile-renderiza-menos-tris': mob['triangles'] is not None and desk['triangles'] is not None and mob['triangles'] < desk['triangles'],
         'mobile-renderiza-menos-drawcalls': mob['drawCalls'] is not None and desk['drawCalls'] is not None and mob['drawCalls'] < desk['drawCalls'],

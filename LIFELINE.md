@@ -136,3 +136,35 @@ Pedido do usuario: minimapa no topo, HP e chakra cada um de um lado, base apenas
 Entrega do pacote de perf/polimento mobile do pivot. DECISAO: o governor (window.__GOV) e avaliado no BOOT a partir de __DEVICE.isMobile (UA/touch) — mobile recebe dpr cap 1.25 e teto de 24 VFX; desktop segue 1.75/ilimitado; applyQuality da pagina de ajustes foi ajustada para NAO furar o cap mobile. O VFX cap roda no loop de update e descarta o efeito MAIS ANTIGO acima do teto (o frescor do impacto importa). EVIDENCIA FORTE: injecao de 40 impactos gerou pico natural de 273 VFX simultaneos — sem cap, um 3v3 mobile real derrubaria o FPS; com cap 24 o array converge em <1s. Haptics: helper com throttle 60ms + gate de perfil (18ms dano recebido, 12ms acerto, [40,60,40] morte) — so em mobile. PWA: manifest.webmanifest (fullscreen/landscape/theme #f97316) + icones 192/512 quadrados gerados do logo.png via Pillow com o fundo real do body (#0b0d12). PITFALLS registrados no TEST_READY: SPAWN GUARD bloqueia injecao de dano perto da base (zerar target.spawnShield em probes) e o governor lido no boot exige setUserAgentOverride ANTES do Page.navigate. Validado probe_pv3_polish (governor 4/4 + pico 273-><=24 + haptics + PWA 9/9) + bateria verify 0 + suite 38/38.
 
 <!-- lifeline:end -->
+
+### #0007 — 2026-10-22T00:03:08.848205+00:00 — decision
+
+- **author**: unknown
+- **agent**: human
+- **provider**: none
+- **model**: human
+- **kind**: decision
+- **summary**: Consolidacao do working tree paralelo + gate de sanidade de assets (PV-B.6/B.7)
+- **parents**: d4c2ff6c89d6e4e1f6c10172053776f93be7131328c72378824f8f6b172c5720
+- **id**: bc013fbbfecd15f84bc2d7ca1bad331c39418a7569468c4937a26eacb2d66e16
+
+**Body**:
+PV2 REALEZA NA VILA provado 8/8 (probe dos agentes) e PV3/PV4 ja commitados por eles. Risco detectado: horas de trabalho paralelo SO' no working tree (450+ webp, roster 12, gzip) + skill_vfx.json CORROMPIDO por pipeline paralelo (sobrescrita em vez de merge, 12 NaN, 536KB vs 1.44MB) — o loader fetch().catch(${}) engolia o parse e matava TODOS os VFX sem console error (suite seguia 38/38 verde). Acoes: (1) skill_vfx restaurado do HEAD + backup forense no scratch; (2) gate novo no verify_browser_runtime.py — assert de sanidade window.skillVfxData>=11 / rosterMeta>=12 / animationsData>=12, provado por teste NEGATIVO (corrompido -> EXIT 1 vfxKeys 0) e POSITIVO (EXIT 0); (3) cache-busters v8->v9 nos fetch de dados; (4) commit consolidado d6e0925 (tudo menos .bak_*); (5) dev server reiniciado com gzip (17813->3208 bytes em roster_meta). Gate: verify EXIT 0 + suite Tiers 1-4 PASSED.
+
+<!-- lifeline:end -->
+
+### #0008 — 2026-10-22T00:31:40.386251+00:00 — decision
+
+- **author**: unknown
+- **agent**: human
+- **provider**: none
+- **model**: human
+- **kind**: decision
+- **summary**: PV3.2 — arena merge mobile: sd03b e o mapa real de toda partida
+- **parents**: bc013fbbfecd15f84bc2d7ca1bad331c39418a7569468c4937a26eacb2d66e16
+- **id**: 647fc499bffafa09c70dd87915e98c2dde857b7de76ad71d84566e84ee11c456
+
+**Body**:
+ACHADO QUE MUDOU O ALVO: instrumentando o jogo com window.__ARENA_LOADED (asset + meshes carregados) descobri que a partida 3v3 NAO roda no sd00a (a primeira arena do catalogo) e sim no sd03b com 294 meshes / 8.02MB — porque dm_3v3 nao define 'arena' no MATCH_CONFIGS, entao o modo cai no palco DEFAULT que o lobby carrega no boot. Ou seja: o mapa mais pesado do jogo e o que TODA partida usa; o sd00a e apenas uma arena selecionavel. DECISAO: criar pipeline generico tools/arena_blender_optimize.py -- <arenaId> (join por textura + decimate por classe, classe extraida do basename da TEXTURA porque os nomes das meshes embutem o id da arena: sd00aobj008_sub0), ratios calibrados por censo real, e aplicar nas duas arenas. RESULTADO: sd03b 294->17 meshes (-94%), 93k->49.7k tris, 8.02->5.48MB; sd00a 122->33 (-73%), 3.58->2.53MB. Registro no catalogo via mapMobile + bump do fetch de dados ?v=11 (fetch embutido nao e coberto pelo auto-cache-buster do index.html). Validado em 2 processos Edge INDEPENDENTES (rodar as duas sessoes no mesmo processo invertia os numeros por estado compartilhado): mobile 17 meshes/109 draw calls/128k tris vs desktop 294/390/180k = -72% draw calls; bateria 38/38. LICAO GERAL: nunca assuma qual arena/recurso a partida usa — instrumente e leia; performance.getEntriesByType('resource') estoura o buffer de 250 entradas no boot e descarta as entradas antigas (a arena sai da lista).
+
+<!-- lifeline:end -->

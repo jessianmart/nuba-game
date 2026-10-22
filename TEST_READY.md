@@ -516,3 +516,29 @@ ode --check do game.js (como .mjs) -> OK.
   precisa `Emulation.setUserAgentOverride` antes do `Page.navigate`.
 - Novos `.bak`: game.js.bak_pv3, index.html.bak_pv3.
 - PV3.2 (arena merge) e PV3.4 (smoke em device real) seguem pendentes.
+
+
+### PV3.2 — ARENA MERGE MOBILE (sd00a + sd03b) — validado 2026-10-21
+- **Descoberta que mudou o alvo**: instrumentando `window.__ARENA_LOADED` (asset +
+  meshes carregados) descobriu-se que **a partida 3v3 roda no `sd03b` (294 meshes)**,
+  nao no `sd00a`: `dm_3v3` nao define `arena`, entao o modo cai no palco default do
+  lobby. Otimizar o sd00a era util (arena selecionavel), mas o sd03b e o mapa de
+  TODA partida — 8,02 MB e o mais pesado do jogo.
+- `tools/arena_blender_optimize.py -- <arenaId>` (generico, headless):
+  - **sd03b: 294 → 17 meshes (-94%) | 93.164 → 49.714 tris (-47%) | 8,02 → 5,48 MB (-32%)**
+  - sd00a: 122 → 33 meshes (-73%) | 40.111 → 22.228 tris (-45%) | 3,58 → 2,53 MB (-29%)
+  - classe da mesh = basename da TEXTURA (nomes embutem o id: `sd00aobj008_sub0` →
+    tira o prefixo do id e le as letras iniciais); ratios calibrados pelo censo real
+    (obj 0.58 · ha/eda 0.50 · ki/flo/bac 0.45 · sd 0.60 · iwa/rock 0.65 · river/hasi 0.80).
+- Catalogo: `mapMobile` em sd00a e sd03b + bump do fetch de dados `?v=9 → 11`
+  (fetch embutido em codigo NAO e coberto pelo auto-cache-buster do index.html).
+- `tools/probe_pv3_2_arena_v2.py` 9/9 — **2 processos Edge INDEPENDENTES** (o run no
+  mesmo processo invertia os numeros: estado/ordem compartilhada): mobile carrega
+  `sd03b.mobile.json` (17 meshes, **109 draw calls**, 128.981 tris) e desktop mantem
+  `sd03b.json` (294 meshes, **390 draw calls**, 179.990 tris) → **-72% draw calls**.
+- Bateria `pv32`: verify EXIT 0 + suite 38/38 zero console errors.
+- Pitfalls: (1) `dm_3v3` sem `arena` roda no palco DEFAULT do lobby — nunca assuma
+  qual arena a partida usa, instrumente; (2) `performance.getEntriesByType('resource')`
+  estoura o buffer de 250 entradas no boot (a arena sai da lista) — use telemetria no
+  jogo; (3) rodar as duas sessoes no MESMO processo Edge inverte/contamina os numeros.
+- Novos `.bak`: arenas.json.bak_pv32/.bak_pv32d · game.js.bak_pv32/.bak_pv32c/.bak_pv32d.
