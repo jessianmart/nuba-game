@@ -78,3 +78,37 @@ intercepta TODOS os toques em portrait — emular LANDSCAPE (915×412) no Tier 5
 com event-log global (tgt=rotate-overlay) encontrou em 1 rodada. (3) meu initTouchControls
 duplicado foi REMOVIDO (a IIFE L~5911 deles é superior — auto-aim com rotação + vibrate);
 window.__cameraMode preservado como leitura E2E.
+
+## §18 — PV2 provado + PV-B (perf) e gate de sanidade de assets (2026-10-21)
+
+Consolidacao do trabalho paralelo (commit d6e0925) + blindagens novas.
+
+| Verificacao | Resultado |
+|---|---|
+| probe PV2 REALEZA NA VILA (`tools/probe_pv2.py`, 8 grupos) | PASS — 10 solo spawns no layout real (arena sa00z), zona 65->6 em 6 fases, dano fora da zona, bau +35 HP, last-standing, 0 console errors |
+| verify_browser_runtime (isolado, apos PV-B.6/B.7) | EXIT 0 — zero console errors; Assets Sanity `{vfxKeys: 11, rosterLen: 12, animKeys: 12}` |
+| test_e2e_suite Tiers 1-4 | PASSED, zero console errors |
+| W2 smoke (`tools/w2_smoke.py`) | PASS — roster 12 herois, Tsunade 1tnd (Rakanken) + Orochimaru 1orc (Sen'nejashu), rig `userData` confirmado |
+| boot payload (`perf_reports/`) | 26.44 MB baseline -> 4.43 MB com gzip (alvo do contrato PV-B: < 14 MB) |
+| gzip no dev server (curl) | `Content-Encoding: gzip` + `Vary: Accept-Encoding` (roster_meta 17813 -> 3208 bytes) |
+
+### Incidente: skill_vfx.json corrompido por pipeline paralelo (silencioso)
+
+`assets/skills/skill_vfx.json` foi REGRAVADO (nao mergeado) por um pipeline paralelo com
+apenas o heroi novo (1.44 MB/43 modelos -> 536 KB/7) e 12 `NaN` nos normals (`json.dump`
+padrao). O loader `fetch(...).then(r => r.json()).catch(() => ({}))` engoliu o parse
+invalido: TODOS os VFX extraidos morreram e a bateria 38/38 continuou VERDE com 0 console
+errors (mesmo padrao do revert W1.1). Restaurado do HEAD; backup forense no scratch
+(`skill_vfx_1tnd_broken_backup.json`).
+
+### Blindagem nova (PV-B.6 / PV-B.7)
+
+- `verify_browser_runtime.py` agora asserta SANIDADE DE ASSETS carregados
+  (`window.skillVfxData`/`rosterMeta`/`animationsData` >= 11/12/12), com log
+  `Assets Sanity Result`. Provado por teste NEGATIVO: injetar o arquivo corrompido
+  -> EXIT 1 com `{"vfxKeys": 0, ...}`; restaurar -> EXIT 0.
+- Cache-buster dos fetch de DADOS bumpado v8->v9 (roster_meta/animations/skill_vfx
+  mudaram mantendo `?v=8` = cache envenenado no browser; o auto-bump cobre so o index.html).
+
+**Nota de flake**: verify com EXIT 1 por 4x `net::ERR_INSUFFICIENT_RESOURCES` (audio .ogg)
+com a suite/probes concorrentes — re-run ISOLADO deu EXIT 0. Bateria roda sozinha.
