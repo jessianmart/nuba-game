@@ -4966,9 +4966,16 @@ body.touch #hud-screen.active .hp-gauge { flex: 1 1 0; }
 body.touch #hud-screen.active .chakra-gauge { flex: 1 1 0; }
 body.touch #hud-screen.active .gauge-num { font-size: 10px; }
 
-/* banners de sequencia/ulti: discretos, padrao APK (escala menor) */
-body.touch #hud-screen.active .streak-banner,
-body.touch #hud-screen.active .ougi-banner { transform: scale(0.55); top: 140px; }
+/* PV4.2 — banners de sequencia/ulti LEVES no touch (padrao APK, pedido do usuario).
+   A regra PV4 anterior (transform: scale(0.55)) NAO tinha efeito: streakPop/bannerPop
+   e o GSAP sobrescrevem o transform ao animar — o banner aparecia no tamanho cheio.
+   Agora o peso cai onde vale: fonte, caixa e moldura. Desktop intacto. */
+body.touch .streak-banner { top: 84px; min-width: 220px; padding: 6px 24px; gap: 10px; border-width: 8px; }
+body.touch .streak-kanji { font-size: 19px; letter-spacing: 3px; }
+body.touch .streak-text { font-size: 13px; letter-spacing: 2px; }
+body.touch .streak-count { font-size: 26px; }
+body.touch .ougi-banner { top: 84px; }
+body.touch .center-banner { top: 24%; font-size: 15px; letter-spacing: 1.5px; padding: 8px 24px; border-width: 8px; }
 
 /* CD visivel nos botoes touch (espelhado de #cd-* pelo game.js) */
 .tbtn { position: relative; }
