@@ -542,3 +542,25 @@ ode --check do game.js (como .mjs) -> OK.
   estoura o buffer de 250 entradas no boot (a arena sai da lista) — use telemetria no
   jogo; (3) rodar as duas sessoes no MESMO processo Edge inverte/contamina os numeros.
 - Novos `.bak`: arenas.json.bak_pv32/.bak_pv32d · game.js.bak_pv32/.bak_pv32c/.bak_pv32d.
+
+
+### Tier 5 E2E — PV1.6/PV2.6 formal (validado 2026-10-22)
+- `tools/test_e2e_suite.py` agora cobre **Tiers 1-5 = 47 testes** (23+5+4+6+9), bateria
+  47/47 + verify 0 erros (decima verde). Tier 5 = emulacao iPhone 844x390 + toque REAL
+  via `Input.dispatchTouchEvent` (pointerdown/up com pointerType touch).
+- Fluxo do tier: M01 boot mobile (UA override **verificado antes de navegar** — o
+  override pode chegar atrasado ao processo e bootar com o UA antigo; race medida no
+  PV3.2) → M02 arena `.mobile.json` → M03 3v3 → M04-M07 touch → M08 BR → M09 portrait
+  + **restaura desktop** (a proxima bateria anexa na mesma aba).
+- **Pitfalls CDP** (custaram a rodada, todos com diag reproduzivel):
+  1. `returnByValue` **descarta valores `undefined`** — ler campo inexistente
+     (`__matchState.mode`) vira KeyError no Python. Chaves reais do `__matchState`:
+     `time/br/overtime/suddenDeath/blue/red`; discriminador de modo DM = `br === null`.
+  2. `startMatch('br_vila')` em MOBILE leva **~32s** (desktop 8.6s) — estoura o timeout
+     CDP de 30s e o `TimeoutError` do asyncio tem **mensagem vazia** (FAIL -> branco).
+     Helper `_t5_eval_slow(timeout=90)`.
+  3. `Emulation.clearUserAgentOverride` **nao propaga no headless** — restaurar via
+     `setUserAgentOverride` com UA desktop + `setDeviceMetricsOverride` 1280x720.
+  4. Servidor :8080 caindo no meio da bateria deixa a suite booting numa pagina morta
+     ("Failed to start 5v5 match") — conferir `curl :8080` antes de rodar.
+- Novos `.bak`: test_e2e_suite.py.bak_pv1_6 / .bak_pv1_6fix.

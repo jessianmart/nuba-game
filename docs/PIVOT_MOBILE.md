@@ -140,7 +140,7 @@ Componentes DOM aditivos:
 | PV0.3 | **`InputState` abstraction**: estado único (§2.4) consumido onde hoje se lê `keys` (L5541+) / `mouseDown`; teclado/pont continuam escrevendo — ZERO mudança de comportamento desktop | `game.js` update loop, input listeners | F08–F17 legado verde (prova: suite) |
 | PV0.4 | **Baseline obrigatória** antes da PV1 (regra repo: repo tem dev paralelo) | — | 38/38 + baseline_suite.log renovado |
 
-### Fase PV1 — Combate 3v3 mobile MVP — **STATUS: DONE via probes (2026-10-21); PV1.6 Tier 5 formal pendente**
+### Fase PV1 — Combate 3v3 mobile MVP — **STATUS: DONE TOTAL (probes 2026-10-21 + PV1.6 Tier 5 FORMAL na suite 2026-10-22: 47/47)**
 
 | # | Task | Arquivos | Verificação |
 |---|---|---|---|
@@ -151,7 +151,31 @@ Componentes DOM aditivos:
 | PV1.5 | Câmera mobile: thirdperson auto + look-ahead joystick; pan off touch; clamp invariante | `game.js` §camera | F11 clamp + T5 snap-behind |
 | PV1.6 | **Tier 5 E2E Mobile**: CDP `Input.dispatchTouchEvent` (joystick/ATK/Q/kawarimi/chakra) + `Emulation.setDeviceMetricsOverride(412×915)`; updates `PROJECT.md`/`TEST_READY.md` §Tier 5 | `tools/test_e2e_suite.py`, docs | 38/38 + novos testes verdes |
 
-### Fase PV2 — Realeza na Vila — **STATUS: MODO BR JOGÁVEL (probe 8/8 + bateria 38/38)**
+### Tier 5 E2E — PV1.6 entregue (2026-10-22): touch real na suite canonica
+
+9 testes "Tier 5" em `tools/test_e2e_suite.py` (38 → **47**), touch de verdade via
+`Input.dispatchTouchEvent` (mesma pipeline de um dedo: pointerdown/up com pointerType
+touch) — nao mais so probes ad-hoc:
+
+| Teste | O que prova |
+|---|---|
+| T5_M01 | Emulacao iPhone 844x390 no boot: `__DEVICE.isMobile`, overlay oculto em landscape, governor dprCap 1.25 + vfxCap 24 |
+| T5_M02 | Arena DEFAULT do lobby carrega a **variante `.mobile.json`** (17 meshes) — PV3.2 dentro da suite |
+| T5_M03 | 3v3 mobile: 6 units, 3 retratos/time, META 15, touch-cluster grid, `__matchState.br === null` |
+| T5_M04 | **Joystick real**: touchStart/move/end → vetor `INPUT` + unidade anda +X + reset ao soltar |
+| T5_M05 | **ATK hold**: `INPUT.fire` true/false, `.pressed`, ataque dispara (cd/estado) |
+| T5_M06 | **Tap Q**: `executeSkill` + espelho de CD vivo em `#cdt-q` (conic/segundos) |
+| T5_M07 | **Hold chakra**: `INPUT.chakra` true/false |
+| T5_M08 | **Realeza na Vila mobile** (PV2.6): 10 ninjas, zona 65→6 encolhendo, 12 baus, `sa00z.mobile.json`, HUD BR |
+| T5_M09 | Portrait → overlay "gire o dispositivo"; restaura desktop no fim (UA set + reload) |
+
+Bateria: **47/47 + verify 0 erros** (decima verde). Pitfalls reais da rodada:
+CDP **descarta valores `undefined`** do `returnByValue` (KeyError no Python — `__matchState`
+nao tem `mode`; o discriminador e `br === null`); `startMatch('br_vila')` em MOBILE leva
+**~32s** (desktop 8.6s) e estoura o timeout CDP de 30s com `TimeoutError` de mensagem VAZIA;
+`Emulation.clearUserAgentOverride` **nao propaga no headless** — restaurar via SET desktop.
+
+### Fase PV2 — Realeza na Vila — **STATUS: MODO BR JOGÁVEL (probe 8/8 + Tier 5 M08 formal na suite 47/47)**
 - `MATCH_CONFIGS.br_vila`: solo 10, sem respawn, zona 65→6 em 6 fases, 180s, layout real via `br_vila_layout.json`
 - `startBRMatch` (game.js): spawn solo no anel real, zona 結界 (cilindro roxo translúcido escala=raio), 12 baús âmbar (+35 HP/+50 chakra), `playMatchIntro([playerHero], roster.slice(1))`
 - `updateBR(dt)` no `updateMatch`: fases a cada 25s, raio contínuo entre fases, drain `2+fase` HP/s fora do raio (+1.5 tolerância), coleta por proximidade (2.6u), last-standing → `brEndMatch` reusa `endMatch` (scoreBlue/Red 1/0)

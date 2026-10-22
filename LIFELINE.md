@@ -168,3 +168,35 @@ PV2 REALEZA NA VILA provado 8/8 (probe dos agentes) e PV3/PV4 ja commitados por 
 ACHADO QUE MUDOU O ALVO: instrumentando o jogo com window.__ARENA_LOADED (asset + meshes carregados) descobri que a partida 3v3 NAO roda no sd00a (a primeira arena do catalogo) e sim no sd03b com 294 meshes / 8.02MB — porque dm_3v3 nao define 'arena' no MATCH_CONFIGS, entao o modo cai no palco DEFAULT que o lobby carrega no boot. Ou seja: o mapa mais pesado do jogo e o que TODA partida usa; o sd00a e apenas uma arena selecionavel. DECISAO: criar pipeline generico tools/arena_blender_optimize.py -- <arenaId> (join por textura + decimate por classe, classe extraida do basename da TEXTURA porque os nomes das meshes embutem o id da arena: sd00aobj008_sub0), ratios calibrados por censo real, e aplicar nas duas arenas. RESULTADO: sd03b 294->17 meshes (-94%), 93k->49.7k tris, 8.02->5.48MB; sd00a 122->33 (-73%), 3.58->2.53MB. Registro no catalogo via mapMobile + bump do fetch de dados ?v=11 (fetch embutido nao e coberto pelo auto-cache-buster do index.html). Validado em 2 processos Edge INDEPENDENTES (rodar as duas sessoes no mesmo processo invertia os numeros por estado compartilhado): mobile 17 meshes/109 draw calls/128k tris vs desktop 294/390/180k = -72% draw calls; bateria 38/38. LICAO GERAL: nunca assuma qual arena/recurso a partida usa — instrumente e leia; performance.getEntriesByType('resource') estoura o buffer de 250 entradas no boot e descarta as entradas antigas (a arena sai da lista).
 
 <!-- lifeline:end -->
+
+### #0009 — 2026-10-22T13:20:08.696769+00:00 — decision
+
+- **author**: unknown
+- **agent**: human
+- **provider**: none
+- **model**: human
+- **kind**: decision
+- **summary**: Deploy PV2+PV-B em producao validado (Tiers 1-4 verdes); T5 novo dos agentes 7/9
+- **parents**: 647fc499bffafa09c70dd87915e98c2dde857b7de76ad71d84566e84ee11c456
+- **id**: fe070072ec2d8fae837d4c71805a37397204c8a8f8e277728123efbdb3e3c371
+
+**Body**:
+Deploy 433d8d7 -> goofy-mendeleev.vercel.app (mapMobile sd03b + roster 12 + 450 webp + gzip). Validacao prod: verify EXIT 0 com Assets Sanity {vfxKeys 11, roster 12, anim 12}; suite Tiers 1-4 100% verdes (23/23+5/5+4/4+6/6), 0 console errors. Tier 5 (mobile, +250 linhas adicionadas HOJE pelos agentes, nao-commitado): 7/9 — falhas T5_M03 (le __matchState.mode, handle a frente do snapshot atual) e T5_M09 (clearUserAgentOverride), ambas em teste novo paralelo, nao regressao do deploy. Primeira run da suite prod morreu porque o prod_proxy caiu (lancado sem log; relancado com log — 2a run fluiu ate o fim, proxy vivo, ConnectionReset 10054 benignos). Licao: proxy sempre com redirect de log; suite via proxy depende do proxy vivo — cascata de FAILs vazios = proxy morto, nao bug do jogo. Dev server local restaurado com gzip (PV-B.5).
+
+<!-- lifeline:end -->
+
+### #0010 — 2026-10-22T13:56:32.960213+00:00 — decision
+
+- **author**: unknown
+- **agent**: human
+- **provider**: none
+- **model**: human
+- **kind**: decision
+- **summary**: PV1.6+PV2.6 — Tier 5 E2E mobile formal na suite canonica (38->47)
+- **parents**: fe070072ec2d8fae837d4c71805a37397204c8a8f8e277728123efbdb3e3c371
+- **id**: a7f8e013c60be8a047c2c0e0d7937d5e09b3f05005f3d3b41d7e38e8317b654b
+
+**Body**:
+Fechada a pendencia formal do pivot: os testes mobile deixaram de ser so probes ad-hoc e entraram NA SUITE canonica como Tier 5 (9 testes, M01-M09), com toque REAL via Input.dispatchTouchEvent e emulacao iPhone 844x390 verificada ANTES de navegar (o setUserAgentOverride pode chegar atrasado ao processo e bootar com UA antigo — race medida na fase PV3.2; a suporte agora espera navigator.userAgent conter iPhone antes do Page.navigate). Cobertura: boot mobile+governor, arena variante .mobile.json in-suite, 3v3 (6 units/3 retratos/META 15/cluster), joystick real (vetor INPUT + movimento + reset), ATK hold, tap Q + espelho de CD #cdt-q, chakra hold, Realeza na Vila mobile (zona 65->6, 12 baus, sa00z.mobile.json) e rotate overlay + restauracao desktop no fim. Bateria: 47/47 + verify 0 erros (decima verde). Tres armadilhas CDP descobertas com diag reproduzivel e registradas na skill: (1) returnByValue DESCARTA valores undefined — ler __matchState.mode (campo inexistente) vira KeyError no Python; as chaves reais sao time/br/overtime/suddenDeath/blue/red e o discriminador de modo DM e br===null; (2) startMatch br_vila em MOBILE demora ~32s vs 8.6s desktop e estoura o timeout CDP de 30s com TimeoutError de mensagem VAZIA (FAIL sem texto) — helper _t5_eval_slow(90s); (3) Emulation.clearUserAgentOverride NAO propaga no headless — restaurar via setUserAgentOverride desktop + setDeviceMetricsOverride, nunca via clear. Aprendizado geral: FAIL com mensagem vazia em teste async = suspeitar de TimeoutError de send(); e todo campo JS lido via CDP deve ter fallback explicito porque undefined some do JSON.
+
+<!-- lifeline:end -->
