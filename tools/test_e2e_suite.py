@@ -1177,6 +1177,7 @@ class E2ETestRunner:
                 enemy.z = player.z;
                 enemy.hp = 5;
                 player.hitstun = 0; player.cds.atk = 0;
+                player.animTimer = 0; player.state = 'idle'; player.awakenedTimer = 0; // PV4.2-race: S03 pode deixar cast lock/slowmo ativo
 
                 // Execute attack to deal lethal damage naturally
                 window.executeSkill(player, 'atk');

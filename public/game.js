@@ -276,7 +276,7 @@ const AUTH_SFX = {
     const v = Math.pow(1 - Math.min(d / 60, 1), 1.2) * 1.4 * base;
     if (v < 0.06) return false;
     const played = this.play(name, { vol: Math.min(v, 1), min: opts && opts.min });
-    if (played) { this.lastPlays = this.lastPlays || []; this.lastPlays.push({ n: name, v: Math.round(Math.min(v, 1) * 100) / 100, d: Math.round(d) }); if (this.lastPlays.length > 24) this.lastPlays.shift(); }
+    if (played) { this.lastPlays = this.lastPlays || []; this.lastPlays.push({ n: name, v: Math.round(Math.min(v, 1) * 100) / 100, d: Math.round(d) }); if (this.lastPlays.length > 60) this.lastPlays.shift(); }
     return played;
   },
   pick(a, b) { this._alt = this._alt || {}; this._alt[a] = !this._alt[a]; return this._alt[a] ? a : b; } // W5: variação hit1/hit2
@@ -466,8 +466,9 @@ function updateJuice(dt) {
   JUICE.timeScale += (targetScale - JUICE.timeScale) * Math.min(1, dt * rate);
   JUICE.trauma = Math.max(0, JUICE.trauma - dt * 1.35);
   JUICE.fovPunch = Math.max(0, JUICE.fovPunch - dt * 30);
-  // Cinematic zoom punch (48 = native PerspectiveCamera fov)
-  const fov = 48 - JUICE.fovPunch;
+  // Cinematic zoom punch (48 = native PerspectiveCamera fov); W-SKL+ CINE
+  // cut de ult contribui até 6 graus (autorrestaura: blend -> 0 = base)
+  const fov = 48 - JUICE.fovPunch - ultCineBlend() * 6;
   if (camera.fov !== fov) {
     camera.fov = fov;
     camera.updateProjectionMatrix();
@@ -680,6 +681,20 @@ function sampleAnimationCurve(heroId, clipName, timeVal, fps = 24) {
 
 // W-SKL+ TRAIL: rastro de mão/lâmina durante o cast — fiel ao nuccChunkTrail
 // do APK (referência ao bone animado; o ribbon é procedural no engine Storm).
+// W-SKL+ CINE: cut cinematográfico do ult — só player com coreografia
+// autêntica (clip fps=60). Camera chunk do APK é stub de referência; o
+// movimento reproduz o sabor Storm (aproximação baixa atrás do caster).
+let ultCine = { active: false, t: 0, dur: 0 };
+function ultCineBlend() {
+  if (!ultCine.active) return 0;
+  const ph = ultCine.t / ultCine.dur;
+  if (ph < 0.24) return THREE.MathUtils.smoothstep(ph, 0, 0.24);
+  if (ph < 0.62) return 1.0;
+  return 1.0 - THREE.MathUtils.smoothstep(ph, 0.62, 1.0);
+}
+
+window.__CINE = () => ({ active: ultCine.active, b: +ultCineBlend().toFixed(3), fov: +camera.fov.toFixed(2), camY: +camera.position.y.toFixed(2) }); // W-SKL+ debug hook
+
 const skillTrails = [];
 const SKILL_TRAIL_MAP = {
   '1hnt:w': { bones: [9, 13], color: 0x8b5cf6, width: 0.42 }, // Twin Lion Fists — ambas as mãos
@@ -4640,6 +4655,7 @@ function executeSkill(unit, slot) {
     const _ultClip = (animationsData[unit.heroId] || animationsData['1nrt'] || {}).ult;
     unit.animDuration = (_ultClip && _ultClip.fps) ? Math.min(1.8, Math.max(1.15, _ultClip.numFrames / _ultClip.fps)) : 1.15;
     unit.animTimer = unit.animDuration;
+    if (unit.isPlayer && _ultClip && _ultClip.fps) { ultCine.active = true; ultCine.t = 0; ultCine.dur = unit.animDuration; }
     unit.awakenedTimer = 14.0; // 14 seconds of Awakening Mode!
     AUTH_SFX.playAt('awake_open', unit.x, unit.z, { vol: 0.9 }); AUTH_SFX.playAt('awake_flash', unit.x, unit.z, { vol: 0.8 }); // W5: awakening posicionado
     unit.auraMesh.visible = true;
@@ -5288,6 +5304,11 @@ function updateMatch(dt, elapsed) {
   }
 
   updateSkillTrails(simDt); // W-SKL+ TRAIL: rastros de mão/lâmina (congelam com o mundo no juice)
+  if (ultCine.active) { // W-SKL+ CINE: cut de ult avança com o mundo (congela no hitstop)
+    ultCine.t += simDt;
+    const _pc = units.find(u => u.isPlayer);
+    if (ultCine.t >= ultCine.dur || !_pc || _pc.state !== 'ult') ultCine.active = false;
+  }
   updateShadowClones(simDt); // SPP: clones 3D (congelam com o mundo no juice)
   // PV3.1: VFX cap — acima do teto descarta o mais ANTIGO (o frescor do impacto
   // importa; efeito velho ja entregou o feedback). So roda no mobile (cap 24).
@@ -5692,6 +5713,15 @@ function updateCameraAndHUD() {
 
   // P1 JUICE: additive impact shake on top of the solved camera position
   applyCameraShake();
+
+  // W-SKL+ CINE: blend do cut de ult por cima da posição resolvida
+  const _ucb = ultCineBlend();
+  if (_ucb > 0.01) {
+    const fx = Math.sin(player.rotY), fz = Math.cos(player.rotY);
+    const cinePos = new THREE.Vector3(player.x - fx * 7.2, 2.7, player.z - fz * 7.2);
+    camera.position.lerpVectors(camera.position, cinePos, Math.min(1, _ucb * 0.92));
+    camera.lookAt(player.x + fx * 2.0, 1.75, player.z + fz * 2.0);
+  }
 
   // Update Player HUD Bars
   const hpPct = Math.round((player.hp / player.maxHp) * 100);

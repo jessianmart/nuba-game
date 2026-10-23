@@ -270,3 +270,28 @@ tocam em velocidade real; longos (1skr 2.52s, 1roc 2.78s, 1orc 2.43s) sobem
 1nrt r: animDuration = 1.15 (clamp baixo) ✓. 1orc W: ribbon vivo na cena com
 588 vértices não-nulos; frame com 87px prateados do Kusanagi + ciano do VFX no
 centro ✓. 1orc r: animDuration = 1.8 (clamp alto) ✓. 0 console errors.
+
+## 23. W-CINE — cut cinematográfico do ult (2026-10-22)
+
+O `nuccChunkCamera` dos skl é **stub de 8 bytes** (referência — os keyframes
+reais vivem nos pacotes de cutscene, fora do repo). O cut reproduz o sabor
+Storm proceduralmente: aproximação baixa atrás do caster durante o windup,
+tele punch, retorno suave.
+
+- **Só player com coreografia autêntica** (clip `ult` com `fps=60` — 10/12;
+  1ssk/1itc sem ult coreografado ficam sem cut, fiel ao APK).
+- Escritor único de FOV: o delta entra no próprio `updateJuice`
+  (`48 - fovPunch - ultCineBlend()*6`) — sem conflito com o juice punch;
+  autorrestaura quando o blend → 0.
+- Posição/lookAt: blend no `updateCameraAndHUD` pós-shake
+  (`lerpVectors` até `cinePos` = atrás do caster, y 2.7; lookAt torso).
+- Blend: sobe em 0–24% da janela, hold até 62%, decai suave até 100% —
+  janela = `animDuration` do ult (1.15–1.8s), nunca além.
+- Avança com `simDt` (congela no hitstop); corta se o state sair de 'ult'.
+- `window.__CINE` debug hook. game.js?v=40.
+
+### Probe (`tools/wcine_probe.py`)
+
+1nrt r: camY 38 → 25,65 (descendo) → 3,06 (hold baixo), FOV 48 → 47,16 → 42;
+após o ult: active=false, FOV 48, camY voltando ao MOBA. Frame do meio com
+câmera baixa e composição de perto (paredes verticais). 0 console errors.
