@@ -335,6 +335,27 @@ nao tem `mode`; o discriminador e `br === null`); `startMatch('br_vila')` em MOB
 Lane, torre, minions, itens/loja, monetização, skins, wrapper nativo, novos heróis.
 **Tema, skin Storm, VFX, áudio, kanji e juice permanecem exatamente como estão.**
 
+### 8.5 W5 — Áudio autêntico do APK na batalha (pedido direto do usuário 2026-10-22)
+
+Fora do escopo original das fases 8.2 (o escopo dizia "áudio permanece como
+está") — o usuário pediu explicitamente as **vozes originais do APK** no momento
+da batalha de cada ninja, **com volume obedecendo à distância** e os **sons
+corretos de combate, sem nada genérico**. Entregue em W5:
+
+- 70 cues autênticas de Naruto Ultimate Ninja Storm em
+  `public/assets/audio/decoded/` (+22 novas, pipeline em
+  `tools/extract_battle_sfx.py` + vgmstream em `tools/audiobanks/`).
+- `AUTH_SFX.playAt` posiciona cada som pela distância câmera→fonte
+  (falloff suave, silêncio além de ~60u): a luta dos bots atravessando a vila
+  toca nos volumes certos, o que acontece perto do jogador é claro.
+- Cada momento de batalha tem o som correto do jogo original: impacto, queda
+  pesada, soco/chute (com variação), kunai/shuriken, impacto metálico
+  (substituindo o som de menu que tocava no impacto de arma), KO, ressurreição,
+  fim de awakening, ult pronto, baús do BR; vozes de jutsu por herói no cast.
+- ZERO áudio sintetizado em batalha (os bleeps de `SoundFX` saíram de todos os
+  caminhos de combate; sobram apenas na UI, onde cues autênticas os cobrem).
+- Validação: `tools/probe_w_sfx.py` 13/13 + bateria 47/47 + verify 0 erros.
+
 ### 8.4 Regras de execução
 
 1. Docs antes de código: cada fase atualiza PROJECT.md (feature row) + TEST_READY.md + LIFELINE.md.

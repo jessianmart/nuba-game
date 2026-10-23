@@ -544,6 +544,63 @@ ode --check do game.js (como .mjs) -> OK.
 - Novos `.bak`: arenas.json.bak_pv32/.bak_pv32d · game.js.bak_pv32/.bak_pv32c/.bak_pv32d.
 
 
+### W5 — SFX AUTÊNTICOS DO APK POSICIONADOS (vozes no momento da batalha + volume por distância) — validado 2026-10-22
+- Pedido do usuário: "puxar do apk as vozes originais e aplicar estrategicamente
+  no momento da batalha de cada um obedecendo a distancia... nos sons CORRETOS
+  de batalha, nada de som generico".
+- Extração (`tools/extract_battle_sfx.py`): bancos CRI já no repo
+  (`public/assets/audio/data_sound_Se_*.xfbin`) -> unwrap NUCC
+  (`parse_nucc_chunks` de extract_moba_assets) -> blob `@UTF` (= ACB) ->
+  `vgmstream-cli -s N` (subsong por CueName) -> wav -> ffmpeg -> ogg mono em
+  `public/assets/audio/decoded/`. 6 ACBs em `tools/audiobanks/` (10,5 MB):
+  battle 141 cues, common 177, hugebtl/pupSe/missionSe/minigame.
+- 47 -> 70 oggs autênticos: +22 cues (kunai_hit, kunai_hit2, kunai_hit_wall,
+  kunai_miss, shuriken, kick_swing, kick_hit2, punch_hit2, ground_hit,
+  ground_hit2, water_hit, body_atk, sousai, stand_up1, stand_up2, awake_off,
+  box_open, chakura_get, item_get, jump1, jump2, chak_hit). Nomenclatura
+  preservada do CueName (S_maxGauge -> max_gauge.ogg).
+- `AUTH_SFX.playAt(name, x, z, opts)`: falloff `pow(1 - min(d/60,1), 1.2) * 1.4`
+  a partir de `window.__camera`; abaixo de 0.06 vira silêncio (luta distante
+  desaparece; sons do jogador ~0.95 em d~15). `AUTH_SFX.pick(a, b)` alterna
+  hit1/hit2 (variação sem repetição). `lastPlays` (cap 60) grava {n, v, d}.
+- **ZERO chamadas genéricas em batalha** (sfx.hit/kick/ko/shuriken/ultimate/
+  kawarimi/jutsu/resurrect removidas): impacto dealDamage -> hit_s (+ground_hit/
+  ground_hit2 em dmg >= 180); melee -> punch_hit/kick_hit com variação no alvo;
+  arremesso -> kunai_swing (golpe 1, 1 kunai) / shuriken (2-3); impacto de
+  projétil -> kunai_hit/kunai_hit2 (**era sfx.clink = menu_slct, som de menu no
+  impacto!**); kunai errada -> kunai_hit_wall; KO -> down+ko; ressurreição ->
+  stand_up1/2; fim do awakening -> awake_off; ult pronto -> max_gauge
+  (edge-trigger `_ultReadyAnnounced`, player); baú do BR -> box_open+chakura_get;
+  vozes de cast do herói (SKILL_SFX_MAP, 12 heróis) + dash/awake_open/level_up
+  agora posicionados (bots distantes nos volumes certos); UI do lobby e cheat
+  lines autênticos (menu_slct/menu_fix/chakura_use).
+- Throttles dedicados no THROTTLE map: kunai_swing 90, shuriken 110, kunai_hit
+  60, ground_hit 240, box_open 1200, awake_off 1500.
+- `tools/probe_w_sfx.py` 13/13: C1 22 cues HEAD 200; C2 falloff
+  d0=1 -> d25=0.73 -> d50=0.16 + skip > 60u; C3/C3b hit_s + ground_hit
+  posicionados; C4 melee punch/kick; C5 voz do herói posicionada; C6
+  down/ko/level_up; C7 stand_up (respawn dm_3v3 = 6s, poof aos 4s); C8
+  awake_off; C9 max_gauge; C10 kunai_swing + kunai_hit; 0 console errors.
+- Pitfalls: (1) throttle é por NOME e o combate 12-unidades come o budget —
+  probes precisam resetar `AUTH_SFX._last = {}`; (2) `lastPlays` cap estoura com
+  o combate ambiente (bots enchem em < 1s) — ler early+late; (3) `clampArena`
+  puxa teleporte longo de volta pela borda — usar deslocamento curto válido;
+  (4) respawn: contagem 6s, poof aos 4s, rebirth no santuário.
+- Novos `.bak`: public/game.js.bak_w5sfx; novos artefatos:
+  tools/extract_battle_sfx.py, tools/w_sfx_patcher.py, tools/probe_w_sfx.py,
+  tools/audiobanks/ (ACBs + vgmstream r2117).
+
+### PV4.2 — Banners leves + zoom afastado (pendente de doc, validado 2026-10-22)
+- Peso dos textos de ult/sequencia cai por fonte/caixa/moldura (a regra PV4
+  `transform: scale(0.55)` NUNCA teve efeito — keyframes/GSAP sobrescrevem
+  transform ao animar): ult 26px->15px, padding 60->24, borda 14->8, top
+  36%->24%; streak kanji 30->19, texto 22->13, contador 42->26, caixa 340->220.
+  Gates `body.touch` — desktop intacto.
+- Zoom thirdperson: `camDist` 13.5 -> 16 (pitch 0.32 mantido; distância real
+  medida 17.3 no probe PV4.2 v2).
+- Probe probe_pv4_2_v2: 11/11 — câmera 17.3, banners leves e dentro da tela,
+  0 console errors (navigator.vibrate bloqueado no headless = PV3.3 correto).
+
 ### Tier 5 E2E — PV1.6/PV2.6 formal (validado 2026-10-22)
 - `tools/test_e2e_suite.py` agora cobre **Tiers 1-5 = 47 testes** (23+5+4+6+9), bateria
   47/47 + verify 0 erros (decima verde). Tier 5 = emulacao iPhone 844x390 + toque REAL

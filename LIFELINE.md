@@ -200,3 +200,67 @@ Deploy 433d8d7 -> goofy-mendeleev.vercel.app (mapMobile sd03b + roster 12 + 450 
 Fechada a pendencia formal do pivot: os testes mobile deixaram de ser so probes ad-hoc e entraram NA SUITE canonica como Tier 5 (9 testes, M01-M09), com toque REAL via Input.dispatchTouchEvent e emulacao iPhone 844x390 verificada ANTES de navegar (o setUserAgentOverride pode chegar atrasado ao processo e bootar com UA antigo — race medida na fase PV3.2; a suporte agora espera navigator.userAgent conter iPhone antes do Page.navigate). Cobertura: boot mobile+governor, arena variante .mobile.json in-suite, 3v3 (6 units/3 retratos/META 15/cluster), joystick real (vetor INPUT + movimento + reset), ATK hold, tap Q + espelho de CD #cdt-q, chakra hold, Realeza na Vila mobile (zona 65->6, 12 baus, sa00z.mobile.json) e rotate overlay + restauracao desktop no fim. Bateria: 47/47 + verify 0 erros (decima verde). Tres armadilhas CDP descobertas com diag reproduzivel e registradas na skill: (1) returnByValue DESCARTA valores undefined — ler __matchState.mode (campo inexistente) vira KeyError no Python; as chaves reais sao time/br/overtime/suddenDeath/blue/red e o discriminador de modo DM e br===null; (2) startMatch br_vila em MOBILE demora ~32s vs 8.6s desktop e estoura o timeout CDP de 30s com TimeoutError de mensagem VAZIA (FAIL sem texto) — helper _t5_eval_slow(90s); (3) Emulation.clearUserAgentOverride NAO propaga no headless — restaurar via setUserAgentOverride desktop + setDeviceMetricsOverride, nunca via clear. Aprendizado geral: FAIL com mensagem vazia em teste async = suspeitar de TimeoutError de send(); e todo campo JS lido via CDP deve ter fallback explicito porque undefined some do JSON.
 
 <!-- lifeline:end -->
+
+### #0011 — 2026-10-22T21:47:22.242811+00:00 — decision
+
+- **author**: unknown
+- **agent**: human
+- **provider**: none
+- **model**: human
+- **kind**: decision
+- **summary**: W-ORC + W-VIS-ALL: VFX autenticos do APK em todas as skills dos 12 herois
+- **parents**: a7f8e013c60be8a047c2c0e0d7937d5e09b3f05005f3d3b41d7e38e8317b654b
+- **id**: d131a4dc9830a1f4d69a8fb504724364226819b72c50500594c10a0ec18e781e
+
+**Body**:
+Causa raiz do gap: ROSTER do pipeline extract tinha so 10 herois (1tnd/1orc fora) e escala fixa radius*0.022 sobre bbox raw 17-472u. Fix: extrator dedicado 1orceff1 (3 modelos + textura, merge cirurgico allow_nan=False), normalizacao de tamanho no buildExtractedVfxMeshGroup (extent ~ targetScale*250u), multiplicador 0.006, binds de mao em chidori/raikiri/lion/chou_rasengan. Alinhamento 100% analitico (centroid + bbox + facing) — Blender nao foi necessario; probes runtime validam antes de patchear. Commit 2ea4267, suite 47/47 + verify + smoke 10/10, 0 console errors. Deploy verificado: game.js?v=37 + skill_vfx.json 12 chaves live.
+
+<!-- lifeline:end -->
+
+### #0012 — 2026-10-22T22:34:00.296289+00:00 — decision
+
+- **author**: unknown
+- **agent**: human
+- **provider**: none
+- **model**: human
+- **kind**: decision
+- **summary**: W-SKL: coreografias FK completas por skill executadas a 60fps
+- **parents**: d131a4dc9830a1f4d69a8fb504724364226819b72c50500594c10a0ec18e781e
+- **id**: 9631e1aefd9f49cc227b058b4ec4f92a4f5bdb32482a4a943910d77deda078db
+
+**Body**:
+Causa raiz do 'falta o formato da execucao': clips de skill vinham com concatenacao de segs misturados (cha10+cha11+cuts) truncados em ~32 frames com canais identity congelados, tocados a numFrames/24 (Anm do Storm é 60fps) e percorridos a 56% da janela. Fix: extract_skill_choreo.py — clip LIMPO (Anm unico) e COMPLETO (frames reais) por slot: Q=cha10, W=cha20, R=cha14 ou fallback Anm pesado de corpo (1orc cha24 167f, 1hnt cha21, 1tnd cha24, 1orc cha11 146f c/ camera; 1gar rejeitado — cha24 dele é anim da areia <12 canais, Gaara parado é fiel). game.js: fps-aware duration (clip.fps||24) — zero regressao pros clips de locomocao. 39 clips, animations.json v10. Commit 943611d, bateria verde (verify+47/47+smoke), deploy verificado. Nota: frames congelados nos canais 7-19 eram artefato do bake concatenado, nao do Anm original — os Anm de skill tem 82-105 canais completos.
+
+<!-- lifeline:end -->
+
+### #0013 — 2026-10-23T12:09:48.787527+00:00 — decision
+
+- **author**: unknown
+- **agent**: human
+- **provider**: none
+- **model**: human
+- **kind**: decision
+- **summary**: W-TRAIL + janelas de ult em velocidade real (W-SKL+)
+- **parents**: 9631e1aefd9f49cc227b058b4ec4f92a4f5bdb32482a4a943910d77deda078db
+- **id**: d4051c954322bc7a627eeb8f7309464cac3b431af716eeaef2287c44c7bae8ec
+
+**Body**:
+Trail chunk do APK é referência de bone (ribbon procedural no engine Storm): ribbon de 14 pts na worldPos da mão, fade+largura decrescente, additive, congela no juice. Mapeado fiel aos chunks: 1hnt W Twin Lion (9+13 roxo), 1orc W Kusanagi (13 prateado). Janela do ult agora casada ao clip real: clamp(60fps-frames, 1.15, 1.8) — 1skr/1roc/1orc 2.4-2.8s agora 1.8s (~1.4x em vez de 2.4x); 1nrt/1kks/1nej/1jry mantêm 1.15. Câmera cinematográfica descartada de propósito: cutscene quebraria o fluxo MOBA (cuts do Storm são de single-player). Commit 02a2702, bateria verde, deploy verificado.
+
+<!-- lifeline:end -->
+
+### #0014 — 2026-10-23T12:54:19.537061+00:00 — decision
+
+- **author**: unknown
+- **agent**: human
+- **provider**: none
+- **model**: human
+- **kind**: decision
+- **summary**: W-CINE: cut cinematico do ult + fix anti-race T4_S04
+- **parents**: d4051c954322bc7a627eeb8f7309464cac3b431af716eeaef2287c44c7bae8ec
+- **id**: 15c25097a7fa1c9fb01158fa0b9338082eb79069bfa409f0944910be1104fd29
+
+**Body**:
+Camera chunk do APK é stub de 8B (keyframes em pacotes de cutscene fora do repo) — cut procedural fiel ao sabor Storm: aproximação baixa atrás do caster, tele punch 6 graus via escritor único de FOV (delta dentro do updateJuice, autorrestaura), blend 0-24%/hold-62%/decai, janela = animDuration do ult, congela no hitstop, player-only com coreografia fps=60 (1ssk/1itc fora, fiel). Probe: camY 38->3.06, fov 48->42, retorno limpo. Suite: T4_S04 flake por cast lock vazando do S03 (rerun 47/47 confirmou) — fix anti-race igual ao S05 (reset animTimer/state/awakenedTimer). Commit 89fe988, deploy verificado.
+
+<!-- lifeline:end -->
