@@ -295,3 +295,22 @@ tele punch, retorno suave.
 1nrt r: camY 38 → 25,65 (descendo) → 3,06 (hold baixo), FOV 48 → 47,16 → 42;
 após o ult: active=false, FOV 48, camY voltando ao MOBA. Frame do meio com
 câmera baixa e composição de perto (paredes verticais). 0 console errors.
+
+## 24. W-VIS-FULL — validação visual 12 heróis × 4 slots = 48 casts (2026-10-23)
+
+`tools/wvis_full_probe.py` (+ `wvis_fix_probe.py`, `wvis_shot_analyze.py`):
+bots de partida 5v5 cobrem 10 heróis; 1tnd/1orc/1nrt via lobby player.
+Por cast: kids delta (VFX spawnou), grupos extraídos vivos (Box3), rig
+animando (quats bone 13 vs idle), trail verts, `__CINE` no ult do player,
+screenshot por slot icônico + todos os R (20 frames).
+
+**Resultado: 48/48 células com VFX 3D extraído + coreografia ativa, 0 console
+errors.** Rig: 46/48 com movimento confirmado na amostra de 0,30s — 1nrt w
+(Kage Bunshin: o selo de mão é sutil sob 42 VFX de clones) e 1skr r (ult de
+151f tem windup estático: braço só move a partir de ~0,5s — confirmado em
+amostra tardia rig@0.65=R). Trails: 1hnt w e 1orc w com ribbon de 84 vértices.
+Cine: Y nos ults do player (1tnd, 1orc, 1nrt), n nos bots (por design).
+
+Pixels de efeito nos 20 frames: ults 4.5k-10.6k px (1gar Shukaku 10.596;
+1nej kaiten azul/ciano; 1tnd 3.647 ciano), icônicos 1ssk q Chidori 4.743,
+trails 1hnt w 6.436 / 1orc w 4.661.
