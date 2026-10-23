@@ -239,3 +239,34 @@ Player 1nrt casta Q/W/R; troca pra 1orc via lobby, casta W (119f/2s) e R.
 Amostra de quats dos braços (bones 13/9) em 3 instantes do animTimer:
 **anima=SIM nos 5 casts**, 0 console errors. (Nos ults a 2ª amostra tardia
 congela legitimamente: o dash de impacto muda o state.)
+
+## 22. W-TRAIL + janelas de ult calibradas (2026-10-22)
+
+### W-SKL+ TRAIL — rastros autênticos de mão/lâmina
+
+O `nuccChunkTrail` dos `skl2` do APK é REFERÊNCIA (cmap -> bone animado):
+o ribbon é procedural no engine Storm, e o APK só marca qual bone rastreia.
+Implementação fiel: ribbon procedural bound ao bone, buffer de 14 pontos da
+worldPos da mão, trianglestripe com largura decrescente e fade por idade,
+additive + depthWrite false — congela com o mundo no juice (simDt).
+
+| skill | bones | cor | fonte |
+|---|---|---|---|
+| 1hnt W (Twin Lion) | 9 + 13 (ambas as mãos) | 0x8b5cf6 roxo-leão | Trail chunk 1hntskl2 cha20 |
+| 1orc W (Kusanagi dash) | 13 (mão direita) | 0xc7d2fe prateado | Trail chunk 1orcskl2 cha20 |
+
+Auto-cleanup por idade (age >= dur -> remove/dispose).
+
+### W-SKL+ janelas de ult — velocidade real por clip
+
+O ponto único de ult (`unit.state = 'ult'`, L4563) agora casa a janela ao clip:
+`clamp(clip.numFrames / clip.fps, 1.15, 1.8)`. Efeito: ults curtos (1nrt 1.05s,
+1kks 0.93s, 1nej 1.1s, 1jry) mantêm 1.15s; médios (1hnt 1.68s, 1tnd 1.35s)
+tocam em velocidade real; longos (1skr 2.52s, 1roc 2.78s, 1orc 2.43s) sobem
+1.15 -> 1.8s (~1.4x em vez de ~2.4x). game.js?v=39.
+
+### Probe (`tools/wtrail_probe.py`)
+
+1nrt r: animDuration = 1.15 (clamp baixo) ✓. 1orc W: ribbon vivo na cena com
+588 vértices não-nulos; frame com 87px prateados do Kusanagi + ciano do VFX no
+centro ✓. 1orc r: animDuration = 1.8 (clamp alto) ✓. 0 console errors.

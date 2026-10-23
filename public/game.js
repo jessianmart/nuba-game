@@ -678,6 +678,77 @@ function sampleAnimationCurve(heroId, clipName, timeVal, fps = 24) {
   return { clip, f0, f1, alpha, pelvisPos };
 }
 
+// W-SKL+ TRAIL: rastro de mão/lâmina durante o cast — fiel ao nuccChunkTrail
+// do APK (referência ao bone animado; o ribbon é procedural no engine Storm).
+const skillTrails = [];
+const SKILL_TRAIL_MAP = {
+  '1hnt:w': { bones: [9, 13], color: 0x8b5cf6, width: 0.42 }, // Twin Lion Fists — ambas as mãos
+  '1orc:w': { bones: [13], color: 0xc7d2fe, width: 0.30 },    // Kusanagi dash — mão direita
+};
+function startSkillTrail(unit, slot) {
+  const cfg = SKILL_TRAIL_MAP[unit.heroId + ':' + slot];
+  if (!cfg || !unit.mesh || !unit.mesh.userData.bones) return;
+  cfg.bones.forEach(bi => {
+    const pts = [];
+    const nSeg = 14;
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(nSeg * 6), 3));
+    const idx = [];
+    for (let i = 0; i < nSeg - 1; i++) {
+      const a = i * 2;
+      idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2);
+    }
+    geo.setIndex(idx);
+    const mat = new THREE.MeshBasicMaterial({ color: cfg.color, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.frustumCulled = false;
+    arenaGroup.add(mesh);
+    skillTrails.push({ unit, boneIdx: bi, pts, mesh, age: 0, dur: unit.animDuration + 0.30, max: nSeg, width: cfg.width });
+  });
+}
+function updateSkillTrails(dt) {
+  for (let i = skillTrails.length - 1; i >= 0; i--) {
+    const t = skillTrails[i];
+    t.age += dt;
+    const alive = t.age < t.dur * 0.7 && t.unit && t.unit.hp > 0 && t.unit.mesh && t.unit.mesh.userData.bones;
+    if (alive) {
+      const bone = t.unit.mesh.userData.bones[String(t.boneIdx)];
+      if (bone) {
+        t.unit.mesh.updateMatrixWorld(true);
+        const wp = new THREE.Vector3();
+        bone.getWorldPosition(wp);
+        t.pts.unshift(wp);
+        if (t.pts.length > t.max) t.pts.pop();
+      }
+    }
+    if (t.age >= t.dur) {
+      if (t.mesh.parent) t.mesh.parent.remove(t.mesh);
+      t.mesh.geometry.dispose();
+      t.mesh.material.dispose();
+      skillTrails.splice(i, 1);
+      continue;
+    }
+    const lifeLeft = Math.max(0, 1 - t.age / t.dur);
+    t.mesh.material.opacity = lifeLeft * 0.9;
+    const pos = t.mesh.geometry.attributes.position.array;
+    const camPos = camera.position;
+    for (let seg = 0; seg < t.max; seg++) {
+      const p0 = t.pts[Math.min(seg * 2, t.pts.length - 1)];
+      const o = seg * 6;
+      if (!p0) { for (let k = 0; k < 6; k++) pos[o + k] = 0; continue; }
+      const p1 = t.pts[Math.min(seg * 2 + 2, t.pts.length - 1)] || p0;
+      const dir = new THREE.Vector3().subVectors(p1, p0);
+      const toCam = new THREE.Vector3().subVectors(camPos, p0);
+      const side = new THREE.Vector3().crossVectors(dir, toCam);
+      if (side.lengthSq() < 1e-6) side.set(0, 1, 0); else side.normalize();
+      const w = t.width * (1 - seg / t.max);
+      pos[o] = p0.x + side.x * w; pos[o + 1] = p0.y + side.y * w; pos[o + 2] = p0.z + side.z * w;
+      pos[o + 3] = p0.x - side.x * w; pos[o + 4] = p0.y - side.y * w; pos[o + 5] = p0.z - side.z * w;
+    }
+    t.mesh.geometry.attributes.position.needsUpdate = true;
+  }
+}
+
 function animateCharacterRig(rig, state, time, animTimer = 0, animDuration = 0.42) {
   if (!rig || !rig.userData.bones) return;
   const b = rig.userData.bones;
@@ -3978,6 +4049,9 @@ function executeSkill(unit, slot) {
     }
   }
 
+  // W-SKL+ TRAIL: rastro autêntico de mão/lâmina (Hinata W, Orochimaru W)
+  startSkillTrail(unit, slot);
+
   // HERO-SPECIFIC SKILL LOGIC & 3D VISUAL EFFECTS (AUTHENTIC STORM 1)
   if (unit.heroId === '1nrt') {
     if (slot === 'q') {
@@ -4561,7 +4635,10 @@ function executeSkill(unit, slot) {
     unit.hp = Math.min(unit.maxHp, unit.hp + 90);
   } else if (sk.type === 'ultimate') {
     unit.state = 'ult';
-    unit.animDuration = 1.15;
+    // W-SKL+: janela do ult casada à coreografia real do APK (clamp 1.15-1.8s;
+    // ults curtos mantêm 1.15, longos (2.4-2.8s) tocam quase em velocidade real)
+    const _ultClip = (animationsData[unit.heroId] || animationsData['1nrt'] || {}).ult;
+    unit.animDuration = (_ultClip && _ultClip.fps) ? Math.min(1.8, Math.max(1.15, _ultClip.numFrames / _ultClip.fps)) : 1.15;
     unit.animTimer = unit.animDuration;
     unit.awakenedTimer = 14.0; // 14 seconds of Awakening Mode!
     AUTH_SFX.playAt('awake_open', unit.x, unit.z, { vol: 0.9 }); AUTH_SFX.playAt('awake_flash', unit.x, unit.z, { vol: 0.8 }); // W5: awakening posicionado
@@ -5210,6 +5287,7 @@ function updateMatch(dt, elapsed) {
     }
   }
 
+  updateSkillTrails(simDt); // W-SKL+ TRAIL: rastros de mão/lâmina (congelam com o mundo no juice)
   updateShadowClones(simDt); // SPP: clones 3D (congelam com o mundo no juice)
   // PV3.1: VFX cap — acima do teto descarta o mais ANTIGO (o frescor do impacto
   // importa; efeito velho ja entregou o feedback). So roda no mobile (cap 24).
