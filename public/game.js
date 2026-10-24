@@ -1070,7 +1070,7 @@ const _q1 = new THREE.Quaternion();
 const _qTarget = new THREE.Quaternion();
 const _vTarget = new THREE.Vector3();
 
-function sampleAnimationCurve(heroId, clipName, timeVal, fps = 24) {
+function sampleAnimationCurve(heroId, clipName, timeVal, fps = null) {
   const heroAnms = animationsData[heroId] || animationsData['1nrt'];
   if (!heroAnms) return null;
   const clip = heroAnms[clipName] ||
@@ -1079,8 +1079,9 @@ function sampleAnimationCurve(heroId, clipName, timeVal, fps = 24) {
                heroAnms['idle']));
   if (!clip) return null;
   const nFrames = clip.numFrames || 1;
+  const effectiveFps = (fps !== null && fps !== undefined) ? fps : (clip.fps || 24);
 
-  const rawFrame = timeVal * fps;
+  const rawFrame = timeVal * effectiveFps;
   let f0, f1, alpha;
   if (clip.loop) {
     const wrapped = ((rawFrame % nFrames) + nFrames) % nFrames;
@@ -1322,7 +1323,7 @@ function animateCharacterRig(rig, state, time, animTimer = 0, animDuration = 0.4
     fs.timer = Math.max(0, fs.timer - frameDt);
   }
 
-  const sample = sampleAnimationCurve(heroId, clipKey, timeVal, 24);
+  const sample = sampleAnimationCurve(heroId, clipKey, timeVal);
   if (sample && sample.clip) {
     const { clip, f0, f1, alpha, pelvisPos } = sample;
 
@@ -1900,6 +1901,121 @@ function saveProfileData(data) {
   try { localStorage.setItem(PROFILE_KEY, JSON.stringify(data)); } catch (err) { /* storage blocked */ }
 }
 
+// ==================== PROGRESSAO (W-PROG) ====================
+// Camada real sobre o perfil local (nuba.profile.v1): XP/nivel, RYO, missoes
+// diarias deterministicas por data, contador de ougi e ninja favorito.
+const PROG_XP_MATCH = 100, PROG_XP_WIN = 60, PROG_XP_KILL = 15;
+const PROG_COIN_MATCH = 25, PROG_COIN_WIN = 10, PROG_COIN_KILL = 2;
+const PROG_MISSION_POOL = [
+  { id: 'play3', metric: 'matches', goal: 3, label: 'JOGUE 3 PARTIDAS', kanji: '戦', xp: 120, coins: 40 },
+  { id: 'win2', metric: 'wins', goal: 2, label: 'VENCA 2 PARTIDAS', kanji: '勝', xp: 180, coins: 60 },
+  { id: 'kill6', metric: 'kills', goal: 6, label: 'CAUSE 6 ABATES', kanji: '討', xp: 150, coins: 50 },
+  { id: 'ult3', metric: 'ults', goal: 3, label: 'USE 3 OUGI (R)', kanji: '奥', xp: 200, coins: 70 },
+  { id: 'hero2', metric: 'hero', goal: 2, label: 'JOGUE 2 PARTIDAS COM SEU NINJA FAVORITO', kanji: '忍', xp: 140, coins: 45 }
+];
+function progXpNeeded(level) { return 800 + (level - 1) * 400; }
+let progUltCount = 0;
+
+function progTodayKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+function progLevelState(xp) {
+  let lvl = 1, into = xp, need = progXpNeeded(1);
+  while (into >= need) { into -= need; lvl += 1; need = progXpNeeded(lvl); }
+  return { lvl, into, need };
+}
+function progSeedRand(seed) {
+  let h = 2166136261;
+  for (let i = 0; i < seed.length; i++) { h ^= seed.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return () => {
+    h = Math.imul(h ^ (h >>> 15), 2246822507);
+    h = Math.imul(h ^ (h >>> 13), 3266489909);
+    return ((h ^= (h >>> 16)) >>> 0) / 4294967296;
+  };
+}
+function progFavHeroId(data) {
+  const counts = data.heroUse || {};
+  return Object.keys(counts).sort((a, b) => counts[b] - counts[a])[0] || null;
+}
+function progDailyRefresh(data) {
+  const today = progTodayKey();
+  if (data.daily && data.daily.date === today && Array.isArray(data.daily.missions) && data.daily.missions.length) return data;
+  const rnd = progSeedRand(`nuba-daily-${today}`);
+  const pool = PROG_MISSION_POOL.slice();
+  const picks = [];
+  while (picks.length < 3 && pool.length) picks.push(...pool.splice(Math.floor(rnd() * pool.length), 1));
+  data.daily = {
+    date: today,
+    heroId: progFavHeroId(data),
+    counters: { matches: 0, wins: 0, kills: 0, ults: 0 },
+    missions: picks.map(m => ({ id: m.id, label: m.label, kanji: m.kanji, metric: m.metric, goal: m.goal, xp: m.xp, coins: m.coins, progress: 0, done: false }))
+  };
+  return data;
+}
+function progApplyMatch(data, winner, player) {
+  progDailyRefresh(data);
+  const d = data.daily;
+  const win = winner === 'blue';
+  const kills = player ? (player.kills || 0) : 0;
+  const ults = progUltCount;
+  progUltCount = 0;
+  data.xp = (data.xp || 0) + PROG_XP_MATCH + (win ? PROG_XP_WIN : 0) + kills * PROG_XP_KILL;
+  data.coins = (data.coins || 0) + PROG_COIN_MATCH + (win ? PROG_COIN_WIN : 0) + kills * PROG_COIN_KILL;
+  data.heroUse = data.heroUse || {};
+  data.heroUse[selectedHeroId] = (data.heroUse[selectedHeroId] || 0) + 1;
+  d.counters.matches += 1;
+  if (win) d.counters.wins += 1;
+  d.counters.kills += kills;
+  d.counters.ults += ults;
+  if (!d.heroId) d.heroId = progFavHeroId(data);
+  if (d.heroId && d.heroId === selectedHeroId) d.counters.hero = (d.counters.hero || 0) + 1;
+  for (const m of d.missions) {
+    if (m.done) continue;
+    m.progress = Math.min(m.goal, (d.counters[m.metric] || 0));
+    if (m.progress >= m.goal) {
+      m.done = true;
+      data.xp += m.xp;
+      data.coins += m.coins;
+    }
+  }
+  return data;
+}
+function renderProgressUI(data) {
+  const d = data || loadProfileData();
+  progDailyRefresh(d);
+  const st = progLevelState(d.xp || 0);
+  const setText = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  setText('profile-level', st.lvl);
+  setText('profile-xp-text', `${st.into.toLocaleString('pt-BR')} / ${st.need.toLocaleString('pt-BR')} XP`);
+  const fill = document.getElementById('profile-xp-fill');
+  if (fill) fill.style.width = `${Math.round((st.into / st.need) * 100)}%`;
+  setText('lobby-ryo', (d.coins || 0).toLocaleString('pt-BR'));
+  setText('profile-ryo', (d.coins || 0).toLocaleString('pt-BR'));
+  const lvlChip = document.getElementById('lobby-level');
+  if (lvlChip) lvlChip.textContent = `Nível ${st.lvl} • Konoha`;
+  const chip = document.querySelector('.player-chip-meta span');
+  if (chip && !document.getElementById('lobby-level')) chip.textContent = `Nível ${st.lvl} • Konoha`;
+  const mh = document.getElementById('profile-missions');
+  if (mh) {
+    const done = d.daily.missions.filter(m => m.done).length;
+    mh.innerHTML = d.daily.missions.map(m => `
+      <li class="mission${m.done ? ' done' : ''}">
+        <span class="mission-kanji">${m.kanji}</span>
+        <div class="mission-body">
+          <strong>${m.label}</strong>
+          <div class="mission-track"><div style="width: ${Math.round((m.progress / m.goal) * 100)}%"></div></div>
+          <span class="mission-meta">${m.progress} / ${m.goal} - ${m.xp} XP + ${m.coins} RYO${m.done ? ' CONCLUIDA' : ''}</span>
+        </div>
+      </li>`).join('');
+    setText('profile-missions-count', `${done} / ${d.daily.missions.length}`);
+  }
+}
+window.progApplyMatch = progApplyMatch; // EXPORT E2E
+window.progDailyRefresh = () => progDailyRefresh(loadProfileData()); // EXPORT E2E
+window.renderProgressUI = renderProgressUI; // EXPORT E2E
+window.PROG_MISSION_POOL = PROG_MISSION_POOL; // EXPORT E2E
+
 function recordMatchResult(winner) {
   if (matchRecorded) return;
   matchRecorded = true;
@@ -1921,6 +2037,7 @@ function recordMatchResult(winner) {
   });
   data.history = data.history.slice(0, 6);
   data.arenas = [...new Set([...(data.arenas || []), selectedArenaId])];
+  progApplyMatch(data, winner, player);
   saveProfileData(data);
   renderProfilePage();
 }
@@ -1954,6 +2071,7 @@ function setLobbyPage(page) {
   else if (target === 'arenas') renderArenaPage();
   else if (target === 'perfil') renderProfilePage();
   else { renderArenaPicker(); updateArenaLabels(); }
+  renderProgressUI();
 }
 
 function heroRoleKey(hero) {
@@ -2094,6 +2212,8 @@ function renderArenaPage() {
 
 function renderProfilePage() {
   const data = loadProfileData();
+  progDailyRefresh(data); // W-PROG: virada de dia regenera missoes e persiste
+  saveProfileData(data);
   const setText = (id, value) => {
     const el = document.getElementById(id);
     if (el) el.textContent = value;
@@ -2105,10 +2225,11 @@ function renderProfilePage() {
   setText('profile-winrate', winRate === null ? '—' : `${winRate}%`);
   setText('profile-kda', `${data.kills} / ${data.deaths} / ${data.assists}`);
 
-  const xp = 1240, xpMax = 3000;
-  setText('profile-xp-text', `${xp.toLocaleString('pt-BR')} / ${xpMax.toLocaleString('pt-BR')} XP`);
+  const _progSt = progLevelState(data.xp || 0);
+  setText('profile-level', _progSt.lvl);
+  setText('profile-xp-text', `${_progSt.into.toLocaleString('pt-BR')} / ${_progSt.need.toLocaleString('pt-BR')} XP`);
   const xpFill = document.getElementById('profile-xp-fill');
-  if (xpFill) xpFill.style.width = `${Math.round((xp / xpMax) * 100)}%`;
+  if (xpFill) xpFill.style.width = `${Math.round((_progSt.into / _progSt.need) * 100)}%`;
 
   const hero = rosterMeta.find(h => h.id === selectedHeroId) || rosterMeta[0];
   const avatar = document.getElementById('profile-avatar');
@@ -2180,6 +2301,7 @@ function renderProfilePage() {
     `).join('');
   }
   setText('profile-ach-count', `${achievements.filter(a => a.ok).length} / ${achievements.length}`);
+  renderProgressUI(data);
 }
 
 function initLobbyNav() {
@@ -4400,6 +4522,7 @@ function executeSkill(unit, slot) {
 
   unit.chakra -= sk.cost;
   unit.cds[slot] = sk.cd;
+  if (slot === 'r' && unit.isPlayer) progUltCount += 1; // W-PROG: missoes diarias contam ougi
   const _ph = (SKILL_VFX_PHASES[unit.heroId] || {})[slot];
   if (_ph && _ph.length) unit.pendingVfxPhases = _ph.map(p => Object.assign({}, p, { done: false }));
   else unit.pendingVfxPhases = null;

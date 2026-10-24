@@ -404,3 +404,41 @@ sem vazamento -> retorno sem reabrir titulo, 0 console errors);
 reveal, 6 units, blue/red identicos ao draft, sem heroi cruzado, BR sem draft);
 `wmenu_draft_layout` (3 colunas sem sobreposicao, board 308px, lock 61px,
 timer 48px). Bateria: verify + suite 49/49 + W-HS 10/10 + 48 celulas.
+
+## 28. W-PROG — progressao real: XP/nivel, RYO, missoes diarias (2026-10-24)
+
+Pedido do usuario ("segue" da fase 2 do plano W-MENU): progressao que faz
+voltar amanha. A page-perfil ja tinha a UI (nivel, barra XP, RYO, sequencia,
+ninja favorito) com valores HARDCODED (xp 1240, nivel 12, 12.450 RYO) —
+tudo agora e backed por dados reais persistidos no perfil local
+(`nuba.profile.v1`), sem servidor.
+
+- Recompensas por partida (fim real, `recordMatchResult` -> `progApplyMatch`):
+  XP 100 base + 60 vitoria + 15/abate; RYO 25 base + 10 vitoria + 2/abate.
+- Niveis: curva `progXpNeeded(lvl) = 800 + (lvl-1)*400` (`progLevelState`).
+- Missoes diarias: 3 sorteadas de um pool de 5 (`PROG_MISSION_POOL` — jogar,
+  vencer, abater, usar Ougi R, jogar com o ninja favorito) via PRNG
+  deterministico por data (`progSeedRand('nuba-daily-YYYY-MM-DD')`): mesma
+  lista o dia inteiro, renovada + counters zerados na virada. Recompensa
+  paga 1x ao completar (done).
+- Ninja favorito: `data.heroUse` (contador de partidas por heroi).
+- Contador de Ougi: incremento no cast real de R do player
+  (`executeSkill`, slot r) e reset por partida.
+- UI: `renderProgressUI(data)` — nivel/XP/RYO reais no perfil
+  (#profile-level/#profile-xp-*/#profile-ryo), header do lobby
+  (#lobby-ryo/#lobby-level) e painel novo `#profile-missions` (kanji 戦勝討奥忍,
+  barra de progresso, meta e recompensa, estado done em verde). Nenhum ID
+  existente removido/renomeado (contrato DOM); section nova e aditiva.
+- Exports E2E: `window.progApplyMatch/progDailyRefresh/renderProgressUI/PROG_MISSION_POOL`.
+
+Validacao: `tools/wprog_probe.py` PASS 18/18 (perfil limpo -> 3 missoes
+deterministicas; partida real dm_3v3 com 2 abates -> XP 190 / RYO 39 /
+counters 1-1-2-0 / nenhuma missao fecha na 1a partida / UI nivel 1, carteira
+39, painel 3 itens; screenshot `wprog_painel.png`; virada de dia simulada ->
+regenera, zera counters/progressos, idempotente no mesmo dia).
+Suite: T4_S09 + T4_S10 -> 51/51. Bateria completa verde (verify + whs +
+wvis 48 celulas + wreal 13 casts, 0 console errors).
+
+Licao de processo: a 1a bateria falhou S09/S10 porque o game.js foi editado
+DURANTE o boot da suite (fetch pegou arquivo em reescrita). Regra: nunca
+editar `public/` com bateria em voo; re-run com disco estavel = 51/51.

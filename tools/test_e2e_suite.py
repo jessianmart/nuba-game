@@ -1429,6 +1429,84 @@ class E2ETestRunner:
 
 
 
+    async def test_s09_progressao_persiste(self):
+        """S09 (W-PROG): XP, RYO e missoes diarias persistem ao fim de partida real."""
+        res = await self.cdp.eval_js("""
+            (async () => {
+                const out = {};
+                localStorage.setItem('nuba.profile.v1', JSON.stringify({
+                    matches: 0, wins: 0, losses: 0, kills: 0, deaths: 0, assists: 0,
+                    history: [], arenas: [], settings: { sound: true, music: true },
+                    xp: 0, coins: 0, heroUse: {} }));
+                const d = window.progDailyRefresh();
+                out.missionCount = d.daily.missions.length;
+                out.dailyZero = d.daily.counters.matches === 0 && d.daily.counters.kills === 0;
+                await window.startMatch('dm_3v3');
+                for (let i = 0; i < 150; i++) {
+                    if (window.units && window.units.length === 6) break;
+                    await new Promise(r => setTimeout(r, 100));
+                }
+                const p = window.units.find(u => u.isPlayer);
+                for (const e of window.units.filter(u => u.team === 'red' && u.deadTimer <= 0).slice(0, 2)) {
+                    e.hp = 5; e.x = p.x + 2; e.z = p.z;
+                    window.dealDamage(p, e, 9999, 'Rasengan!');
+                }
+                out.killsCredited = p.kills || 0;
+                window.endMatch('FIM DE PARTIDA');
+                await new Promise(r => setTimeout(r, 2500));
+                const prof = JSON.parse(localStorage.getItem('nuba.profile.v1'));
+                out.matches = prof.matches; out.wins = prof.wins;
+                out.xp = prof.xp; out.coins = prof.coins;
+                out.killCounter = prof.daily.counters.kills;
+                out.ultCounter = prof.daily.counters.ults;
+                out.doneMissions = prof.daily.missions.filter(m => m.done).length;
+                out.progMissions = prof.daily.missions.filter(m => m.progress > 0).length;
+                out.level = document.getElementById('profile-level').textContent;
+                out.ryoHdr = document.getElementById('lobby-ryo').textContent;
+                out.ryoProf = document.getElementById('profile-ryo').textContent;
+                out.missionItems = document.getElementById('profile-missions').children.length;
+                return out;
+            })()
+        """, await_promise=True)
+        assert res["missionCount"] == 3, f"esperava 3 missoes diarias: {res['missionCount']}"
+        assert res["dailyZero"] is True, "contadores diarios deveriam zerar no perfil novo"
+        assert res["killsCredited"] == 2, f"player.kills deveria creditar 2 abates: {res['killsCredited']}"
+        assert res["matches"] == 1, f"partida contabilizada: {res['matches']}"
+        assert res["wins"] == 1, f"vitoria contabilizada: {res['wins']}"
+        assert res["killCounter"] == 2, f"counter de abates diario deveria ser 2: {res['killCounter']}"
+        assert res["ultCounter"] == 0, f"counter de ougi zerado (sem cast de R): {res['ultCounter']}"
+        assert res["xp"] == 190, f"XP = 100 base + 60 vitoria + 30 abates = 190: {res['xp']}"
+        assert res["coins"] == 39, f"RYO = 25 base + 10 vitoria + 4 abates = 39: {res['coins']}"
+        assert res["doneMissions"] == 0, f"nenhuma missao deveria fechar na 1a partida: {res['doneMissions']}"
+        assert res["progMissions"] >= 1, f"ao menos 1 missao deveria progredir: {res['progMissions']}"
+        assert res["level"] == "1", f"nivel 1 com 190 XP (precisa de 800): {res['level']}"
+        assert res["ryoHdr"] == "39", f"header do lobby deveria mostrar a carteira: {res['ryoHdr']}"
+        assert res["ryoProf"] == "39", f"painel do perfil deveria mostrar a carteira: {res['ryoProf']}"
+        assert res["missionItems"] == 3, f"painel de missoes deveria renderizar 3 itens: {res['missionItems']}"
+
+    async def test_s10_missoes_virada_de_dia(self):
+        """S10 (W-PROG): missoes diarias renovam na virada de dia (deterministico por data)."""
+        res = await self.cdp.eval_js("""
+            (() => {
+                const d = window.progDailyRefresh();
+                d.daily.date = '2000-01-01';
+                localStorage.setItem('nuba.profile.v1', JSON.stringify(d));
+                const after = window.progDailyRefresh();
+                const again = window.progDailyRefresh();
+                return {
+                    date: after.daily.date,
+                    zero: after.daily.counters.matches === 0 && after.daily.counters.kills === 0,
+                    progZero: after.daily.missions.every(m => m.progress === 0),
+                    stable: again.daily.missions.map(m => m.id).join(',') === after.daily.missions.map(m => m.id).join(',')
+                };
+            })()
+        """)
+        assert res["date"] != "2000-01-01", f"data deveria voltar para hoje: {res['date']}"
+        assert res["zero"] is True, "contadores deveriam zerar no novo dia"
+        assert res["progZero"] is True, "progressos deveriam zerar no novo dia"
+        assert res["stable"] is True, "refresh idempotente (seed estavel dentro do dia)"
+
+
     # =========================================================================
     # TIER 5: MOBILE PIVOT — PV1.6 + PV2.6 formais (docs/PIVOT_MOBILE.md)
     # Toque REAL via Input.dispatchTouchEvent; emulacao iPhone 844x390.
@@ -1779,6 +1857,8 @@ async def run_suite():
     await runner.run_test("T4_S06", "Match Results: Victory Board + MVP + Rematch", "Tier 4", runner.test_s06_match_results_mvp_flow)
     await runner.run_test("T4_S07", "W-MENU: Title -> Draft (pick/lock/reveal) -> Match", "Tier 4", runner.test_s07_title_to_draft_to_match)
     await runner.run_test("T4_S08", "W-MENU: Draft Timer Auto-Lock (bots + reveal)", "Tier 4", runner.test_s08_draft_timer_autolock)
+    await runner.run_test("T4_S09", "W-PROG: XP/RYO/missoes diarias persistem na partida", "Tier 4", runner.test_s09_progressao_persiste)
+    await runner.run_test("T4_S10", "W-PROG: missoes diarias renovam na virada de dia", "Tier 4", runner.test_s10_missoes_virada_de_dia)
 
     # -------------------------------------------------------------------------
     # Tier 5 Tests — Mobile Pivot formal (PV1.6 + PV2.6)

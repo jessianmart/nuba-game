@@ -138,14 +138,14 @@
       <div class="lobby-actions-top">
         <div class="currency-pill" title="Ryō acumulado">
           <img src="assets/ui/skin/orb_dark.png" alt="" aria-hidden="true" />
-          <span>12.450</span>
+          <span id="lobby-ryo">12.450</span>
           <small>RYO</small>
         </div>
         <div class="player-chip" title="Sua conta">
           <img class="player-chip-avatar" src="assets/portraits/1nrt.png" alt="" aria-hidden="true" />
           <div class="player-chip-meta">
             <strong>Shinobi_117</strong>
-            <span>Nível 12 • Konoha</span>
+            <span id="lobby-level">Nível 12 • Konoha</span>
           </div>
         </div>
       </div>
@@ -354,7 +354,7 @@
           </div>
           <div class="profile-currency">
             <img src="assets/ui/skin/orb_dark.png" alt="" aria-hidden="true" />
-            <strong>12.450</strong>
+            <strong id="profile-ryo">12.450</strong>
             <small>RYO</small>
           </div>
         </aside>
@@ -398,6 +398,11 @@
           <section class="profile-section">
             <header><h4>CONQUISTAS</h4><span id="profile-ach-count">0 / 6</span></header>
             <div id="profile-achievements" class="achievement-grid"></div>
+          </section>
+
+          <section class="profile-section">
+            <header><h4>MISSOES DIARIAS</h4><span id="profile-missions-count">0 / 3</span></header>
+            <ul id="profile-missions" class="mission-list"></ul>
           </section>
         </div>
       </div>
@@ -844,6 +849,6 @@
     </div>
 
   <script src="vendor/gsap.min.js"></script>
-  <script type="module" src="game.js?v=47"></script>
+  <script type="module" src="game.js?v=49"></script>
 </body>
 </html>
