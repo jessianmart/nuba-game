@@ -336,6 +336,25 @@ Lane, torre, minions, itens/loja, monetização, skins, wrapper nativo, novos he
 **Tema, skin Storm, VFX, áudio, kanji e juice permanecem exatamente como estão.**
 
 ### 8.5 W5 — Áudio autêntico do APK na batalha (pedido direto do usuário 2026-10-22)
+#### 8.5.1 W5-F2 — Vozes de batalha POR HERÓI (bancos PL_1XXX) — 2026-10-23
+
+Descoberta-chave: o APK carrega **um voice bank por ninja** no `sound.awb`
+(CPK interno): `PL_1nrt.xfbin` ... `PL_1tyo.xfbin` (30 ninjas, ~78 cues de
+batalha cada — `S_PL_DmgS1-3`, `DmgM1-2`, `DmgL1-2`, `AtkS1-3`, `AtkM1-2`,
+`AtkL1-2`, `Combo1-3`, `Awake`, `Catch`, `GrdBrk1-2`...). Extração: ACB
+embutido no xfbin (`tools/extract_pl_banks.py` @UTF 8+tsize) ->
+`tools/extract_voices_nuba.py` (vgmstream 56 subsongs + ffmpeg mono q2) ->
+**252 oggs (21 cues × 12 heróis do NUBA, 2,6 MB)** em
+`public/assets/audio/decoded/voice/<heroId>/S_PL_*.ogg`.
+
+Wiring (`tools/w5f2_voice_patcher.py`, 5 edições): `HERO_VOICE_MAP` +
+`window.unitVoice(u, kind, opts)` com **gate por unidade** (1 voz/1,7 s
+padrão; bots 45% mais esparsos; `min:0` para KO/awake, `min:4200` para
+cast), volume pelo `playAt` falloff existente. Momentos: dano leve/pesado
+na vítima (`DmgS`/`DmgM`), KO (`DmgL` — gemido de queda), cast
+(`AtkS` básico / `AtkM` skills / `AtkL` ult), despertar (`Awake`).
+Probe `tools/probe_w5f2.py` **8/8** (oggs 200, voz da vítima posicionada,
+gate, defensivo, 0 console errors).
 
 Fora do escopo original das fases 8.2 (o escopo dizia "áudio permanece como
 está") — o usuário pediu explicitamente as **vozes originais do APK** no momento

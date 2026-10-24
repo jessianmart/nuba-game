@@ -264,3 +264,38 @@ Trail chunk do APK é referência de bone (ribbon procedural no engine Storm): r
 Camera chunk do APK é stub de 8B (keyframes em pacotes de cutscene fora do repo) — cut procedural fiel ao sabor Storm: aproximação baixa atrás do caster, tele punch 6 graus via escritor único de FOV (delta dentro do updateJuice, autorrestaura), blend 0-24%/hold-62%/decai, janela = animDuration do ult, congela no hitstop, player-only com coreografia fps=60 (1ssk/1itc fora, fiel). Probe: camY 38->3.06, fov 48->42, retorno limpo. Suite: T4_S04 flake por cast lock vazando do S03 (rerun 47/47 confirmou) — fix anti-race igual ao S05 (reset animTimer/state/awakenedTimer). Commit 89fe988, deploy verificado.
 
 <!-- lifeline:end -->
+
+### #0015 — 2026-10-23T14:20:02.689252+00:00 — checkpoint
+
+- **author**: unknown
+- **agent**: human
+- **provider**: none
+- **model**: human
+- **kind**: checkpoint
+- **summary**: W-VIS-FULL: validacao visual 48/48 (12 herois x 4 slots) toda verde
+- **parents**: 15c25097a7fa1c9fb01158fa0b9338082eb79069bfa409f0944910be1104fd29
+- **id**: 69e0919617e1cc7d82e1f0a99e910da1ac3b1c0130244f61c1e2dfc75e6e99d8
+
+**Body**:
+Probe em 3 etapas: bots 5v5 (10 herois), lobby player (1tnd/1orc/1nrt), shot-analyze por pixels. Toda celula: VFX extraido vivo (kids>=1, grupos Box3), coreografia FK ativa (quats bone13), 0 console errors. Trails 84 verts, cine Y nos ults do player. 2 rig negativos eram sutis/late: 1nrt w selo de mao sob 42 VFX; 1skr r windup de 151f move so apos ~0.5s (confirmado amostra tardia). Pixels nos 20 frames: ults 4.5k-10.6k (Shukaku top), Chidori 4.743, trails 6.4k/4.7k. Commit 9d70817. Validacao completa da linha de execucao autentica.
+
+<!-- lifeline:end -->
+
+### [2026-10-23] W5-F2 — Vozes de batalha por herói: bancos PL_1XXX do APK
+**Agente:** human · **Provider:** none · **Model:** human
+
+**O quê:** cada ninja do Storm tem um voice bank próprio (`PL_<nexo>.xfbin`)
+no `sound.awb` com 78 cues de batalha. Decodificadas 21 cues × 12 heróis do
+Nuba (252 oggs, 2,6 MB) e ligadas nos momentos de combate via `unitVoice`
+(gate por unidade 1,7 s, bots esparsos, falloff por distância).
+
+**Por quê:** o pedido do usuário era voz original no momento de cada
+hit/jutsu/morte *de cada herói* — os 78 grunts `S_dXX_rear` do battle ACB
+eram compartilhados (sem mapa char->dXX em data algum; scan do APK inteiro
+deu 0 hits). Os PL_1XXX eliminam a necessidade do mapa: o arquivo É por
+herói, com DmgS/M/L, AtkS/M/L, Combo, Awake por ninja.
+
+**Como:** extract_pl_banks (ACB embutido no xfbin) -> vgmstream (56
+subsongs inline HCA) -> ffmpeg mono q2 -> decoded/voice/<hero>/.
+w5f2_voice_patcher 5 edições; probe_w5f2 8/8 com Math.random mockado
+(determinismo dos checks de dano em bots).

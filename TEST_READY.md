@@ -545,6 +545,18 @@ ode --check do game.js (como .mjs) -> OK.
 
 
 ### W5 — SFX AUTÊNTICOS DO APK POSICIONADOS (vozes no momento da batalha + volume por distância) — validado 2026-10-22
+### W5-F2 — VOZES DE BATALHA POR HERÓI (PL_1XXX) — validado 2026-10-23
+- `python tools/probe_w5f2.py` -> **8/8** (C1 62 paths HEAD 200; C2 dano leve
+  -> `voice/<hero>/S_PL_DmgS*` na vítima posicionado; C3 pesado -> DmgM+ground_hit;
+  C4 kill -> `voice/<hero>/S_PL_DmgL*`; C5 cast atk -> `S_PL_AtkS*` e ult r ->
+  `S_PL_AtkL*`+`S_PL_Awake`; C6 gate 1 voz/unidade/1,7s; C7 unitVoice defensivo
+  (heroId fora do roster/null -> false); C8 zero console errors).
+- Gate de determinismo do probe: `Math.random = () => 0.99` durante os checks
+  de dano (bots da vítima têm 45% de skip natural — sem o mock o C2/C3 é
+  loteria; restaurado em `finally`).
+- Arquivos: 252 oggs (21 cues × 12 heróis, 2,6 MB) em
+  `public/assets/audio/decoded/voice/`; infra `HERO_VOICE_MAP`/`unitVoice`
+  game.js L287-319; hooks dealDamage L3751, kill L3787, cast L3942, awake L4698.
 - Pedido do usuário: "puxar do apk as vozes originais e aplicar estrategicamente
   no momento da batalha de cada um obedecendo a distancia... nos sons CORRETOS
   de batalha, nada de som generico".

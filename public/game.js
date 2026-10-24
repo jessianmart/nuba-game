@@ -283,6 +283,40 @@ const AUTH_SFX = {
 };
 window.AUTH_SFX = AUTH_SFX; // W1.1: validação E2E
 window.SKILL_SFX_MAP = SKILL_SFX_MAP;
+
+// W5-F2: vozes de batalha POR HERÓI — bancos PL_1XXX do APK (21 cues/ninja:
+// dano leve/médio/pesado, ataque leve/médio/ult, combo, despertar). Gate por
+// unidade (1 voz/1.7s padrão), bots 45% mais esparsos, volume pelo playAt.
+const VOICE_CUE_SETS = {
+  dmg_s: ['S_PL_DmgS1', 'S_PL_DmgS2', 'S_PL_DmgS3'],
+  dmg_m: ['S_PL_DmgM1', 'S_PL_DmgM2'],
+  dmg_l: ['S_PL_DmgL1', 'S_PL_DmgL2'],
+  atk_s: ['S_PL_AtkS1', 'S_PL_AtkS2', 'S_PL_AtkS3'],
+  atk_m: ['S_PL_AtkM1', 'S_PL_AtkM2'],
+  atk_l: ['S_PL_AtkL1', 'S_PL_AtkL2'],
+  combo: ['S_PL_Combo1', 'S_PL_Combo2', 'S_PL_Combo3'],
+  awake: ['S_PL_Awake'],
+  catch: ['S_PL_Catch'],
+  grdb: ['S_PL_GrdBrk1', 'S_PL_GrdBrk2'],
+};
+window.HERO_VOICE_MAP = {};
+['1nrt', '1ssk', '1skr', '1kks', '1roc', '1itc', '1gar', '1hnt', '1nej', '1jry', '1tnd', '1orc'].forEach(function (id) { window.HERO_VOICE_MAP[id] = VOICE_CUE_SETS; });
+window._voiceGate = {};
+window.unitVoice = function (u, kind, opts) {
+  if (!u || !u.heroId || !window.HERO_VOICE_MAP[u.heroId]) return false;
+  if (!u.isPlayer && Math.random() < 0.45) return false;
+  const set = window.HERO_VOICE_MAP[u.heroId][kind];
+  if (!set || !set.length) return false;
+  const now = performance.now();
+  const min = (opts && opts.min !== undefined) ? opts.min : 1700;
+  const key = u.id || u.heroId;
+  if (window._voiceGate[key] && now - window._voiceGate[key] < min) return false;
+  AUTH_SFX._vAlt = (AUTH_SFX._vAlt || 0) + 1;
+  const cue = set[AUTH_SFX._vAlt % set.length];
+  const played = AUTH_SFX.playAt('voice/' + u.heroId + '/' + cue, u.x, u.z, { vol: (opts && opts.vol) || 0.95 });
+  if (played) window._voiceGate[key] = now;
+  return played;
+}; // W5-F2
 (function () { const _cl = sfx.clink.bind(sfx); sfx.clink = function () { AUTH_SFX.play('menu_slct', { vol: 0.65 }); _cl(); }; })(); // W1.1: cliques de UI
 
 // ============================================================================
@@ -3714,6 +3748,7 @@ function dealDamage(attacker, target, amount, skillName) {
   // Synchronized SFX on damage impact
   AUTH_SFX.playAt('hit_s', target.x, target.z, { vol: 0.55 }); // W5: impacto posicionado
   if (dmg >= 180) AUTH_SFX.playAt(AUTH_SFX.pick('ground_hit', 'ground_hit2'), target.x, target.z, { vol: 0.85, min: 260 }); // W5: tombo pesado autêntico
+  window.unitVoice(target, dmg >= 180 ? 'dmg_m' : 'dmg_s'); // W5-F2: voz do herói ao levar dano
 
   // Cel-shaded impact hit spark burst on damage impact
   // P1 JUICE: hitstop + shake + zoom scaled by damage weight, player
@@ -3749,6 +3784,7 @@ function dealDamage(attacker, target, amount, skillName) {
     if (window.__GOV && window.__GOV.mobile && target.isPlayer) haptic([40, 60, 40]); // PV3.3: morri
     target.deadTimer = activeMatchCfg.respawn != null ? activeMatchCfg.respawn : 6.0; // respawn por modo (legacy 6s, 3v3 5s; PV2: BR = anim down normal, rebirth gate torna permanente)
     AUTH_SFX.playAt('down', target.x, target.z, { vol: 0.8 }); AUTH_SFX.playAt('ko', target.x, target.z, { vol: 0.9 }); // W5: KO posicionado
+    window.unitVoice(target, 'dmg_l', { min: 0 }); // W5-F2: gemido de queda do herói
     target.state = 'down'; // Authentic knockdown fall animation
     target.animDuration = 2.0; // Lie on ground for 2.0s before vanishing
     target.animTimer = 2.0;
@@ -3903,6 +3939,7 @@ function executeSkill(unit, slot) {
   activeSkillVfxModel = ((SKILL_VFX_MAP[unit.heroId] || {})[slot]) || null; // M7: identidade por skill
   activeSkillVfxAnim = ((SKILL_VFX_ANIM[unit.heroId] || {})[slot]) || null; // SPP: anim por skill
   const _authSfx = ((SKILL_SFX_MAP[unit.heroId] || {})[slot]) || null; // W1.1
+  window.unitVoice(unit, slot === 'atk' ? 'atk_s' : (slot === 'r' ? 'atk_l' : 'atk_m'), { min: 4200 }); // W5-F2: voz de ataque do herói
   if (_authSfx) AUTH_SFX.playAt(_authSfx, unit.x, unit.z, { vol: 0.8 }); // W5: voz do herói posicionada
   else if (slot === 'atk') AUTH_SFX.playAt(AUTH_SFX.pick('punch_swing', 'kick_swing'), unit.x, unit.z, { vol: 0.5 }); // W5: swing alternado
   activeSkillVfxFaceY = unit.rotY; // SPP: VFX encara a direcao do caster
@@ -4658,6 +4695,7 @@ function executeSkill(unit, slot) {
     if (unit.isPlayer && _ultClip && _ultClip.fps) { ultCine.active = true; ultCine.t = 0; ultCine.dur = unit.animDuration; }
     unit.awakenedTimer = 14.0; // 14 seconds of Awakening Mode!
     AUTH_SFX.playAt('awake_open', unit.x, unit.z, { vol: 0.9 }); AUTH_SFX.playAt('awake_flash', unit.x, unit.z, { vol: 0.8 }); // W5: awakening posicionado
+    window.unitVoice(unit, 'awake', { min: 0 }); // W5-F2: grito de despertar do herói
     unit.auraMesh.visible = true;
 
     const maxReach = 9.5;
