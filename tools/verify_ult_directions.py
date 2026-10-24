@@ -63,6 +63,8 @@ async def main():
         tabs = json.loads(urllib.request.urlopen(f'http://127.0.0.1:{PORT}/json').read())
         ws = await websockets.connect([t['webSocketDebuggerUrl'] for t in tabs if 'localhost' in t['url']][0],
                                       max_size=50_000_000, compression=None)
+        await ws.send(json.dumps({'id': 1, 'method': 'Network.enable'}))
+        await ws.send(json.dumps({'id': 2, 'method': 'Network.setCacheDisabled', 'params': {'cacheDisabled': True}}))
         mid = [100]
         async def ev(expr):
             mid[0] += 1; i = mid[0]
