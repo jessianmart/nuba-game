@@ -316,3 +316,24 @@ Batalha "de leve" para não competir com SFX/vozes (0,38 vs 0,70 do menu).
 ogg q2; modulo MUSIC com unlock de autoplay (primeiro gesto); DOM aditivo
 pref-music/pref-music-vol/pref-sfx-vol; schema do perfil ganha
 music/musicVol/sfxVol; probe 7/7.
+
+### [2026-10-23] W7 — HUDs com estética shadcn + Framer Motion vanilla
+**Agente:** human · **Provider:** none · **Model:** human
+
+**O quê:** os informativos de SEQUÊNCIA e ULT saem do meio da tela —
+streak vira toast compacto no canto sup. direito, ult vira pill discreta
+top 28% — ambos com blur, border fino e spring física do Framer Motion.
+
+**Por quê:** pedido do usuário ("pode usar um shadcn, e framer motion,
+para huds da batalha? aliviar o peso dos informativos no meio da tela,
+de sequencia, e ulti, com excelência, busque pesquisa e referências").
+Pesquisa: pattern Sonner (toast no canto, não-bloqueante) + motion.dev
+(spring física). Decisão: shadcn/ui literal (React+Tailwind+bundler)
+inviável no runtime vanilla com DOM inviolável — tokens/pattern aplicados
+no CSS puro; Motion vanilla vendored entra de verdade.
+
+**Como:** bundle framer-motion@12/dom/+esm (141KB, imports jsdelivr
+rescritos local) + w7Spring helper com fallback GSAP; CSS compacto
+(blur 10-12px, border 1px rgba white/9-10%, radius 12-16px); flare
+infinito OFF; keyframes streakPop OFF (translateX(-50%) voaria no
+canto); probe 6/6 desktop+mobile com screenshots.

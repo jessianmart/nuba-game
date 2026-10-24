@@ -327,6 +327,28 @@ window.MUSIC = MUSIC;
 })();
 MUSIC.play('menu'); // W6: trilha do lobby (modeslct)
 
+// W7: Framer Motion vanilla (dom/+esm vendored em assets/vendor) — spring
+// física para os HUDs. Import dinâmico: se falhar, GSAP/CSS seguram o fallback.
+let MOTION = null;
+import('./assets/vendor/motion.esm.js')
+  .then((m) => { MOTION = m; window.MOTION = m; })
+  .catch(() => {});
+function w7Spring(el, props, opts) {
+  if (MOTION && MOTION.animate) {
+    try {
+      return MOTION.animate(el, props, Object.assign({ type: 'spring', stiffness: 420, damping: 30 }, opts || {}));
+    } catch (e) { /* fallback abaixo */ }
+  }
+  if (window.gsap) {
+    try {
+      window.gsap.fromTo(el, { scale: 0.9, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.3, ease: 'back.out(1.8)', overwrite: 'auto' });
+    } catch (e) { /* seco */ }
+  }
+  return null;
+}
+window.w7Spring = w7Spring;
+
 // W5-F2: vozes de batalha POR HERÓI — bancos PL_1XXX do APK (21 cues/ninja:
 // dano leve/médio/pesado, ataque leve/médio/ult, combo, despertar). Gate por
 // unidade (1 voz/1.7s padrão), bots 45% mais esparsos, volume pelo playAt.
@@ -468,11 +490,245 @@ const MATCH_CONFIGS = {
   dm_3v3:        { label: 'COMBATE 3v3', teamSize: 3, killTarget: 15, time: 180, respawn: 5,  overtime: 30, mode: 'dm' },
   dm_legacy_5v5: { label: 'COMBATE 5v5', teamSize: 5, killTarget: 30, time: 300, respawn: 6,  overtime: 60, mode: 'dm' },
   br_vila:       { label: 'REALEZA NA VILA', mode: 'br', arena: 'sa00z', players: 10, squad: 1, teamSize: 5, killTarget: null, time: 180, respawn: null, overtime: 0, zoneStart: 65, zoneMin: 6, zonePhases: 6, phaseTime: 25 }, // PV2 (§2.3) — layout real via br_vila_layout.json
+  training:       { label: 'TREINO · CAMPO 3', mode: 'training', arena: 'sd00a', teamSize: 1, killTarget: null, time: null, respawn: 3, overtime: 0 }, // W-TRN: campo dos troncos — dano, skills, combos e Teste dos Sinos
 };
 let activeMatchCfg = MATCH_CONFIGS.dm_legacy_5v5;   // modo atual (global — playMatchIntro/tick leem)
 let lastMatchConfigId = 'dm_legacy_5v5';           // revanche reusa o modo da partida anterior
 let selectedModeId = 'dm_3v3';                      // default do lobby (decisao #1 do plano)
 let brState = null;                                 // PV2: estado do BR (zona 結界/baús/vivos) — null fora do modo
+
+// ============================================================================
+// W-TRN TREINO · CAMPO DE TREINAMENTO (modo training) — arena sd00a, os tres
+// troncos do Campo 3. Bonecos de treino (dummies) sem IA, medição de dano
+// (números flutuantes + DPS + combos) e o TESTE DOS SINOS do Kakashi:
+// 2 sinos antes do meio-dia (cada queda do Kakashi rende 1 sino — ele
+// escapa com kawarimi e volta com HP cheio).
+// ============================================================================
+const TRN = {
+  active: false,
+  last: 0, total: 0, hits: 0, dps: 0,
+  combo: 0, comboDmg: 0, bestCombo: 0, bestComboDmg: 0,
+  firstHitAt: 0, lastHitAt: 0, bySkill: {},
+  bells: 0,
+  bell: { active: false, time: 0, limit: 180, dummy: null, startedAt: 0, bestSecs: null },
+  dummies: [], _hudT: 0, hudDirty: true,
+  DUMMY_HP: 12000, KAKASHI_HP: 2600, COMBO_WINDOW: 3.0,
+
+  reset(announce) {
+    this.last = 0; this.total = 0; this.hits = 0; this.dps = 0;
+    this.combo = 0; this.comboDmg = 0; this.bestCombo = 0; this.bestComboDmg = 0;
+    this.firstHitAt = 0; this.lastHitAt = 0; this.bySkill = {};
+    const p = units.find(u => u.isPlayer);
+    if (p) {
+      p.hp = p.maxHp; p.chakra = p.maxChakra; p.hitstun = 0; p.deadTimer = 0; p.comboStep = 0;
+      for (const k of Object.keys(p.cds)) p.cds[k] = 0;
+    }
+    if (announce) showBanner('TREINO RESETADO — CHAKRA E RECARGAS RESTAURADOS', 1500);
+    this.hudDirty = true;
+  },
+
+  recordHit(attacker, target, dmg, skillName) {
+    const now = performance.now();
+    this.last = dmg; this.total += dmg; this.hits++;
+    if (!this.firstHitAt) this.firstHitAt = now;
+    if (now - (this.lastHitAt || 0) > this.COMBO_WINDOW * 1000) { this.combo = 0; this.comboDmg = 0; }
+    this.combo++; this.comboDmg += dmg;
+    if (this.combo > this.bestCombo) { this.bestCombo = this.combo; this.bestComboDmg = this.comboDmg; }
+    this.lastHitAt = now;
+    const key = (skillName || 'golpe').replace(/\s*\[.*\]\s*$/, '');
+    const agg = this.bySkill[key] || (this.bySkill[key] = { n: 0, dmg: 0 });
+    agg.n++; agg.dmg += dmg;
+    if (target && !target.isPlayer) this.spawnFloat(target, dmg);
+    this.hudDirty = true;
+  },
+
+  spawnFloat(target, dmg) {
+    const layer = document.getElementById('dmg-float-layer');
+    if (!layer || !camera) return;
+    const v = new THREE.Vector3(target.x, 4.9, target.z).project(camera);
+    if (v.z > 1) return;
+    const sx = (v.x * (window.innerWidth / 2)) + (window.innerWidth / 2);
+    const sy = -(v.y * (window.innerHeight / 2)) + (window.innerHeight / 2);
+    const el = document.createElement('div');
+    el.className = 'dmg-float' + (dmg >= 300 ? ' crit' : (dmg >= 180 ? ' heavy' : ''));
+    el.textContent = String(dmg);
+    el.style.left = sx + 'px';
+    el.style.top = sy + 'px';
+    layer.appendChild(el);
+    setTimeout(() => { if (el.parentNode) el.parentNode.removeChild(el); }, 980);
+  },
+
+  async spawnDummy(heroId, x, z, opts = {}) {
+    try {
+      const h = rosterMeta.find(r => r.id === heroId) || rosterMeta[0];
+      const mesh = await loadCharacter3DModel(h.id);
+      const ringGeo = new THREE.RingGeometry(1.45, 1.85, 32);
+      const ringMesh = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({ color: 0xef4444, side: THREE.DoubleSide }));
+      ringMesh.rotation.x = -Math.PI / 2;
+      ringMesh.position.y = 0.08;
+      mesh.add(ringMesh);
+      const auraMesh = createHeroAwakeningAuraMesh(h.id, h.color || 0xff7b00);
+      auraMesh.visible = false;
+      mesh.add(auraMesh);
+      mesh.position.set(x, 0, z);
+      arenaGroup.add(mesh);
+      const labelEl = document.createElement('div');
+      labelEl.className = 'unit-label red';
+      labelEl.innerHTML = `
+        <span class="u-name">${opts.name || 'BONECO'} <small class="u-lvl">Nv.1</small></span>
+        <div class="u-hp-bg"><div class="u-hp-fill" style="width:100%"></div></div>
+        <div class="u-ck-bg"><div class="u-ck-fill" style="width:100%"></div></div>
+      `;
+      document.getElementById('world-labels').appendChild(labelEl);
+      const hs = HERO_STATS[h.id] || HERO_STATS.__d;
+      const hp = opts.hp || Math.round(hs.hp * HERO_HP_SCALE);
+      const u = {
+        id: 'trn_' + (opts.id || heroId) + '_' + Math.floor(Math.random() * 1e5),
+        heroId: h.id, name: opts.name || h.name, portrait: h.portrait,
+        team: 'red', isPlayer: false, isDummy: true, isKakashi: !!opts.isKakashi,
+        mesh, auraMesh, labelEl, kit: HERO_KITS[h.id] || HERO_KITS['1nrt'],
+        x, z, spawnX: x, spawnZ: z, rotY: Math.atan2(-x, -z),
+        hp, maxHp: hp, chakra: 0, maxChakra: 100,
+        level: 1, kills: 0, deaths: 0, assists: 0, killStreak: 0, lastKillAt: 0,
+        speed: 0, state: 'idle', animTimer: 0, animDuration: 0,
+        comboStep: 0, comboResetTimer: 0, awakenedTimer: 0, deadTimer: 0, hitstun: 0,
+        spawnShield: 0,
+        cds: { atk: 9999, q: 9999, w: 9999, e: 9999, r: 9999 },
+        aiTarget: null, aiStrafeDir: 1,
+        recentAttackers: new Map()
+      };
+      units.push(u);
+      return u;
+    } catch (err) {
+      console.warn('[TRN] falha ao spawnar boneco:', err && err.message);
+      return null;
+    }
+  },
+
+  async begin(CFG) {
+    this.reset(false);
+    this.bells = 0;
+    this.bell.active = false;
+    this.bell.dummy = null;
+    this.dummies = [];
+    // Player entra em campo PERTO dos troncos reais do Campo 3 (createTrainingPosts)
+    const p = units.find(u => u.isPlayer);
+    if (p) {
+      p.x = -30; p.z = 2; p.spawnX = -30; p.spawnZ = 2;
+      p.rotY = Math.atan2(-17.5 - p.x, 13 - p.z);
+      if (p.mesh) p.mesh.position.set(p.x, 0, p.z);
+    }
+    // Bonecos EM FRENTE aos tres troncos de madeira do Kakashi
+    const spots = [
+      { x: -15, z: 9.2 },
+      { x: -17.5, z: 10.8 },
+      { x: -20, z: 9.4 }
+    ];
+    const names = ['樹 BONECO I', '樹 BONECO II', '樹 BONECO III'];
+    const heroes = ['1skr', '1nej', '1hnt'];
+    for (let i = 0; i < spots.length; i++) {
+      const u = await this.spawnDummy(heroes[i], spots[i].x, spots[i].z, { name: names[i], hp: this.DUMMY_HP, id: 'p' + i });
+      if (u) this.dummies.push(u);
+    }
+    this.updateHud();
+  },
+
+  toggleBell() { if (this.bell.active) this.endBell(false, true); else this.startBell(); },
+
+  async startBell() {
+    if (this.bell.active) return;
+    if (this.bell.dummy) {
+      const li = units.indexOf(this.bell.dummy);
+      if (li >= 0) units.splice(li, 1);
+      if (this.bell.dummy.labelEl) this.bell.dummy.labelEl.remove();
+      if (this.bell.dummy.mesh) { try { arenaGroup.remove(this.bell.dummy.mesh); } catch (e) {} }
+      this.bell.dummy = null;
+    }
+    const u = await this.spawnDummy('1kks', -17.5, 15.5, { name: '鈴 KAKASHI', hp: this.KAKASHI_HP, isKakashi: true, id: 'kks' }); // entre os troncos do Campo 3
+    if (!u) { showBanner('TESTE DOS SINOS INDISPONÍVEL — TENTE NOVAMENTE', 1800); return; }
+    this.bell.active = true;
+    this.bell.time = this.bell.limit;
+    this.bell.dummy = u;
+    this.bell.startedAt = performance.now();
+    this.bells = 0;
+    AUTH_SFX.play('bell_jingle', { vol: 0.95, min: 1 });
+    showBanner('鈴 TESTE DOS SINOS — DERRUBE O KAKASHI 2x ANTES DO MEIO-DIA!', 3200);
+    this.hudDirty = true;
+  },
+
+  endBell(won, cancelled) {
+    if (!this.bell.active) return;
+    this.bell.active = false;
+    if (won) {
+      const secs = Math.round((performance.now() - this.bell.startedAt) / 1000);
+      if (this.bell.bestSecs == null || secs < this.bell.bestSecs) this.bell.bestSecs = secs;
+      AUTH_SFX.play('bell_jingle', { vol: 1, min: 1 });
+      showBanner('鈴鈴 VOCÊ PASSOU NO TESTE DOS SINOS! 2 sinos em ' + secs + 's', 4200);
+    } else if (!cancelled) {
+      AUTH_SFX.play('time_up', { vol: 0.9 });
+      showBanner('縛 MEIO-DIA! SEM OS DOIS SINOS — AMARRADO AO TRONCO ATÉ O ALMOÇO', 4200);
+    } else {
+      showBanner('TESTE DOS SINOS ENCERRADO', 1600);
+    }
+    this.hudDirty = true;
+  },
+
+  onDummyKO(target, attacker) {
+    if (target.isKakashi && this.bell.active) {
+      this.bells++;
+      if (this.bells >= 2) {
+        this.endBell(true);
+      } else {
+        AUTH_SFX.play('bell_jingle', { vol: 0.95, min: 1 });
+        showBanner('鈴 SINO ' + this.bells + '/2! O KAKASHI ESCAPOU COM KAWARIMI E VOLTOU...', 3000);
+      }
+      this.hudDirty = true;
+    }
+  },
+
+  tick(dt) {
+    const p = units.find(u => u.isPlayer);
+    if (p && p.deadTimer <= 0) p.chakra = Math.min(p.maxChakra, p.chakra + dt * 28);
+    if (this.dummies) for (const d of this.dummies) if (d.deadTimer <= 0) d.chakra = 0; // W-TRN: boneco nao acumula chakra
+    if (this.bell.dummy && this.bell.dummy.deadTimer <= 0) this.bell.dummy.chakra = 0; // W-TRN: idem Kakashi
+    if (this.bell.active) {
+      this.bell.time = Math.max(0, this.bell.time - dt);
+      if (this.bell.time <= 0) this.endBell(false);
+      else this.hudDirty = true;
+    }
+    if (this.firstHitAt) {
+      const secs = Math.max(0.5, (performance.now() - this.firstHitAt) / 1000);
+      this.dps = Math.round(this.total / secs);
+      this.hudDirty = true;
+    }
+    this._hudT += dt;
+    if (this.hudDirty && this._hudT >= 0.12) { this._hudT = 0; this.hudDirty = false; this.updateHud(); }
+  },
+
+  updateHud() {
+    const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    set('trn-last', this.last);
+    set('trn-combo', this.combo);
+    set('trn-combo-dmg', this.comboDmg);
+    set('trn-best-combo', this.bestCombo ? this.bestCombo + ' · ' + this.bestComboDmg : '0');
+    set('trn-total', this.total);
+    set('trn-dps', this.dps);
+    set('trn-hits', this.hits);
+    set('trn-bells', this.bells);
+    const bt = document.getElementById('trn-bell-timer');
+    if (bt) bt.textContent = this.bell.active ? Math.ceil(this.bell.time) + 's' : (this.bell.bestSecs != null ? 'rec ' + this.bell.bestSecs + 's' : '');
+    const bb = document.getElementById('trn-bell-btn');
+    if (bb) bb.textContent = this.bell.active ? 'ENCERRAR (B)' : 'TESTE DOS SINOS';
+  }
+};
+window.__TRN = TRN; // W-TRN: telemetria E2E
+(function trnWireButtons() {
+  const bb = document.getElementById('trn-bell-btn');
+  if (bb) bb.addEventListener('click', () => { if (TRN.active) TRN.toggleBell(); });
+  const rb = document.getElementById('trn-reset-btn');
+  if (rb) rb.addEventListener('click', () => { if (TRN.active) TRN.reset(true); });
+})();
+
 let scoreBlue = 0;
 let scoreRed = 0;
 let matchTimeRemaining = 300; // 5:00
@@ -2010,7 +2266,7 @@ async function startMatch(configId) {
   matchOvertime = false; // T5
   matchSuddenDeath = false; // T5
   const _goalEl = document.querySelector('.match-goal-txt');
-  if (_goalEl) _goalEl.textContent = CFG.killTarget != null ? `META: ${CFG.killTarget} ABATES` : 'SOBREVIVA · ÚLTIMO DE PÉ'; // PV2: BR nao tem meta de abates
+  if (_goalEl) _goalEl.textContent = CFG.mode === 'training' ? 'TREINO LIVRE · CAMPO 3' : (CFG.killTarget != null ? `META: ${CFG.killTarget} ABATES` : 'SOBREVIVA · ÚLTIMO DE PÉ'); // PV2: BR nao tem meta de abates // W-TRN
   const _mtReset = document.getElementById('match-timer');
   if (_mtReset) _mtReset.classList.remove('overtime', 'sudden');
   projectiles = [];
@@ -2043,10 +2299,12 @@ async function startMatch(configId) {
   const playerHero = rosterMeta.find(h => h.id === selectedHeroId) || rosterMeta[0];
   const others = rosterMeta.filter(h => h.id !== playerHero.id);
   document.body.classList.toggle('br-mode', CFG.mode === 'br'); // PV2: gate CSS do HUD BR
+  document.body.classList.toggle('training-mode', CFG.mode === 'training'); // W-TRN: gate CSS do HUD de treino
   if (CFG.mode === 'br') { if (CFG.arena) { await applyArena(CFG.arena); } await startBRMatch(CFG, playerHero, others); return; } // PV2: branch total — forca a arena do config e spawna solo na vila
+  if (CFG.mode === 'training') { for (let _trnWait = 0; _trnWait < 150 && !window.__ARENA_BOOT_DONE; _trnWait++) { await new Promise(r => setTimeout(r, 100)); } await applyArena('sd00a'); TRN.active = true; } else { TRN.active = false; } // W-TRN: campo de treinamento forçado (os troncos) — boot-guard espera o applyArena do boot (race da L5737); outro modo encerra treino anterior
   cleanupBRVisuals(); // PV2: partida DM nova — remove zona/baús de um BR anterior
   const blueRoster = [playerHero, ...others.slice(0, CFG.teamSize - 1)];
-  const redRoster = others.slice(CFG.teamSize - 1, 2 * CFG.teamSize - 1);
+  const redRoster = CFG.mode === 'training' ? [] : others.slice(CFG.teamSize - 1, 2 * CFG.teamSize - 1); // W-TRN: treino nao tem time vermelho humano — so bonecos
 
   const spawnTeam = async (teamRoster, teamName, baseX, baseZ) => {
     const meshes = await Promise.all(teamRoster.map(h => loadCharacter3DModel(h.id)));
@@ -2151,6 +2409,7 @@ async function startMatch(configId) {
   setupHUDPlayerInfo(playerHero);
   renderTopTeamPortraits();
   playMatchIntro(blueRoster, redRoster);
+  if (CFG.mode === 'training') await TRN.begin(CFG); // W-TRN: spawna os bonecos apos o player entrar em campo
 }
 
 // ============================================================================
@@ -2183,10 +2442,10 @@ function playMatchIntro(blueRoster, redRoster) {
   const countDigit = document.getElementById('intro-count-digit');
   const finishIntro = () => {
     if (introEl) { introEl.classList.remove('show'); introEl.classList.add('hidden'); }
-    showBanner(activeMatchCfg.mode === 'br' ? 'REALEZA NA VILA INICIADO! SOBREVIVA — ÚLTIMO DE PÉ VENCE' : `${activeMatchCfg.label} EM ${ARENA.label.toUpperCase()} INICIADO! META: ${activeMatchCfg.killTarget} ABATES`);
+    showBanner(activeMatchCfg.mode === 'br' ? 'REALEZA NA VILA INICIADO! SOBREVIVA — ÚLTIMO DE PÉ VENCE' : activeMatchCfg.mode === 'training' ? '訓練 CAMPO DE TREINAMENTO — MEÇA SEU DANO, TESTE COMBOS E ENFRENTE O TESTE DOS SINOS' : `${activeMatchCfg.label} EM ${ARENA.label.toUpperCase()} INICIADO! META: ${activeMatchCfg.killTarget} ABATES`);
   };
   if (!introEl || !blueSlots || !redSlots) {
-    showBanner(activeMatchCfg.mode === 'br' ? 'REALEZA NA VILA INICIADO! SOBREVIVA — ÚLTIMO DE PÉ VENCE' : `${activeMatchCfg.label} EM ${ARENA.label.toUpperCase()} INICIADO! META: ${activeMatchCfg.killTarget} ABATES`);
+    showBanner(activeMatchCfg.mode === 'br' ? 'REALEZA NA VILA INICIADO! SOBREVIVA — ÚLTIMO DE PÉ VENCE' : activeMatchCfg.mode === 'training' ? '訓練 CAMPO DE TREINAMENTO — MEÇA SEU DANO, TESTE COMBOS E ENFRENTE O TESTE DOS SINOS' : `${activeMatchCfg.label} EM ${ARENA.label.toUpperCase()} INICIADO! META: ${activeMatchCfg.killTarget} ABATES`);
     return;
   }
   const fillSlots = (container, roster) => {
@@ -2272,18 +2531,8 @@ function showStreakBanner(unit) {
   if (textEl) textEl.textContent = label;
   if (countEl) countEl.textContent = `${tier}x`;
   pulseSkinHook('streak-banner', 1600);
-  const gsapLib = window.gsap;
-  if (!gsapLib) return;
-  banner.classList.add('gsap-anim');
-  gsapLib.fromTo(banner,
-    { scale: 0.6, opacity: 0, xPercent: -50 },
-    { scale: 1, opacity: 1, xPercent: -50, duration: 0.45, ease: 'back.out(2.2)', overwrite: 'auto' });
-  const flare = banner.querySelector('.streak-flare');
-  if (flare) {
-    gsapLib.fromTo(flare,
-      { opacity: 0.35, scale: 1.22, xPercent: -50, yPercent: -50 },
-      { opacity: 0.9, scale: 1, xPercent: -50, yPercent: -50, duration: 0.85, ease: 'sine.inOut', repeat: -1, yoyo: true, overwrite: 'auto' });
-  }
+  // W7: toast no canto — spring física (Motion) com fallback GSAP; flare desativado
+  w7Spring(banner, { opacity: [0, 1], scale: [0.94, 1], y: [-10, 0] }, { stiffness: 380, damping: 26 });
 }
 
 const SKIN_URL = 'assets/ui/skin/';
@@ -2412,10 +2661,12 @@ function renderTopTeamPortraits() {
   }
 }
 
-function showBanner(text, duration = 2600) {
+function showBanner(text, duration = 2100) {
   const el = document.getElementById('center-banner');
   el.textContent = text;
   el.classList.remove('hidden');
+  w7Spring(el, { opacity: [0, 1], scale: [0.94, 1], x: ['-50%', '-50%'], y: ['-50%', '-50%'] },
+    { stiffness: 520, damping: 34 }); // W7: pill com spring pop (Motion)
   clearTimeout(el._timer);
   el._timer = setTimeout(() => el.classList.add('hidden'), duration);
 }
@@ -2546,56 +2797,20 @@ function buildExtractedVfxMeshGroup(heroId, colorHex, targetScale = 0.08, modelN
 
 function createHeroAwakeningAuraMesh(heroId, colorHex) {
   const grp = new THREE.Group();
-
-  const vfxAura = buildExtractedVfxMeshGroup(heroId, colorHex, 0.065);
-  if (vfxAura) {
-    vfxAura.position.y = 2.2;
-    grp.add(vfxAura);
-  } else {
-    const sphere = new THREE.Mesh(
-      new THREE.SphereGeometry(2.6, 16, 16),
-      new THREE.MeshBasicMaterial({
-        color: colorHex,
-        transparent: true,
-        opacity: 0.45,
-        wireframe: false,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false
-      })
-    );
-    sphere.position.y = 2.7;
-    grp.add(sphere);
+  const aura = buildExtractedVfxMeshGroup(heroId, colorHex, 0.065) ||
+               buildExtractedVfxMeshGroup('common', colorHex, 0.065, '1efc_chakra05');
+  if (aura) {
+    aura.position.y = 2.2;
+    aura.userData.rotSpeed = new THREE.Vector3(0, 6, 0);
+    grp.add(aura);
   }
-
-  // Authentic Storm Awakening Ground Aura Rings / Shockwave Ripples
-  const ringGeo1 = new THREE.RingGeometry(2.0, 2.55, 32);
-  const ringMat1 = new THREE.MeshBasicMaterial({
-    color: colorHex,
-    side: THREE.DoubleSide,
-    transparent: true,
-    opacity: 0.75,
-    blending: THREE.AdditiveBlending
-  });
-  const groundRing1 = new THREE.Mesh(ringGeo1, ringMat1);
-  groundRing1.rotation.x = -Math.PI / 2;
-  groundRing1.position.y = 0.12;
-  groundRing1.name = 'groundRing1';
-  grp.add(groundRing1);
-
-  const ringGeo2 = new THREE.RingGeometry(3.0, 3.45, 32);
-  const ringMat2 = new THREE.MeshBasicMaterial({
-    color: 0xfde047,
-    side: THREE.DoubleSide,
-    transparent: true,
-    opacity: 0.55,
-    blending: THREE.AdditiveBlending
-  });
-  const groundRing2 = new THREE.Mesh(ringGeo2, ringMat2);
-  groundRing2.rotation.x = -Math.PI / 2;
-  groundRing2.position.y = 0.14;
-  groundRing2.name = 'groundRing2';
-  grp.add(groundRing2);
-
+  const ring = buildExtractedVfxMeshGroup('common', colorHex, 0.010, '1efc_ring01');
+  if (ring) {
+    ring.rotation.x = -Math.PI / 2;
+    ring.position.y = 0.12;
+    ring.userData.rotSpeed = new THREE.Vector3(0, 0, 10);
+    grp.add(ring);
+  }
   return grp;
 }
 
@@ -2871,796 +3086,251 @@ function createProceduralLightningArcs(radius = 1.35, count = 10, color = 0x93c5
 
 function createRasenganMesh(radius = 1.0, color = 0x00d4ff) {
   const grp = new THREE.Group();
-  const extRas = buildExtractedVfxMeshGroup('1nrt', color, radius * 0.040, 'spl_rasengan') ||
-                 buildExtractedVfxMeshGroup('1nrt', color, radius * 0.040, 'rasengan') ||
-                 buildExtractedVfxMeshGroup('common', color, radius * 0.040, '1efc_chakra00');
-  if (extRas) grp.add(extRas);
-
-  // 1. Energetic nucleus core (subtle white glow)
-  const coreMat = new THREE.MeshBasicMaterial({
-    color: 0xffffff,
-    transparent: true,
-    opacity: 0.35,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false
-  });
-  const core = new THREE.Mesh(new THREE.SphereGeometry(radius * 0.25, 12, 12), coreMat);
-  core.userData = {
-    jitter: 0.08,
-    baseScale: 1.0,
-    rotSpeed: new THREE.Vector3(0, 8, 0)
-  };
-  grp.add(core);
-
-  // 2. Outer swirling chakra sphere with 1efc_chakra00.png
-  const chakraTex = loadTex('assets/skills/1efc_chakra00.png');
-  const sphereMat = new THREE.MeshBasicMaterial({
-    color,
-    map: chakraTex,
-    transparent: true,
-    opacity: 0.55,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false,
-    side: THREE.DoubleSide,
-    wireframe: false
-  });
-  const shell = new THREE.Mesh(new THREE.SphereGeometry(radius * 0.82, 20, 20), sphereMat);
-  shell.userData = {
-    rotSpeed: new THREE.Vector3(0, 20, 0),
-    uvScroll: { x: 0.8, y: 1.4 }
-  };
-  grp.add(shell);
-
-  // 3. Three gyroscopic counter-rotating rings with 1efc_ring01.png
-  const ringTex = loadTex('assets/skills/1efc_ring01.png');
-  const ringMat = new THREE.MeshBasicMaterial({
-    color: 0x38bdf8,
-    map: ringTex,
-    transparent: true,
-    opacity: 0.45,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false,
-    side: THREE.DoubleSide
-  });
-  const ringVels = [
-    new THREE.Vector3(14, 18, 0),
-    new THREE.Vector3(0, -16, 20),
-    new THREE.Vector3(-18, 0, -14)
-  ];
-  for (let i = 0; i < 3; i++) {
-    const ring = new THREE.Mesh(new THREE.TorusGeometry(radius * 0.92, 0.04, 6, 24), ringMat);
-    ring.rotation.set((i * Math.PI) / 3, (i * Math.PI) / 4, (i * Math.PI) / 6);
-    ring.userData = { rotSpeed: ringVels[i] };
-    grp.add(ring);
+  const core = buildExtractedVfxMeshGroup('1nrt', color, radius * 0.011, '1nrveff1_chakra01') ||
+               buildExtractedVfxMeshGroup('1nrt', color, radius * 0.011, 'rasengan') ||
+               buildExtractedVfxMeshGroup('common', color, radius * 0.011, '1efc_chakra00');
+  if (core) {
+    core.userData.rotSpeed = new THREE.Vector3(0, 15, 0);
+    core.userData.uvScroll = { x: 0.5, y: 1.1 };
+    grp.add(core);
+  }
+  const outer = buildExtractedVfxMeshGroup('1nrt', color, radius * 0.013, 'spl_rasengan');
+  if (outer) {
+    outer.userData.rotSpeed = new THREE.Vector3(0, -9, 0);
+    outer.userData.uvScroll = { x: -0.3, y: 0.8 };
+    grp.add(outer);
   }
   return grp;
 }
 
 function createChidoriMesh(radius = 0.95, color = 0x60a5fa) {
   const grp = new THREE.Group();
-  const extChi = buildExtractedVfxMeshGroup('1ssk', color, radius * 0.040, 'chidori_spark') ||
-                 buildExtractedVfxMeshGroup('1ssk', color, radius * 0.040, '1sskeff1_aura01') ||
-                 buildExtractedVfxMeshGroup('common', color, radius * 0.040, '1efc_spk01');
-  if (extChi) grp.add(extChi);
-
-  // 1. Electric plasma core with stochastic jitter
-  const coreMat = new THREE.MeshBasicMaterial({
-    color: 0xffffff,
-    transparent: true,
-    opacity: 0.35,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false
-  });
-  const core = new THREE.Mesh(new THREE.SphereGeometry(radius * 0.22, 12, 12), coreMat);
-  core.userData = {
-    jitter: 0.25,
-    baseScale: 1.0,
-    rotSpeed: new THREE.Vector3(12, 16, 8)
-  };
-  grp.add(core);
-
-  // 2. High-voltage lightning plasma dome with 1efc_spk01.png
-  const spkTex = loadTex('assets/skills/1efc_spk01.png');
-  const domeMat = new THREE.MeshBasicMaterial({
-    color,
-    map: spkTex,
-    transparent: true,
-    opacity: 0.50,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false,
-    side: THREE.DoubleSide,
-    wireframe: false
-  });
-  const dome = new THREE.Mesh(new THREE.IcosahedronGeometry(radius * 0.72, 2), domeMat);
-  dome.userData = {
-    rotSpeed: new THREE.Vector3(18, -22, 14),
-    jitter: 0.20,
-    baseScale: 1.0,
-    uvScroll: { x: 1.2, y: 1.6 }
-  };
-  grp.add(dome);
-
-  // 3. Dynamic procedural zigzag lightning discharge arcs
-  const arcs = createProceduralLightningArcs(radius * 0.85, 10, 0x93c5fd);
-  grp.add(arcs);
-
-  // 4. Electric spark planes
-  for (let i = 0; i < 4; i++) {
-    const spPlane = new THREE.Mesh(
-      new THREE.PlaneGeometry(radius * 0.9, radius * 0.9),
-      new THREE.MeshBasicMaterial({
-        map: spkTex,
-        color: 0xffffff,
-        transparent: true,
-        opacity: 0.88,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false,
-        side: THREE.DoubleSide
-      })
-    );
-    spPlane.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
-    spPlane.userData = {
-      rotSpeed: new THREE.Vector3(
-        (Math.random() - 0.5) * 20,
-        (Math.random() - 0.5) * 20,
-        (Math.random() - 0.5) * 20
-      )
-    };
-    grp.add(spPlane);
+  const body = buildExtractedVfxMeshGroup('1ssk', color, radius * 0.012, '1szneff_chak01') ||
+               buildExtractedVfxMeshGroup('1ssk', color, radius * 0.012, 'chidori_spark') ||
+               buildExtractedVfxMeshGroup('common', color, radius * 0.012, '1efc_spk01');
+  if (body) {
+    body.userData.rotSpeed = new THREE.Vector3(4, 10, 3);
+    body.userData.jitter = 0.30;
+    body.userData.uvScroll = { x: 0.2, y: 1.6 };
+    grp.add(body);
   }
-
+  const sparks = buildExtractedVfxMeshGroup('common', color, radius * 0.009, '1efc_spk01');
+  if (sparks) {
+    sparks.userData.rotSpeed = new THREE.Vector3(0, 22, 0);
+    sparks.userData.jitter = 0.5;
+    grp.add(sparks);
+  }
   return grp;
 }
 
 function createKaitenMesh(radius = 3.2) {
   const grp = new THREE.Group();
-  const extKaiten = buildExtractedVfxMeshGroup('1nej', 0x60a5fa, radius * 0.040, 'kaiten_dome') ||
-                    buildExtractedVfxMeshGroup('common', 0x60a5fa, radius * 0.040, '1efc_wind01');
-  if (extKaiten) grp.add(extKaiten);
-
-  // 1. Spinning 360° chakra dome with 1efc_wind01.png
-  const windTex = loadTex('assets/skills/1efc_wind01.png');
-  const dome = new THREE.Mesh(
-    new THREE.SphereGeometry(radius, 28, 20, 0, Math.PI * 2, 0, Math.PI * 0.75),
-    new THREE.MeshBasicMaterial({
-      color: 0x60a5fa,
-      map: windTex,
-      transparent: true,
-      opacity: 0.42,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-      side: THREE.DoubleSide,
-      wireframe: false
-    })
-  );
-  dome.userData = {
-    rotSpeed: new THREE.Vector3(0, 24, 0),
-    uvScroll: { x: 2.5, y: 1.0 }
-  };
-  grp.add(dome);
-
-  // 2. Three tiered counter-rotating latitude wind rings with 1efc_ring01.png
-  const ringTex = loadTex('assets/skills/1efc_ring01.png');
-  const yTiers = [0.3, radius * 0.45, radius * 0.85];
-  const ringScales = [0.98, 0.85, 0.65];
-  const ringVels = [-20, 22, -24];
-  for (let i = 0; i < 3; i++) {
-    const ring = new THREE.Mesh(
-      new THREE.TorusGeometry(radius * ringScales[i], 0.10, 6, 28),
-      new THREE.MeshBasicMaterial({
-        color: i === 1 ? 0x93c5fd : 0x38bdf8,
-        map: ringTex,
-        transparent: true,
-        opacity: 0.40,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false,
-        side: THREE.DoubleSide
-      })
-    );
-    ring.rotation.x = Math.PI / 2;
-    ring.position.y = yTiers[i];
-    ring.userData = { rotSpeed: new THREE.Vector3(0, 0, ringVels[i]) };
-    grp.add(ring);
+  const dome = buildExtractedVfxMeshGroup('1nej', 0x60a5fa, radius * 0.026, 'kaiten_dome') ||
+               buildExtractedVfxMeshGroup('common', 0x60a5fa, radius * 0.026, '1efc_wind01');
+  if (dome) {
+    dome.userData.rotSpeed = new THREE.Vector3(0, 24, 0);
+    dome.userData.uvScroll = { x: 2.5, y: 1.0 };
+    grp.add(dome);
   }
-
-  // 3. Ground dust ring with 1efc_shock01.png
-  const dustTex = loadTex('assets/skills/1efc_shock01.png');
-  const dust = new THREE.Mesh(
-    new THREE.RingGeometry(radius * 0.3, radius * 1.15, 32),
-    new THREE.MeshBasicMaterial({
-      color: 0xbae6fd,
-      map: dustTex,
-      transparent: true,
-      opacity: 0.35,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-      side: THREE.DoubleSide
-    })
-  );
-  dust.rotation.x = -Math.PI / 2;
-  dust.position.y = 0.12;
-  dust.userData = { rotSpeed: new THREE.Vector3(0, 0, 12) };
-  grp.add(dust);
-
+  const dust = buildExtractedVfxMeshGroup('common', 0xbae6fd, radius * 0.022, '1efc_shock01');
+  if (dust) {
+    dust.rotation.x = -Math.PI / 2;
+    dust.position.y = 0.12;
+    dust.userData.rotSpeed = new THREE.Vector3(0, 0, 12);
+    grp.add(dust);
+  }
   return grp;
 }
 
 function createSandShieldMesh(radius = 3.0) {
   const grp = new THREE.Group();
-  const extShield = buildExtractedVfxMeshGroup('1gar', 0xd97706, radius * 0.040, '1gareff1_bd_snd02') ||
-                    buildExtractedVfxMeshGroup('1gar', 0xd97706, radius * 0.040, 'sand_dust');
-  if (extShield) grp.add(extShield);
-
-  // 1. Earthen sand dome with 1gar_1gareff1_snd02.png
-  const sandTex = loadTex('assets/skills/1gar_1gareff1_snd02.png');
-  const dome = new THREE.Mesh(
-    new THREE.SphereGeometry(radius, 24, 18, 0, Math.PI * 2, 0, Math.PI * 0.72),
-    new THREE.MeshStandardMaterial({
-      color: 0xd97706,
-      map: sandTex,
-      roughness: 0.85,
-      metalness: 0.1,
-      transparent: true,
-      opacity: 0.85,
-      side: THREE.DoubleSide,
-      wireframe: false
-    })
-  );
-  dome.userData = {
-    rotSpeed: new THREE.Vector3(0, 4, 0),
-    uvScroll: { x: 0.5, y: 0.2 }
-  };
-  grp.add(dome);
-
-  // 2. Swirling sand ribbon rings
-  const sndRibbonTex = loadTex('assets/skills/1gar_1gareff1_snd01.png');
-  for (let i = 0; i < 2; i++) {
-    const ring = new THREE.Mesh(
-      new THREE.TorusGeometry(radius * (1.05 + i * 0.12), 0.12, 6, 24),
-      new THREE.MeshBasicMaterial({
-        color: 0xf59e0b,
-        map: sndRibbonTex,
-        transparent: true,
-        opacity: 0.55,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false,
-        side: THREE.DoubleSide
-      })
-    );
-    ring.rotation.set((i * Math.PI) / 3, (i * Math.PI) / 4, 0);
-    ring.userData = { rotSpeed: new THREE.Vector3(3 + i * 2, -6 - i * 3, 2) };
-    grp.add(ring);
+  const base = buildExtractedVfxMeshGroup('1gar', 0xd97706, radius * 0.018, '1gareff1_bd_snd02') ||
+               buildExtractedVfxMeshGroup('1gar', 0xd97706, radius * 0.018, 'sand_dust');
+  if (base) { base.rotation.x = -Math.PI / 2; grp.add(base); }
+  for (let i = 0; i < 3; i++) {
+    const wall = buildExtractedVfxMeshGroup('1gar', 0xd97706, radius * 0.022, '1gareff1_snd14') ||
+                 buildExtractedVfxMeshGroup('1gar', 0xd97706, radius * 0.022, '1gareff1_snd13');
+    if (!wall) break;
+    wall.rotation.y = (i * Math.PI * 2) / 3;
+    wall.userData.rotSpeed = new THREE.Vector3(0, -5, 2);
+    wall.userData.uvScroll = { x: 0.4, y: 0.2 };
+    grp.add(wall);
   }
-
   return grp;
 }
 
 function createSandHandMesh(scale = 0.12) {
   const grp = new THREE.Group();
-  // Authentic giant sand hand: 1gareff1_hnd01_body (1,160 vertices!)
-  const extHand = buildExtractedVfxMeshGroup('1gar', 0xd97706, scale, '1gareff1_hnd01_body');
-  if (extHand) {
-    extHand.rotation.x = -Math.PI / 2;
-    grp.add(extHand);
-  } else {
-    const palm = new THREE.Mesh(
-      new THREE.BoxGeometry(4.5 * scale * 10, 2.5 * scale * 10, 5.0 * scale * 10),
-      new THREE.MeshLambertMaterial({ color: 0xd97706 })
-    );
-    grp.add(palm);
+  const hand = buildExtractedVfxMeshGroup('1gar', 0xd97706, scale, '1gareff1_hnd01_body');
+  if (hand) {
+    hand.rotation.x = -Math.PI / 2;
+    grp.add(hand);
   }
-
-  // Sand geyser dust shockwave at base
-  const sandTex = loadTex('assets/skills/1gar_1gareff1_snd01.png');
-  const geyserRing = new THREE.Mesh(
-    new THREE.RingGeometry(1.5, 7.5, 24),
-    new THREE.MeshBasicMaterial({
-      color: 0xf59e0b,
-      map: sandTex,
-      transparent: true,
-      opacity: 0.85,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-      side: THREE.DoubleSide
-    })
-  );
-  geyserRing.rotation.x = -Math.PI / 2;
-  geyserRing.position.y = 0.15;
-  geyserRing.userData = { rotSpeed: new THREE.Vector3(0, 0, 8) };
-  grp.add(geyserRing);
-
+  const geyser = buildExtractedVfxMeshGroup('1gar', 0xd97706, scale * 1.1, '1gareff1_snd07') ||
+                 buildExtractedVfxMeshGroup('1gar', 0xd97706, scale * 1.1, '1gareff1_snd02');
+  if (geyser) {
+    geyser.rotation.x = -Math.PI / 2;
+    geyser.userData.rotSpeed = new THREE.Vector3(0, 0, 9);
+    grp.add(geyser);
+  }
   return grp;
 }
 
 function createAmaterasuMesh(radius = 4.2) {
   const grp = new THREE.Group();
-  const extFlame = buildExtractedVfxMeshGroup('1itc', 0xdc2626, radius * 0.05, 'amaterasu_flame') ||
-                   buildExtractedVfxMeshGroup('common', 0xdc2626, radius * 0.05, '1efc_fire03');
-  if (extFlame) grp.add(extFlame);
-
-  // 1. Deep jet-black flame column with upward scrolling UVs
-  const fireTex1 = loadTex('assets/skills/1efc_fire03.png').clone();
-  fireTex1.needsUpdate = true;
-  const flamePillar = new THREE.Mesh(
-    new THREE.CylinderGeometry(radius * 0.65, radius * 0.95, radius * 3.2, 24, 1, true),
-    new THREE.MeshBasicMaterial({
-      color: 0x0a0a0f,
-      map: fireTex1,
-      transparent: true,
-      opacity: 0.96,
-      depthWrite: false,
-      side: THREE.DoubleSide,
-      wireframe: false
-    })
-  );
-  flamePillar.position.y = radius * 1.6;
-  flamePillar.userData = {
-    rotSpeed: new THREE.Vector3(0, 4, 0),
-    uvScroll: { x: 0, y: 4.0 }
-  };
-  grp.add(flamePillar);
-
-  // 2. Crimson corona rim with additive blending
-  const fireTex2 = loadTex('assets/skills/1efc_fire03.png').clone();
-  fireTex2.needsUpdate = true;
-  const corona = new THREE.Mesh(
-    new THREE.CylinderGeometry(radius * 0.82, radius * 1.18, radius * 3.4, 24, 1, true),
-    new THREE.MeshBasicMaterial({
-      color: 0xdc2626,
-      map: fireTex2,
-      transparent: true,
-      opacity: 0.65,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-      side: THREE.DoubleSide,
-      wireframe: false
-    })
-  );
-  corona.position.y = radius * 1.6;
-  corona.userData = {
-    rotSpeed: new THREE.Vector3(0, -6, 0),
-    uvScroll: { x: 0.15, y: 3.5 }
-  };
-  grp.add(corona);
-
-  // 3. Persistent burning black ground scorch decal disc
-  const scorchTex = loadTex('assets/skills/1efc_shock01.png');
-  const scorch = new THREE.Mesh(
-    new THREE.RingGeometry(0.2, radius * 1.3, 32),
-    new THREE.MeshBasicMaterial({
-      color: 0x050508,
-      map: scorchTex,
-      transparent: true,
-      opacity: 0.92,
-      depthWrite: false,
-      side: THREE.DoubleSide
-    })
-  );
-  scorch.rotation.x = -Math.PI / 2;
-  scorch.position.y = 0.08;
-  grp.add(scorch);
-
+  const flameA = buildExtractedVfxMeshGroup('1ssk', 0x7f1d1d, radius * 0.020, '1ssveff1_fire06');
+  if (flameA) {
+    flameA.position.y = radius * 1.3;
+    flameA.userData.rotSpeed = new THREE.Vector3(0, 5, 0);
+    flameA.userData.uvScroll = { x: 0, y: 3.4 };
+    grp.add(flameA);
+  }
+  const flameB = buildExtractedVfxMeshGroup('1ssk', 0x991b1b, radius * 0.023, '1ssveff1_fire01');
+  if (flameB) {
+    flameB.position.y = radius * 0.7;
+    flameB.userData.rotSpeed = new THREE.Vector3(0, -4, 0);
+    flameB.userData.uvScroll = { x: 0.1, y: 2.6 };
+    grp.add(flameB);
+  }
+  const core = buildExtractedVfxMeshGroup('1itc', 0x450a0a, radius * 0.016, 'amaterasu_flame') ||
+               buildExtractedVfxMeshGroup('common', 0x450a0a, radius * 0.016, '1efc_fire03');
+  if (core) {
+    core.position.y = radius * 0.5;
+    core.userData.uvScroll = { x: 0, y: 2.2 };
+    grp.add(core);
+  }
   return grp;
 }
 
 function createLionFistMesh(radius = 1.35) {
   const grp = new THREE.Group();
-  const extLion = buildExtractedVfxMeshGroup('1hnt', 0x8b5cf6, radius * 0.045, 'lion_chakra') ||
-                  buildExtractedVfxMeshGroup('common', 0x8b5cf6, radius * 0.045, '1efc_chakra04');
-  if (extLion) grp.add(extLion);
-
-  // 1. Violet/indigo chakra lion head
-  const headMat = new THREE.MeshBasicMaterial({
-    color: 0x7c3aed,
-    transparent: true,
-    opacity: 0.88,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false,
-    wireframe: false
-  });
-  const head = new THREE.Mesh(new THREE.SphereGeometry(radius * 0.75, 16, 16), headMat);
-  head.userData = { jitter: 0.15, baseScale: 1.0 };
-  grp.add(head);
-
-  // 2. Lion snout / roaring jaw
-  const jaw = new THREE.Mesh(
-    new THREE.ConeGeometry(radius * 0.55, radius * 1.15, 12),
-    new THREE.MeshBasicMaterial({
-      color: 0xa78bfa,
-      transparent: true,
-      opacity: 0.85,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false
-    })
-  );
-  jaw.rotation.x = Math.PI / 2;
-  jaw.position.z = radius * 0.55;
-  grp.add(jaw);
-
-  // 3. Glowing tenketsu eyes (blinding cyan/white starbursts)
-  const eyeTex = loadTex('assets/skills/1efc_light01.png');
-  const eyeMat = new THREE.MeshBasicMaterial({
-    color: 0xffffff,
-    map: eyeTex,
-    transparent: true,
-    opacity: 0.95,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false,
-    side: THREE.DoubleSide
-  });
-  for (const xOff of [-0.28 * radius, 0.28 * radius]) {
-    const eye = new THREE.Mesh(new THREE.SphereGeometry(radius * 0.16, 8, 8), eyeMat);
-    eye.position.set(xOff, radius * 0.25, radius * 0.65);
-    grp.add(eye);
+  const lion = buildExtractedVfxMeshGroup('1hnt', 0x8b5cf6, radius * 0.013, 'lion_chakra') ||
+               buildExtractedVfxMeshGroup('common', 0x8b5cf6, radius * 0.013, '1efc_chakra04');
+  if (lion) {
+    lion.userData.rotSpeed = new THREE.Vector3(0, 10, 0);
+    lion.userData.jitter = 0.12;
+    lion.userData.uvScroll = { x: 0.1, y: 1.8 };
+    grp.add(lion);
   }
-
-  // 4. Flaming chakra mane planes mapped with 1efc_chakra04.png
-  const maneTex = loadTex('assets/skills/1efc_chakra04.png');
-  for (let i = 0; i < 3; i++) {
-    const mane = new THREE.Mesh(
-      new THREE.PlaneGeometry(radius * 1.4, radius * 1.4),
-      new THREE.MeshBasicMaterial({
-        color: 0xc4b5fd,
-        map: maneTex,
-        transparent: true,
-        opacity: 0.8,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false,
-        side: THREE.DoubleSide
-      })
-    );
-    mane.rotation.set((i * Math.PI) / 3, (i * Math.PI) / 4, 0);
-    mane.userData = {
-      rotSpeed: new THREE.Vector3(6, 8, -6),
-      uvScroll: { x: 0, y: 2.2 }
-    };
-    grp.add(mane);
-  }
-
   return grp;
 }
 
 function createTornadoMesh(radius = 4.2) {
   const grp = new THREE.Group();
-  const extTornado = buildExtractedVfxMeshGroup('1roc', 0x22c55e, radius * 0.045, 'air_tornado') ||
-                     buildExtractedVfxMeshGroup('common', 0x4ade80, radius * 0.045, '1efc_wind02');
-  if (extTornado) grp.add(extTornado);
-
-  // 1. Emerald whirlwind funnel mapped with 1efc_wind01.png
-  const windTex = loadTex('assets/skills/1efc_wind01.png');
-  const funnel = new THREE.Mesh(
-    new THREE.CylinderGeometry(radius * 1.25, radius * 0.35, radius * 2.8, 24, 1, true),
-    new THREE.MeshBasicMaterial({
-      color: 0x22c55e,
-      map: windTex,
-      transparent: true,
-      opacity: 0.78,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-      side: THREE.DoubleSide,
-      wireframe: false
-    })
-  );
-  funnel.position.y = radius * 1.4;
-  funnel.userData = {
-    rotSpeed: new THREE.Vector3(0, 22, 0),
-    uvScroll: { x: 1.8, y: 2.2 }
-  };
-  grp.add(funnel);
-
-  // 2. Latitude wind rings with 1efc_wind02.png
-  const windRingTex = loadTex('assets/skills/1efc_wind02.png');
-  for (let i = 0; i < 3; i++) {
-    const ring = new THREE.Mesh(
-      new THREE.RingGeometry(radius * (0.5 + i * 0.28), radius * (0.68 + i * 0.28), 24),
-      new THREE.MeshBasicMaterial({
-        color: 0x86efac,
-        map: windRingTex,
-        side: THREE.DoubleSide,
-        transparent: true,
-        opacity: 0.85,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false
-      })
-    );
-    ring.rotation.x = -Math.PI / 2;
-    ring.position.y = (i + 0.5) * (radius * 0.85);
-    ring.userData = { rotSpeed: new THREE.Vector3(0, 0, (i % 2 === 0 ? 18 : -18)) };
-    grp.add(ring);
+  const funnel = buildExtractedVfxMeshGroup('1roc', 0x22c55e, radius * 0.022, 'air_tornado') ||
+                 buildExtractedVfxMeshGroup('common', 0x4ade80, radius * 0.022, '1efc_wind02');
+  if (funnel) {
+    funnel.position.y = radius * 1.1;
+    funnel.userData.rotSpeed = new THREE.Vector3(0, 20, 0);
+    funnel.userData.uvScroll = { x: 1.6, y: 2.0 };
+    grp.add(funnel);
   }
-
-  // 3. Orbiting green Konoha leaf particles with 1efc_leaf01.png
-  const leafTex = loadTex('assets/skills/1efc_leaf01.png');
-  const leafMat = new THREE.MeshBasicMaterial({
-    map: leafTex,
-    transparent: true,
-    opacity: 0.95,
-    side: THREE.DoubleSide,
-    depthWrite: false
-  });
-  const leafGroup = new THREE.Group();
-  const leafCount = 8;
-  const leafData = [];
-  for (let i = 0; i < leafCount; i++) {
-    const leaf = new THREE.Mesh(new THREE.PlaneGeometry(0.55, 0.55), leafMat);
-    const ang = (i / leafCount) * Math.PI * 2;
-    const r = radius * (0.6 + (i % 3) * 0.25);
-    const y = 0.5 + (i / leafCount) * (radius * 2.2);
-    leaf.position.set(Math.cos(ang) * r, y, Math.sin(ang) * r);
-    leafGroup.add(leaf);
-    leafData.push({
-      mesh: leaf,
-      angle: ang,
-      radius: r,
-      y,
-      speed: 8.0 + (i % 3) * 3.0
-    });
+  const gust = buildExtractedVfxMeshGroup('1roc', 0x86efac, radius * 0.024, 'whirlwind') ||
+               buildExtractedVfxMeshGroup('common', 0x86efac, radius * 0.024, '1efc_wind01');
+  if (gust) {
+    gust.position.y = radius * 0.5;
+    gust.userData.rotSpeed = new THREE.Vector3(0, -14, 0);
+    grp.add(gust);
   }
-  leafGroup.userData = {
-    updateArcs: function(dt) {
-      for (const ld of leafData) {
-        ld.angle += ld.speed * dt;
-        ld.mesh.position.x = Math.cos(ld.angle) * ld.radius;
-        ld.mesh.position.z = Math.sin(ld.angle) * ld.radius;
-        ld.mesh.rotation.y += dt * 10;
-        ld.mesh.rotation.x += dt * 6;
-      }
-    }
-  };
-  grp.add(leafGroup);
-
   return grp;
 }
 
 function createFireballMesh(radius = 2.4, color = 0xff5500) {
   const grp = new THREE.Group();
-  const extFire = buildExtractedVfxMeshGroup('1ssk', color, radius * 0.055, 'fireball') ||
-                  buildExtractedVfxMeshGroup('common', color, radius * 0.055, '1efc_fire03');
-  if (extFire) grp.add(extFire);
-
-  // 1. Bright white-gold incandescent fire core
-  const core = new THREE.Mesh(
-    new THREE.SphereGeometry(radius * 0.65, 16, 16),
-    new THREE.MeshBasicMaterial({
-      color: 0xffedd5,
-      transparent: true,
-      opacity: 0.95,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false
-    })
-  );
-  core.userData = { jitter: 0.12, baseScale: 1.0 };
-  grp.add(core);
-
-  // 2. Rolling flame shell mapped with 1efc_fire03.png
-  const fireTex = loadTex('assets/skills/1efc_fire03.png').clone();
-  fireTex.needsUpdate = true;
-  const shell = new THREE.Mesh(
-    new THREE.SphereGeometry(radius, 24, 24),
-    new THREE.MeshBasicMaterial({
-      color,
-      map: fireTex,
-      transparent: true,
-      opacity: 0.88,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-      side: THREE.DoubleSide,
-      wireframe: false
-    })
-  );
-  shell.userData = {
-    rotSpeed: new THREE.Vector3(4, 12, 2),
-    uvScroll: { x: 0.3, y: 3.2 }
-  };
-  grp.add(shell);
-
-  // 3. Coronal flame rings
-  const ringTex = loadTex('assets/skills/1efc_ring01.png');
-  for (let i = 0; i < 2; i++) {
-    const ring = new THREE.Mesh(
-      new THREE.TorusGeometry(radius * 1.1, 0.14, 8, 28),
-      new THREE.MeshBasicMaterial({
-        color: 0xf97316,
-        map: ringTex,
-        transparent: true,
-        opacity: 0.9,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false,
-        side: THREE.DoubleSide
-      })
-    );
-    ring.rotation.set((i * Math.PI) / 2, Math.PI / 4, 0);
-    ring.userData = { rotSpeed: new THREE.Vector3(12, -14, 8) };
-    grp.add(ring);
+  const body = buildExtractedVfxMeshGroup('1ssk', color, radius * 0.021, '1ssveff1_fire03') ||
+               buildExtractedVfxMeshGroup('1ssk', color, radius * 0.021, 'fireball') ||
+               buildExtractedVfxMeshGroup('common', color, radius * 0.021, '1efc_fire03');
+  if (body) {
+    body.userData.rotSpeed = new THREE.Vector3(3, 9, 2);
+    body.userData.uvScroll = { x: 0.2, y: 2.6 };
+    grp.add(body);
+  }
+  const tail = buildExtractedVfxMeshGroup('1ssk', color, radius * 0.017, '1ssveff1_fire05') ||
+               buildExtractedVfxMeshGroup('common', color, radius * 0.017, '1efc_fire03');
+  if (tail) {
+    tail.position.z = -radius * 0.8;
+    tail.userData.rotSpeed = new THREE.Vector3(0, -7, 0);
+    tail.userData.uvScroll = { x: 0, y: 1.6 };
+    grp.add(tail);
   }
   return grp;
 }
 
 function createWaterDragonMesh(radius = 2.8) {
   const grp = new THREE.Group();
-  const extWater = buildExtractedVfxMeshGroup('1kks', 0x0ea5e9, radius * 0.05, 'water_dragon') ||
-                   buildExtractedVfxMeshGroup('common', 0x0ea5e9, radius * 0.05, '1efc_wtr02');
-  if (extWater) grp.add(extWater);
-
-  // 1. Water dragon body cone mapped with 1efc_wtr02.png
-  const wtrTex = loadTex('assets/skills/1efc_wtr02.png').clone();
-  wtrTex.needsUpdate = true;
-  const core = new THREE.Mesh(
-    new THREE.ConeGeometry(radius * 0.85, radius * 2.8, 16, 1, true),
-    new THREE.MeshBasicMaterial({
-      color: 0x38bdf8,
-      map: wtrTex,
-      transparent: true,
-      opacity: 0.88,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-      side: THREE.DoubleSide,
-      wireframe: false
-    })
-  );
-  core.rotation.x = Math.PI / 2;
-  core.userData = {
-    rotSpeed: new THREE.Vector3(0, 0, 18),
-    uvScroll: { x: 0, y: 3.5 }
-  };
-  grp.add(core);
-
-  // 2. Trailing foam splash rings with 1efc_wav01.png
-  const wavTex = loadTex('assets/skills/1efc_wav01.png');
-  for (let i = 0; i < 3; i++) {
-    const ring = new THREE.Mesh(
-      new THREE.TorusGeometry(radius * (0.65 + i * 0.32), 0.16, 8, 24),
-      new THREE.MeshBasicMaterial({
-        color: 0xbae6fd,
-        map: wavTex,
-        transparent: true,
-        opacity: 0.85,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false,
-        side: THREE.DoubleSide
-      })
-    );
-    ring.rotation.x = Math.PI / 2;
-    ring.position.z = -i * 0.9;
-    ring.userData = { rotSpeed: new THREE.Vector3(0, 0, (i % 2 === 0 ? 14 : -14)) };
-    grp.add(ring);
+  const dragon = buildExtractedVfxMeshGroup('1kks', 0x0ea5e9, radius * 0.024, 'water_dragon') ||
+                 buildExtractedVfxMeshGroup('common', 0x0ea5e9, radius * 0.024, '1efc_wtr02');
+  if (dragon) {
+    dragon.userData.rotSpeed = new THREE.Vector3(0, 0, 14);
+    dragon.userData.uvScroll = { x: 0, y: 3.2 };
+    grp.add(dragon);
+  }
+  const foam = buildExtractedVfxMeshGroup('common', 0xbae6fd, radius * 0.016, '1efc_wav01');
+  if (foam) {
+    foam.position.z = -radius * 1.2;
+    foam.rotation.x = -Math.PI / 2;
+    grp.add(foam);
   }
   return grp;
 }
 
 function createGroundShatterMesh(radius = 5.5) {
   const grp = new THREE.Group();
-  const extShatter = buildExtractedVfxMeshGroup('1skr', 0xf43f5e, radius * 0.045, 'shatter') ||
-                     buildExtractedVfxMeshGroup('common', 0xf43f5e, radius * 0.045, '1efc_brk01_02');
-  if (extShatter) grp.add(extShatter);
-
-  // 1. Cherry-blossom pink impact shockwave ring with 1efc_shock01.png
-  const shockTex = loadTex('assets/skills/1efc_shock01.png');
-  const shockRing = new THREE.Mesh(
-    new THREE.RingGeometry(radius * 0.25, radius, 36),
-    new THREE.MeshBasicMaterial({
-      color: 0xff5c8a,
-      map: shockTex,
-      side: THREE.DoubleSide,
-      transparent: true,
-      opacity: 0.9,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-      wireframe: false
-    })
-  );
-  shockRing.rotation.x = -Math.PI / 2;
-  shockRing.position.y = 0.15;
-  shockRing.userData = { rotSpeed: new THREE.Vector3(0, 0, 6) };
-  grp.add(shockRing);
-
-  // 2. Flying shattered rock debris with 1efc_brk01.png
-  const brkTex = loadTex('assets/skills/1efc_brk01.png');
-  const rockMat = new THREE.MeshStandardMaterial({
-    color: 0x78716c,
-    map: brkTex,
-    roughness: 0.9,
-    metalness: 0.1
-  });
-  for (let i = 0; i < 10; i++) {
-    const rock = new THREE.Mesh(
-      new THREE.DodecahedronGeometry(0.45 + Math.random() * 0.4),
-      rockMat
-    );
-    const ang = (i / 10) * Math.PI * 2;
-    const r = radius * (0.35 + Math.random() * 0.55);
-    rock.position.set(Math.cos(ang) * r, 0.4 + Math.random() * 1.4, Math.sin(ang) * r);
-    rock.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
-    rock.userData = {
-      rotSpeed: new THREE.Vector3(
-        (Math.random() - 0.5) * 8,
-        (Math.random() - 0.5) * 8,
-        (Math.random() - 0.5) * 8
-      )
-    };
-    grp.add(rock);
+  const fist = buildExtractedVfxMeshGroup('1skr', 0xf43f5e, radius * 0.028, '1skneff_fist01');
+  if (fist) {
+    fist.position.y = radius * 0.75;
+    fist.userData.rotSpeed = new THREE.Vector3(0, 8, 0);
+    fist.userData.jitter = 0.10;
+    grp.add(fist);
+  }
+  const shock = buildExtractedVfxMeshGroup('1skr', 0xff5c8a, radius * 0.018, 'shatter') ||
+                buildExtractedVfxMeshGroup('common', 0xff5c8a, radius * 0.018, '1efc_brk01_02');
+  if (shock) {
+    shock.rotation.x = -Math.PI / 2;
+    shock.position.y = 0.15;
+    grp.add(shock);
   }
   return grp;
 }
 
 function createToadOilFlameMesh(radius = 3.2) {
   const grp = new THREE.Group();
-  const fireTex = loadTex('assets/skills/1efc_fire02.png').clone();
-  fireTex.needsUpdate = true;
-  const cone = new THREE.Mesh(
-    new THREE.ConeGeometry(radius * 1.15, radius * 3.6, 20, 1, true),
-    new THREE.MeshBasicMaterial({
-      color: 0xf97316,
-      map: fireTex,
-      transparent: true,
-      opacity: 0.9,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-      side: THREE.DoubleSide,
-      wireframe: false
-    })
-  );
-  // Apex (+Y) points back at Jiraiya's mouth (-Z); wide flame front faces forward (+Z)
-  cone.rotation.x = -Math.PI / 2;
-  cone.position.z = radius * 1.6;
-  cone.userData = {
-    rotSpeed: new THREE.Vector3(0, 0, 8),
-    uvScroll: { x: 0, y: 3.8 }
-  };
-  grp.add(cone);
+  const flame = buildExtractedVfxMeshGroup('1jry', 0xf97316, radius * 0.024, '1jryeff01') ||
+               buildExtractedVfxMeshGroup('common', 0xf97316, radius * 0.024, '1efc_fire03');
+  if (flame) {
+    flame.position.z = radius * 1.2;
+    flame.userData.rotSpeed = new THREE.Vector3(0, 0, 7);
+    flame.userData.uvScroll = { x: 0, y: 3.4 };
+    grp.add(flame);
+  }
+  const smoke = buildExtractedVfxMeshGroup('1jry', 0x94a3b8, radius * 0.016, '1jryeff02');
+  if (smoke) {
+    smoke.position.z = radius * 2.2;
+    smoke.position.y = radius * 0.6;
+    smoke.userData.rotSpeed = new THREE.Vector3(0, 4, 0);
+    grp.add(smoke);
+  }
   return grp;
 }
 
 function createKirinMesh(x, z) {
   const grp = new THREE.Group();
   grp.position.set(x, 0, z);
-
-  // 1. Sleek celestial lightning bolt column descending from clouds
-  const spkTex = loadTex('assets/skills/1efc_spk03.png');
-  const boltGeo = new THREE.CylinderGeometry(0.4, 0.85, 55, 12, 1, true);
-  const boltMat = new THREE.MeshBasicMaterial({
-    color: 0x93c5fd,
-    map: spkTex,
-    transparent: true,
-    opacity: 0.55,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false,
-    side: THREE.DoubleSide,
-    wireframe: false
-  });
-  const bolt = new THREE.Mesh(boltGeo, boltMat);
-  bolt.position.y = 27.5;
-  bolt.userData = {
-    rotSpeed: new THREE.Vector3(0, 30, 0),
-    uvScroll: { x: 0, y: 8.0 }
-  };
-  grp.add(bolt);
-
-  // 2. Procedural secondary lightning discharge arcs along the column
-  const arcs = createProceduralLightningArcs(2.2, 12, 0x60a5fa);
-  arcs.position.y = 8;
-  grp.add(arcs);
-
-  // 3. Ground detonation shockwave disc with 1efc_shock01.png
-  const shockTex = loadTex('assets/skills/1efc_shock01.png');
-  const shockRing = new THREE.Mesh(
-    new THREE.RingGeometry(0.8, 7.5, 32),
-    new THREE.MeshBasicMaterial({
-      color: 0x60a5fa,
-      map: shockTex,
-      side: THREE.DoubleSide,
-      transparent: true,
-      opacity: 0.50,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-      wireframe: false
-    })
-  );
-  shockRing.rotation.x = -Math.PI / 2;
-  shockRing.position.y = 0.2;
-  shockRing.userData = { rotSpeed: new THREE.Vector3(0, 0, 16) };
-  grp.add(shockRing);
-
+  const bolt = buildExtractedVfxMeshGroup('1kks', 0x93c5fd, 0.28, '1kmmeff1_blt01') ||
+               buildExtractedVfxMeshGroup('common', 0x93c5fd, 0.28, '1efc_spk03');
+  if (bolt) {
+    bolt.position.y = 26;
+    bolt.userData.rotSpeed = new THREE.Vector3(0, 26, 0);
+    bolt.userData.uvScroll = { x: 0, y: 6.5 };
+    grp.add(bolt);
+  }
+  const shock = buildExtractedVfxMeshGroup('common', 0x60a5fa, 0.030, '1efc_shock01');
+  if (shock) {
+    shock.rotation.x = -Math.PI / 2;
+    shock.position.y = 0.2;
+    shock.userData.rotSpeed = new THREE.Vector3(0, 0, 16);
+    grp.add(shock);
+  }
   return grp;
 }
 
@@ -3802,6 +3472,7 @@ function dealDamage(attacker, target, amount, skillName) {
   const mult = attacker.awakenedTimer > 0 ? 1.35 : 1.0;
   const dmgRaw = Math.round(amount * mult * (1 + (attacker.level - 1) * 0.08));
   const dmg = Math.max(1, Math.round(dmgRaw * HERO_DMG_SCALE * ((HERO_STATS[target.heroId] || HERO_STATS.__d).dr))); // T5 escala global + P2 dano por heroi
+  if (TRN.active && attacker.isPlayer && target !== attacker) TRN.recordHit(attacker, target, dmg, skillName); // W-TRN: medição de dano do treino
   target.hp = Math.max(0, target.hp - dmg);
 
   // PV3.3: haptics — levou dano (18ms) > acertou (12ms)
@@ -3838,8 +3509,10 @@ function dealDamage(attacker, target, amount, skillName) {
   const dx = target.x - attacker.x;
   const dz = target.z - attacker.z;
   const len = Math.hypot(dx, dz) || 1;
+  if (!target.isDummy) { // W-TRN: boneco de treino fica cravado no chao, como os troncos
   target.x = clampPush(target.x + (dx / len) * 1.4);
   target.z = clampPush(target.z + (dz / len) * 1.4);
+  }
 
   // APK HITSTUN (engine de dano do Storm, medido do APK: dmg0f FACE_DAMAGE_NORMAL
   // 21f = 0.35s hit normal / hsta0 hit-stagger 36f = 0.60s hit pesado): alvo VIVO
@@ -3899,6 +3572,7 @@ function dealDamage(attacker, target, amount, skillName) {
     attacker.killStreak = (killNow - (attacker.lastKillAt || 0) > 15000) ? 1 : (attacker.killStreak || 0) + 1;
     attacker.lastKillAt = killNow;
     target.killStreak = 0;
+    if (TRN.active && target.isDummy) TRN.onDummyKO(target, attacker); // W-TRN: sino quando o Kakashi cai
 
     // Assist attribution: all teammates who damaged target in last 10s
     const now = performance.now();
@@ -3982,6 +3656,60 @@ const SKILL_VFX_ANIM = {
   '1orc': { q: 'rise',   w: 'thrust', e: 'rise', r: 'pulse' }
 };
 
+// W-VFX-SEQ: emissores REAIS por fase do cast (at = fracao da duracao; o relogio e
+// o animTimer, que PAUSA no hitstop como no Storm). s = extent alvo em unidades de mundo;
+// fd = offset a frente do caster; dx = offset lateral; y = altura; c = tinta; g = grupo do modelo.
+const SKILL_VFX_PHASES = {
+  '1nrt': {
+    q: [{ m: '1nrveff1_sonic01_air02', at: 0.55, s: 4.5, y: 1.4, fd: 2.6, c: 0x00d4ff }],
+    w: [{ m: '1nrveff1_ptc01', at: 0.10, s: 2.6, y: 1.6, c: 0xffffff },
+        { m: '1nrveff1_smk01', at: 0.30, s: 3.2, y: 1.2, dx: 1.7, c: 0xe2e8f0 },
+        { m: '1nrveff1_smk01', at: 0.30, s: 3.2, y: 1.2, dx: -1.7, c: 0xe2e8f0 }],
+    e: [{ m: '1nrveff1_smk02', at: 0.05, s: 3.0, y: 1.2, c: 0xe2e8f0 }],
+    r: [{ m: '1nrveff1_chakra03', at: 0.15, s: 5.5, y: 2.2, c: 0xff3b00 },
+        { m: '1nrveff1_ring01', at: 0.80, s: 6.0, y: 0.6, c: 0xffedd5 }]
+  },
+  '1ssk': {
+    q: [{ m: '1ssveff1_shock01', at: 0.45, s: 3.2, y: 1.8, fd: 1.6, c: 0x60a5fa }],
+    w: [{ m: '1ssveff1_smk01', at: 0.35, s: 2.8, y: 1.6, fd: -1.6, c: 0x94a3b8 }],
+    e: [{ m: '1ssveff1_smk02', at: 0.05, s: 3.0, y: 1.2, c: 0xe2e8f0 }],
+    r: [{ m: '1ssveff1_smk02', at: 0.55, s: 4.5, y: 1.0, c: 0x93c5fd }]
+  },
+  '1skr': {
+    q: [{ m: '1skneff_leg01', at: 0.40, s: 5.0, y: 1.6, fd: 1.8, c: 0xf43f5e }],
+    e: [{ m: 'shatter', at: 0.05, s: 2.6, y: 1.0, c: 0xe2e8f0 }],
+    r: [{ g: 'common', m: '1efc_brk01_02', at: 0.60, s: 8.0, y: 0.4, c: 0xff5c8a }]
+  },
+  '1kks': {
+    q: [{ m: 'raikiri_spark', at: 0.50, s: 2.8, y: 1.8, fd: 1.4, c: 0x38bdf8 }],
+    w: [{ g: 'common', m: '1efc_wtr03', at: 0.35, s: 3.5, y: 1.2, fd: 3.0, c: 0x0ea5e9 }]
+  },
+  '1roc': {
+    q: [{ m: 'leaf_flurry', at: 0.35, s: 3.5, y: 1.4, c: 0x4ade80 }],
+    w: [{ m: 'leaf_flurry', at: 0.50, s: 4.2, y: 1.6, c: 0x4ade80 }]
+  },
+  '1itc': {
+    q: [{ m: 'amaterasu_flame', at: 0.50, s: 3.2, y: 1.4, fd: 2.0, c: 0x450a0a }]
+  },
+  '1gar': {
+    q: [{ m: '1gareff1_snd15', at: 0.40, s: 5.0, y: 1.2, c: 0xd97706 }],
+    w: [{ m: '1gareff1_snd03', at: 0.50, s: 4.0, y: 1.0, fd: 2.2, c: 0xd97706 }]
+  },
+  '1nej': {
+    q: [{ m: 'air_palm', at: 0.35, s: 3.0, y: 1.4, fd: 2.0, c: 0x60a5fa }]
+  },
+  '1jry': {
+    q: [{ m: '1jryeff03', at: 0.50, s: 3.2, y: 1.8, fd: 2.4, c: 0x94a3b8 }]
+  },
+  '1tnd': {
+    r: [{ g: 'common', m: '1efc_brk01_02', at: 0.50, s: 7.0, y: 0.4, c: 0xfbbf24 }]
+  },
+  '1orc': {
+    q: [{ m: '1orceff1_02', at: 0.40, s: 3.6, y: 1.4, fd: 2.4, c: 0xa3e635 }],
+    w: [{ g: 'common', m: '1efc_slash01', at: 0.50, s: 3.5, y: 1.6, fd: 2.0, c: 0xc7d2fe }]
+  }
+};
+
 // ==================== P2: STATS POR HEROI (identidade de combate) ====================
 // hp = vida base; spd = multiplicador de velocidade; dr = dano RECEBIDO (tank < 1 < frágil);
 // reg = multiplicador do regen no santuário. Derivado dos papéis do roster (Fighter/Burst,
@@ -4020,6 +3748,9 @@ function executeSkill(unit, slot) {
 
   unit.chakra -= sk.cost;
   unit.cds[slot] = sk.cd;
+  const _ph = (SKILL_VFX_PHASES[unit.heroId] || {})[slot];
+  if (_ph && _ph.length) unit.pendingVfxPhases = _ph.map(p => Object.assign({}, p, { done: false }));
+  else unit.pendingVfxPhases = null;
 
   // Auto-face nearest enemy
   const nearest = findNearestEnemy(unit, 32);
@@ -5010,6 +4741,7 @@ function showMatchResults(winner, bannerTextFallback) {
 
 function returnToLobby() {
   matchActive = false;
+  if (TRN.active) { TRN.active = false; TRN.bell.active = false; document.body.classList.remove('training-mode'); } // W-TRN
   hideMatchResults();
   cancelMatchIntro(); // INTRO/STREAK: limpa timers e esconde overlays ao voltar
   document.getElementById('hud-screen').classList.remove('active');
@@ -5136,7 +4868,7 @@ function updateMatch(dt, elapsed) {
   // P1 JUICE: simDt drives combat cadence (units/AI/projectiles/VFX).
   // Clock, cooldowns, respawn and regen keep real dt (E2E contracts safe).
   const simDt = dt * JUICE.timeScale;
-  matchTimeRemaining = Math.max(0, matchTimeRemaining - dt);
+  if (activeMatchCfg.time != null) matchTimeRemaining = Math.max(0, matchTimeRemaining - dt); else matchTimeRemaining = 9999; // W-TRN: time null = treino sem relogio (nunca expira)
   const mins = String(Math.floor(matchTimeRemaining / 60)).padStart(2, '0');
   const secs = String(Math.floor(matchTimeRemaining % 60)).padStart(2, '0');
   matchClockText = `${mins}:${secs}`;
@@ -5178,6 +4910,7 @@ function updateMatch(dt, elapsed) {
 
   // PV2: tick do modo Realeza na Vila (zona/baús/last-standing)
   if (activeMatchCfg && activeMatchCfg.mode === 'br' && brState && matchActive && !matchEnding) updateBR(dt);
+  if (TRN.active && matchActive && !matchEnding) TRN.tick(dt); // W-TRN: sinos, DPS, chakra de treino e HUD
 
   // Central Scroll Shrine Buff Orb
   if (shrineOrb) {
@@ -5341,6 +5074,30 @@ function updateMatch(dt, elapsed) {
 
     if (u.animTimer > 0) {
       u.animTimer -= simDt; // P1 JUICE: THE hitstop — action animations freeze
+    }
+
+    if (u.pendingVfxPhases && u.pendingVfxPhases.length) {
+      if (u.animDuration > 0 && u.animTimer > 0) {
+        const frac = 1 - (u.animTimer / u.animDuration);
+        for (const p of u.pendingVfxPhases) {
+          if (!p.done && frac >= p.at) {
+            p.done = true;
+            const grp = buildExtractedVfxMeshGroup(p.g || u.heroId, p.c || 0xffffff, (p.s || 3) * 0.004, p.m);
+            if (grp) {
+              const fx = Math.sin(u.rotY), fz = Math.cos(u.rotY);
+              const fd = p.fd || 0, dx = p.dx || 0;
+              grp.position.set(u.x + fx * fd + fz * dx, p.y || 1.2, u.z + fz * fd - fx * dx);
+              grp.rotation.y = u.rotY;
+              grp.userData.rotSpeed = new THREE.Vector3(0, 4, 0);
+              arenaGroup.add(grp);
+              vfxList.push({ mesh: grp, age: 0, duration: p.dur || 0.7, style: 'compound', directional: true, bindUnit: u });
+            }
+          }
+        }
+        if (u.pendingVfxPhases.every(q => q.done)) u.pendingVfxPhases = null;
+      } else if (u.animTimer <= 0) {
+        u.pendingVfxPhases = null;
+      }
     }
 
     if (u.isPlayer) {
@@ -5649,6 +5406,7 @@ function updatePlayerUnit(u, dt) {
 }
 
 function updateAIBotUnit(u, dt) {
+  if (u.isDummy) { u.state = 'idle'; return; } // W-TRN: boneco de treino nao pensa — e um tronco
   if (u.animTimer > 0) return;
 
   // Low HP retreat to base fountain
@@ -6058,6 +5816,7 @@ async function init() {
 
   if (arenasRes && arenasRes.default) selectedArenaId = arenasRes.default;
   await applyArena(selectedArenaId, { silent: true });
+  window.__ARENA_BOOT_DONE = performance.now(); // W-TRN: readiness — applyArena silencioso do boot concluido
   renderArenaPicker();
 
   const gridEl = document.getElementById('roster-grid');
@@ -6245,6 +6004,10 @@ async function init() {
       toggleCameraMode();
     } else if (e.code === 'KeyH') {
       toggleControlsDrawer();
+    } else if (e.code === 'KeyT') {
+      if (TRN.active) TRN.reset(true); // W-TRN: resetar stats/chakra/recargas
+    } else if (e.code === 'KeyB') {
+      if (TRN.active) TRN.toggleBell(); // W-TRN: Teste dos Sinos
     }
   });
 

@@ -1180,30 +1180,29 @@ body, html {
 
 /* --- CENTER ANNOUNCEMENT BANNER --- */
 .center-banner {
+  /* W7: pill compacta estilo shadcn — blur + border fino, Motion spring no JS */
   pointer-events: none;
   position: fixed;
-  top: 36%;
+  top: 28%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background-color: rgba(10, 11, 18, 0.9);
-  background-image: var(--skin-banners);
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: auto 100%;
-  border: 14px solid transparent;
-  border-image: var(--skin-panel-orange) var(--skin-frame-slice) fill round;
-  padding: 16px 60px;
+  background: rgba(9, 9, 11, 0.72);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 10px 26px;
+  max-width: min(84vw, 480px);
   font-family: var(--font-display);
-  font-size: 26px;
+  font-size: 19px;
   font-weight: 900;
-  letter-spacing: 2.5px;
+  letter-spacing: 1.5px;
   text-transform: uppercase;
   color: var(--storm-gold-light);
-  text-shadow: 0 0 20px rgba(201, 162, 39, 0.8), 0 2px 10px rgba(0, 0, 0, 0.9);
+  text-shadow: 0 0 14px rgba(201, 162, 39, 0.55), 0 2px 8px rgba(0, 0, 0, 0.85);
   text-align: center;
   z-index: 50;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
-  animation: bannerPop 0.4s var(--ease-bounce);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
 }
 
 @keyframes bannerPop {
@@ -4657,30 +4656,33 @@ kbd {
   to { opacity: 1; transform: none; }
 }
 
-/* ==================== KILL STREAK BANNER (SEQUENCIA DE ABATES) ==================== */
+/* ==================== KILL STREAK BANNER (W7: toast estilo sonner no canto — shadcn + Motion) ==================== */
 .streak-banner {
   position: fixed;
-  top: 18%;
-  left: 50%;
-  transform: translateX(-50%);
+  top: 74px;
+  right: 12px;
+  left: auto;
+  transform: none;
   z-index: 55;
   pointer-events: none;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 16px;
-  min-width: 340px;
-  max-width: 90vw;
-  padding: 10px 54px;
+  justify-content: flex-start;
+  gap: 9px;
+  min-width: 0;
+  max-width: min(74vw, 320px);
+  padding: 7px 14px;
   overflow: hidden;
-  background: rgba(10, 11, 18, 0.94);
-  border: 12px solid transparent;
-  border-image: var(--skin-panel-orange) var(--skin-frame-slice) fill round;
-  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.8), 0 0 30px rgba(201, 162, 39, 0.25);
+  background: rgba(9, 9, 11, 0.68);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
 }
 #streak-banner.streak-banner.hidden { display: none !important; }
 
-.streak-banner.show { animation: streakPop 0.45s var(--ease-bounce) both; }
+.streak-banner.show { animation: none; } /* W7: Motion spring assume (GSAP fallback) */
 
 @keyframes streakPop {
   from { opacity: 0; transform: translateX(-50%) scale(0.6); }
@@ -4704,9 +4706,8 @@ kbd {
 
 .streak-banner.show .streak-flare { animation: streakFlarePulse 0.85s ease-in-out infinite; }
 
-@keyframes streakFlarePulse {
-  0%, 100% { opacity: 0.45; transform: translate(-50%, -50%) scale(1); }
-  50% { opacity: 0.95; transform: translate(-50%, -50%) scale(1.07); }
+@keyframes streakFlarePulse { /* W7: flare desativado — toast limpo */
+  0%, 100% { opacity: 0; }
 }
 
 .streak-kanji, .streak-text, .streak-count {
@@ -4718,30 +4719,34 @@ kbd {
 .streak-kanji {
   font-family: 'Noto Sans JP', sans-serif;
   font-weight: 900;
-  font-size: 30px;
-  letter-spacing: 5px;
+  font-size: 19px;
+  letter-spacing: 3px;
   line-height: 1;
   color: var(--storm-gold-light);
-  text-shadow: 0 0 14px rgba(232, 201, 106, 0.7), 0 2px 8px rgba(0, 0, 0, 0.9);
+  text-shadow: 0 0 10px rgba(232, 201, 106, 0.6), 0 1px 6px rgba(0, 0, 0, 0.85);
 }
 
 .streak-text {
   font-family: var(--font-display);
-  font-size: 22px;
-  font-weight: 900;
-  letter-spacing: 4px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 2px;
   text-transform: uppercase;
   color: #ffffff;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.95);
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.9);
 }
 
 .streak-count {
   font-family: var(--font-display);
-  font-size: 42px;
+  font-size: 17px;
   font-weight: 900;
-  line-height: 1;
+  line-height: 1.35;
+  padding: 1px 9px;
+  border-radius: 999px;
+  background: rgba(249, 115, 22, 0.16);
+  border: 1px solid rgba(249, 115, 22, 0.4);
   color: var(--storm-gold-light);
-  text-shadow: 0 0 22px rgba(232, 201, 106, 0.9), 0 3px 12px rgba(0, 0, 0, 0.95);
+  text-shadow: 0 1px 5px rgba(0, 0, 0, 0.85);
 }
 
 /* ==================== GSAP DRIVER MODE (keyframes off quando GSAP anima) ==================== */
@@ -4973,13 +4978,65 @@ body.touch #hud-screen.active .gauge-num { font-size: 10px; }
    A regra PV4 anterior (transform: scale(0.55)) NAO tinha efeito: streakPop/bannerPop
    e o GSAP sobrescrevem o transform ao animar — o banner aparecia no tamanho cheio.
    Agora o peso cai onde vale: fonte, caixa e moldura. Desktop intacto. */
-body.touch .streak-banner { top: 84px; min-width: 220px; padding: 6px 24px; gap: 10px; border-width: 8px; }
-body.touch .streak-kanji { font-size: 19px; letter-spacing: 3px; }
-body.touch .streak-text { font-size: 13px; letter-spacing: 2px; }
-body.touch .streak-count { font-size: 26px; }
+body.touch .streak-banner { top: 64px; padding: 6px 12px; gap: 8px; }
+body.touch .streak-kanji { font-size: 16px; letter-spacing: 2px; }
+body.touch .streak-text { font-size: 11px; letter-spacing: 1.5px; }
+body.touch .streak-count { font-size: 14px; padding: 1px 8px; }
 body.touch .ougi-banner { top: 84px; }
-body.touch .center-banner { top: 24%; font-size: 15px; letter-spacing: 1.5px; padding: 8px 24px; border-width: 8px; }
+body.touch .center-banner { top: 22%; font-size: 14px; letter-spacing: 1px; padding: 7px 16px; }
 
 /* CD visivel nos botoes touch (espelhado de #cd-* pelo game.js) */
 .tbtn { position: relative; }
 .tbtn-cd { position: absolute; inset: 0; border-radius: 50%; display: none; align-items: center; justify-content: center; font-family: 'Storm Title', 'Poppins', sans-serif; font-size: 13px; font-weight: 700; color: #fff; text-shadow: 0 1px 3px #000; pointer-events: none; }
+
+
+/* ===== W-TRN TREINO · CAMPO DE TREINAMENTO (Teste dos Sinos) ===== */
+#training-hud { display: none; }
+body.training-mode #hud-screen.active #training-hud {
+  display: flex; flex-direction: column; gap: 6px;
+  position: fixed; top: 60px; right: 20px; z-index: 40;
+  width: 212px; padding: 10px 12px;
+  background: rgba(8, 10, 16, 0.84);
+  border: 1px solid rgba(251, 191, 36, 0.45); border-radius: 10px;
+  pointer-events: auto;
+}
+body.training-mode #hud-screen.active .team-group.blue,
+body.training-mode #hud-screen.active .team-group.red { display: none; } /* treino e solo — sem placar de times */
+body.training-mode #hud-screen.active #match-timer { display: none; } /* sem relogio no treino */
+body.training-mode #hud-screen.active #player-death-overlay { display: none !important; } /* treino: player nao morre */
+body.touch #hud-screen.active #training-hud { transform: scale(0.88); transform-origin: top right; }
+.trn-head { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 800; letter-spacing: 1px; color: #fde68a; }
+.trn-head .trn-kanji { font-size: 15px; color: #fbbf24; }
+.trn-grid { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; }
+.trn-k { font-size: 10px; color: #8a93a5; letter-spacing: 0.5px; align-self: center; }
+.trn-v { font-size: 12.5px; font-weight: 800; color: #f4efe2; text-align: right; font-variant-numeric: tabular-nums; }
+.trn-v.trn-hot { color: #fbbf24; }
+.trn-bell-row { display: flex; align-items: center; gap: 6px; margin-top: 2px; flex-wrap: wrap; }
+.trn-bell-ico { font-size: 15px; color: #fbbf24; }
+#trn-bells { font-size: 13px; font-weight: 800; color: #fde68a; }
+.trn-bell-of { font-size: 10px; color: #8a93a5; }
+#trn-bell-timer { font-size: 11px; font-weight: 700; color: #fca5a5; font-variant-numeric: tabular-nums; }
+#trn-bell-btn, #trn-reset-btn {
+  cursor: pointer; font-family: inherit; font-size: 10.5px; font-weight: 700; letter-spacing: 0.4px;
+  padding: 4px 8px; border-radius: 6px; color: #fde68a;
+  background: rgba(30, 24, 10, 0.65); border: 1px solid rgba(251, 191, 36, 0.5);
+}
+#trn-bell-btn:hover, #trn-reset-btn:hover { border-color: #fbbf24; color: #fff; }
+.trn-hint { font-size: 9px; color: #64748b; letter-spacing: 0.3px; }
+
+/* W-TRN: numeros de dano flutuantes (apenas no modo treino) */
+#dmg-float-layer { position: fixed; inset: 0; overflow: hidden; pointer-events: none; z-index: 6; }
+.dmg-float {
+  position: absolute; transform: translate(-50%, -100%);
+  font-family: 'Barlow Condensed', 'Poppins', sans-serif;
+  font-size: 17px; font-weight: 800; color: #ffffff;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.85), 0 0 10px rgba(255, 255, 255, 0.25);
+  animation: dmgFloatUp 0.95s ease-out forwards;
+}
+.dmg-float.heavy { font-size: 21px; color: #f97316; text-shadow: 0 2px 5px rgba(0, 0, 0, 0.9), 0 0 12px rgba(249, 115, 22, 0.45); }
+.dmg-float.crit { font-size: 26px; color: #f87171; text-shadow: 0 2px 6px rgba(0, 0, 0, 0.95), 0 0 16px rgba(248, 113, 113, 0.55); }
+@keyframes dmgFloatUp {
+  0% { opacity: 0; margin-top: 0; }
+  12% { opacity: 1; }
+  100% { opacity: 0; margin-top: -64px; }
+}

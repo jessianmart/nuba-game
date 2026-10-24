@@ -13,7 +13,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="NUBA" />
-  <link rel="stylesheet" href="styles.css?v=36" />
+  <link rel="stylesheet" href="styles.css?v=37" />
   <script type="importmap">
     {
       "imports": {
@@ -114,6 +114,7 @@
           <button type="button" class="mode-chip selected" data-mode="dm_3v3">COMBATE 3v3<small>15 abates · 3 min</small></button>
           <button type="button" class="mode-chip" data-mode="dm_legacy_5v5">CLÁSSICO 5v5<small>30 abates · 5 min</small></button>
           <button type="button" class="mode-chip" data-mode="br_vila">REALEZA NA VILA<small>10 ninjas · zona 結界 · solo</small></button>
+          <button type="button" class="mode-chip" data-mode="training">TREINO<small>bonecos · dano · combos · sinos 鈴</small></button>
         </div>
 
         <div class="hero-stage-cta">
@@ -394,6 +395,25 @@
           <div id="match-timer" class="match-clock">05:00</div>
           <span class="match-goal-txt">META: 30 ABATES</span>
           <div id="br-hud"><span class="br-alive-label">VIVOS</span> <span id="br-alive" data-digits="true">10</span> <span class="br-phase" id="br-phase">FASE 0/6</span></div>
+          <div id="training-hud">
+            <div class="trn-head"><span class="trn-kanji">訓練</span> CAMPO DE TREINAMENTO</div>
+            <div class="trn-grid">
+              <span class="trn-k">ÚLTIMO</span><b class="trn-v" id="trn-last">0</b>
+              <span class="trn-k">COMBO</span><b class="trn-v" id="trn-combo">0</b>
+              <span class="trn-k">DANO DO COMBO</span><b class="trn-v" id="trn-combo-dmg">0</b>
+              <span class="trn-k">MAIOR COMBO</span><b class="trn-v" id="trn-best-combo">0</b>
+              <span class="trn-k">DANO TOTAL</span><b class="trn-v trn-hot" id="trn-total">0</b>
+              <span class="trn-k">DPS</span><b class="trn-v" id="trn-dps">0</b>
+              <span class="trn-k">GOLPES</span><b class="trn-v" id="trn-hits">0</b>
+            </div>
+            <div class="trn-bell-row">
+              <span class="trn-bell-ico">鈴</span><b id="trn-bells">0</b><span class="trn-bell-of">/2</span>
+              <span id="trn-bell-timer"></span>
+              <button type="button" id="trn-bell-btn">TESTE DOS SINOS</button>
+              <button type="button" id="trn-reset-btn">RESET (T)</button>
+            </div>
+            <div class="trn-hint">B Teste dos Sinos · T reset · os bonecos não revidam</div>
+          </div>
         </div>
 
         <!-- Red Team (Rivais) -->
@@ -444,6 +464,8 @@
 
     <!-- Floating 3D World Labels (HP/Chakra above ninjas) -->
     <div id="world-labels" class="world-labels"></div>
+    <!-- W-TRN: numeros de dano flutuantes (modo TREINO) -->
+    <div id="dmg-float-layer"></div>
 
     <!-- Bottom HUD: MOBA Command Deck (Minimap + Centered Abilities Ribbon) -->
     <footer class="hud-bottom-moba">
@@ -735,6 +757,6 @@
     </div>
 
   <script src="vendor/gsap.min.js"></script>
-  <script type="module" src="game.js?v=42"></script>
+  <script type="module" src="game.js?v=43"></script>
 </body>
 </html>

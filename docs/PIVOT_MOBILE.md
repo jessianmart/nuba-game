@@ -378,6 +378,41 @@ pointerdown/keydown. Hooks: boot (menu), `startMatch` (battle, L2003),
 persistem no perfil (`music`, `musicVol`, `sfxVol` no schema do
 loadProfileData). Probe `tools/probe_w6_music.py` **7/7**.
 
+### 8.7 W7 — HUDs com estética shadcn + Framer Motion vanilla (2026-10-23)
+
+Pedido: usar shadcn + framer motion nos HUDs de batalha, aliviando o peso
+dos informativos no meio da tela (SEQUÊNCIA e ULT). **Decisão de engenharia**
+documentada: shadcn/ui literal exige React+Tailwind+bundler — incompatível
+com o runtime vanilla (DOM inviolável §UI_SKIN_CONTRACT, suite 47/47 lê
+IDs/classes); aplicamos os **design tokens e o pattern Sonner** (toast
+compacto no canto, blur + border fino, não-bloqueante) e o **Framer Motion
+vanilla de verdade**: bundle `framer-motion@12/dom/+esm` (motion.dev, mesmo
+autor) vendored em `public/assets/vendor/` (3 arquivos, 141 KB / ~40 KB
+gzip) — spring FÍSICA (stiffness/damping), não ease curve. Import dinâmico
+com fallback GSAP (`w7Spring`) — o jogo nunca quebra se a lib falhar.
+
+- **`#streak-banner` (SEQUÊNCIA)**: sai do MEIO (era top 18% left 50%,
+  340px de largura, border-image 12px, flare infinito) → toast estilo sonner
+  no canto sup. direito (top 74px/right 12px, w 184px medido, h 43px),
+  backdrop-blur 10px, border 1px white/9%, badge laranja no count
+  (rgba(249,115,22,.16) pill), kanji 19px/text 12px, flare desativado,
+  keyframes streakPop OFF (eram translateX(-50%) — voariam no novo
+  layout). Entrada: spring y -10→0 + scale .94→1 (stiffness 380/damping
+  26); vida 1.6s via pulseSkinHook (auto-dismiss).
+- **`#center-banner` (ULT)**: pill compacta top 28% (era 36%), padding
+  10px 26px (era 16px 60px), border-image 14px → 1px white/10% + radius
+  16px + blur 12px, font 19px (era 26px), duração 2600→2100ms, pop spring
+  scale .94→1 (stiffness 520/damping 34) com x/y -50% constantes nos
+  keyframes (transform-clash-free).
+- Touch: streak top 64px/padding 6px 12px; center top 22%/font 14px.
+- IDs + classes hidden/show intactos (suite lê center-banner.hidden);
+  `gsap-anim` class órfã removida do fluxo do streak.
+
+Probe `tools/probe_w7_hud.py` **6/6 desktop + 6/6 mobile** (vendor 200 ×3,
+MOTION.animate fn, center pill w 302/h 48/top 28%, streak rightPct 99/top
+74/h 43, hidden semantics, 0 console errors) + screenshots
+`w7_banner_desktop.png` / `w7_banner_mobile.png`.
+
 Fora do escopo original das fases 8.2 (o escopo dizia "áudio permanece como
 está") — o usuário pediu explicitamente as **vozes originais do APK** no momento
 da batalha de cada ninja, **com volume obedecendo à distância** e os **sons

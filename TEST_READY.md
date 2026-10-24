@@ -545,6 +545,16 @@ ode --check do game.js (como .mjs) -> OK.
 
 
 ### W5 — SFX AUTÊNTICOS DO APK POSICIONADOS (vozes no momento da batalha + volume por distância) — validado 2026-10-22
+### W7 — HUDS SHADCN + FRAMER MOTION VANILLA — validado 2026-10-23
+- `python tools/probe_w7_hud.py` -> **6/6 desktop + 6/6 mobile** (C1 vendor
+  motion 200 x3; C2 window.MOTION.animate fn; C3 center-pill w<=480/h<=80/
+  top 22-34% + spring transform inline; C4 streak right>60% VW/top 74px/
+  h<64; C5 hidden semantics; C6 zero console errors).
+- Probe roda startMatch ANTES dos checks de banner (HUD só é visível em
+  partida — rects 0 no lobby são falso-negativo).
+- Motion bundle: assets/vendor/{motion,motion-dom,motion-utils}.esm.js —
+  imports jsdelivr reescritos para caminhos locais; validado com
+  `node --input-type=module` antes do browser.
 ### W6 — MÚSICA DE FUNDO + SETTINGS FUNCIONAIS — validado 2026-10-23
 - `python tools/probe_w6_music.py` -> **7/7** (C1 2 trilhas HEAD 200; C2 boot
   menu vol 0.385=0.70x0.55 loop=true; C3 battle vol 0.209=0.38x0.55 LEVE;
