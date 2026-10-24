@@ -965,6 +965,23 @@ function cloneCharacterModel(data, heroId) {
   const skeleton = new THREE.Skeleton(bones);
   const materials = [];
 
+  // Authentic Storm Inverted-Hull Anime Cel-Shaded Outline Material
+  const outlineMat = new THREE.MeshBasicMaterial({
+    color: 0x141014,
+    side: THREE.BackSide,
+    wireframe: isWireframe
+  });
+  outlineMat.onBeforeCompile = (shader) => {
+    shader.vertexShader = shader.vertexShader.replace(
+      '#include <begin_vertex>',
+      `
+      #include <begin_vertex>
+      transformed += normal * 0.015;
+      `
+    );
+  };
+  materials.push(outlineMat);
+
   for (const sm of data.meshes) {
     const texPath = sm.texture ? `assets/${sm.texture}` : null;
     const mapTex = loadTex(texPath);
@@ -1008,7 +1025,28 @@ function cloneCharacterModel(data, heroId) {
     inner.add(mesh);
     mesh.updateMatrixWorld(true);
     mesh.bind(skeleton);
+
+    // Authentic Storm Cel-Shaded Outline Mesh
+    const outlineMesh = new THREE.SkinnedMesh(geom, outlineMat);
+    outlineMesh.frustumCulled = false;
+    inner.add(outlineMesh);
+    outlineMesh.updateMatrixWorld(true);
+    outlineMesh.bind(skeleton);
   }
+
+  // Authentic soft circular contact shadow beneath feet (from Storm APK)
+  const shadowTex = loadTex('assets/skills/1efc_shadow02.png');
+  const shadowGeo = new THREE.PlaneGeometry(2.7, 2.7);
+  const shadowMat = new THREE.MeshBasicMaterial({
+    map: shadowTex,
+    transparent: true,
+    opacity: 0.80,
+    depthWrite: false
+  });
+  const shadowMesh = new THREE.Mesh(shadowGeo, shadowMat);
+  shadowMesh.rotation.x = -Math.PI / 2;
+  shadowMesh.position.y = 0.038;
+  root.add(shadowMesh);
 
   const basePelvisPos = bones[1] ? bones[1].position.clone() : new THREE.Vector3(0, 2.3, 0);
   root.userData = {
@@ -1017,6 +1055,7 @@ function cloneCharacterModel(data, heroId) {
     bones,
     skeleton,
     materials,
+    shadowMesh,
     baseScale: 1.0,
     basePelvisPos
   };
@@ -1086,28 +1125,81 @@ window.__CINE = () => ({ active: ultCine.active, b: +ultCineBlend().toFixed(3), 
 
 const skillTrails = [];
 const SKILL_TRAIL_MAP = {
-  '1hnt:w': { bones: [9, 13], color: 0x8b5cf6, width: 0.42 }, // Twin Lion Fists — ambas as mãos
-  '1orc:w': { bones: [13], color: 0xc7d2fe, width: 0.30 },    // Kusanagi dash — mão direita
+  // Naruto
+  '1nrt:q': { bones: [13], color: 0x00d4ff, width: 0.38 },
+  '1nrt:atk': { bones: [13], color: 0xffa500, width: 0.28 },
+  // Sasuke
+  '1ssk:q': { bones: [9], color: 0x60a5fa, width: 0.40 },
+  '1ssk:atk': { bones: [13], color: 0x818cf8, width: 0.28 },
+  // Sakura
+  '1skr:q': { bones: [13], color: 0xff5c8a, width: 0.42 },
+  '1skr:atk': { bones: [13], color: 0xf43f5e, width: 0.30 },
+  // Kakashi
+  '1kks:q': { bones: [13], color: 0x38bdf8, width: 0.40 },
+  '1kks:atk': { bones: [13], color: 0x93c5fd, width: 0.28 },
+  // Rock Lee
+  '1roc:q': { bones: [5, 8], color: 0x22c55e, width: 0.40 },
+  '1roc:w': { bones: [9, 13], color: 0x4ade80, width: 0.38 },
+  '1roc:atk': { bones: [13, 5], color: 0x86efac, width: 0.30 },
+  // Itachi
+  '1itc:q': { bones: [13], color: 0x991b1b, width: 0.38 },
+  '1itc:atk': { bones: [13], color: 0xef4444, width: 0.26 },
+  // Gaara
+  '1gar:q': { bones: [13], color: 0xd97706, width: 0.45 },
+  '1gar:atk': { bones: [13], color: 0xf59e0b, width: 0.32 },
+  // Hinata
+  '1hnt:q': { bones: [13], color: 0x8b5cf6, width: 0.35 },
+  '1hnt:w': { bones: [9, 13], color: 0xa855f7, width: 0.42 },
+  '1hnt:atk': { bones: [9, 13], color: 0xc084fc, width: 0.28 },
+  // Neji
+  '1nej:q': { bones: [9, 13], color: 0x38bdf8, width: 0.44 },
+  '1nej:atk': { bones: [13], color: 0x67e8f9, width: 0.28 },
+  // Jiraiya
+  '1jry:q': { bones: [13], color: 0xf97316, width: 0.45 },
+  '1jry:atk': { bones: [13], color: 0xfb923c, width: 0.34 },
+  // Tsunade
+  '1tnd:q': { bones: [5], color: 0x22c55e, width: 0.45 },
+  '1tnd:atk': { bones: [13], color: 0x4ade80, width: 0.34 },
+  // Orochimaru
+  '1orc:q': { bones: [13], color: 0xa3e635, width: 0.36 },
+  '1orc:w': { bones: [13], color: 0xc7d2fe, width: 0.38 },
+  '1orc:atk': { bones: [13], color: 0x84cc16, width: 0.28 },
 };
 function startSkillTrail(unit, slot) {
   const cfg = SKILL_TRAIL_MAP[unit.heroId + ':' + slot];
   if (!cfg || !unit.mesh || !unit.mesh.userData.bones) return;
+  const trailTex = loadTex('assets/skills/1efc_trl01.png');
   cfg.bones.forEach(bi => {
     const pts = [];
     const nSeg = 14;
     const geo = new THREE.BufferGeometry();
     geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(nSeg * 6), 3));
+    const uvs = new Float32Array(nSeg * 4);
+    for (let i = 0; i < nSeg; i++) {
+      const u = i / (nSeg - 1);
+      uvs[i * 4] = u; uvs[i * 4 + 1] = 0;
+      uvs[i * 4 + 2] = u; uvs[i * 4 + 3] = 1;
+    }
+    geo.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
     const idx = [];
     for (let i = 0; i < nSeg - 1; i++) {
       const a = i * 2;
       idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2);
     }
     geo.setIndex(idx);
-    const mat = new THREE.MeshBasicMaterial({ color: cfg.color, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
+    const mat = new THREE.MeshBasicMaterial({
+      map: trailTex,
+      color: cfg.color,
+      transparent: true,
+      opacity: 0.88,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      side: THREE.DoubleSide
+    });
     const mesh = new THREE.Mesh(geo, mat);
     mesh.frustumCulled = false;
     arenaGroup.add(mesh);
-    skillTrails.push({ unit, boneIdx: bi, pts, mesh, age: 0, dur: unit.animDuration + 0.30, max: nSeg, width: cfg.width });
+    skillTrails.push({ unit, boneIdx: bi, pts, mesh, age: 0, dur: (unit.animDuration || 0.42) + 0.30, max: nSeg, width: cfg.width });
   });
 }
 function updateSkillTrails(dt) {
@@ -3876,6 +3968,31 @@ function spawnSmokePuff(x, y, z, radius = 3.5) {
   }
 }
 
+function spawnGroundCrackDecal(x, z, radius = 2.8) {
+  const crackTex = loadTex('assets/skills/1efc_brk01.png');
+  const crackGeo = new THREE.PlaneGeometry(radius, radius);
+  const crackMat = new THREE.MeshBasicMaterial({
+    map: crackTex,
+    transparent: true,
+    opacity: 0.88,
+    depthWrite: false,
+    polygonOffset: true,
+    polygonOffsetFactor: -1,
+    polygonOffsetUnits: -1
+  });
+  const crackMesh = new THREE.Mesh(crackGeo, crackMat);
+  crackMesh.rotation.x = -Math.PI / 2;
+  crackMesh.rotation.z = Math.random() * Math.PI * 2;
+  crackMesh.position.set(x, 0.045, z);
+  arenaGroup.add(crackMesh);
+  vfxList.push({
+    mesh: crackMesh,
+    age: 0,
+    duration: 3.5,
+    style: 'decal'
+  });
+}
+
 function spawnHitSparks(x, y, z, colorHex = 0xfde047, intensity = 1) {
   // P1 JUICE: intensity 0.75 light hit / 1.0 skill / 1.7 KO & ult impact
   // 0. White radial impact flash (procedural additive sprite)
@@ -4037,8 +4154,16 @@ function dealDamage(attacker, target, amount, skillName) {
   const dz = target.z - attacker.z;
   const len = Math.hypot(dx, dz) || 1;
   if (!target.isDummy) { // W-TRN: boneco de treino fica cravado no chao, como os troncos
-  target.x = clampPush(target.x + (dx / len) * 1.4);
-  target.z = clampPush(target.z + (dz / len) * 1.4);
+    target.x = clampPush(target.x + (dx / len) * 1.4);
+    target.z = clampPush(target.z + (dz / len) * 1.4);
+    // Authentic Storm Airborne Launch Parabola on heavy/finisher hits
+    const isHeavy = dmg >= 170 || (skillName && (skillName.includes('Rasengan') || skillName.includes('Chidori') || skillName.includes('Kaiten') || skillName.includes('Oukahou') || skillName.includes('Finalizador')));
+    if (isHeavy) {
+      target.vy = 7.5;
+      target.vx = (dx / len) * 8.0;
+      target.vz = (dz / len) * 8.0;
+      target.isAirborne = true;
+    }
   }
 
   // APK HITSTUN (engine de dano do Storm, medido do APK: dmg0f FACE_DAMAGE_NORMAL
@@ -4300,6 +4425,7 @@ function executeSkill(unit, slot) {
     const hitIdx = (unit.comboStep === 0) ? 3 : unit.comboStep; // 1, 2, or 3
     unit.animDuration = hitIdx === 1 ? 0.38 : (hitIdx === 2 ? 0.42 : 0.52);
     unit.animTimer = unit.animDuration;
+    startSkillTrail(unit, 'atk'); // Authentic Taijutsu slash ribbon trail
 
     // Check if enemy is in close melee range (<= 7.5 units)
     const meleeTarget = findNearestEnemy(unit, 7.5);
@@ -5667,9 +5793,37 @@ function updateMatch(dt, elapsed) {
       updateAIBotUnit(u, simDt);
     }
 
+    // Authentic Airborne Knockback Parabola Physics
+    if (u.isAirborne) {
+      u.y = (u.y || 0) + (u.vy || 0) * simDt;
+      u.vy = (u.vy || 0) - 26.0 * simDt;
+      u.x = clampPush(u.x + (u.vx || 0) * simDt);
+      u.z = clampPush(u.z + (u.vz || 0) * simDt);
+      if (u.y <= 0) {
+        u.y = 0;
+        u.vy = 0;
+        u.vx = 0;
+        u.vz = 0;
+        u.isAirborne = false;
+        spawnGroundCrackDecal(u.x, u.z, 2.8);
+        spawnSmokePuff(u.x, 0.4, u.z, 3.0);
+        AUTH_SFX.playAt(AUTH_SFX.pick('ground_hit', 'ground_hit2'), u.x, u.z, { vol: 0.85 });
+      }
+    }
+
     // Apply position & rotation to 3D SkinnedMesh Rig
-    u.mesh.position.set(u.x, 0, u.z);
+    u.mesh.position.set(u.x, u.y || 0, u.z);
     u.mesh.rotation.y = u.rotY;
+
+    // Contact drop shadow tracking (stays on ground plane)
+    if (u.mesh.userData && u.mesh.userData.shadowMesh) {
+      const sm = u.mesh.userData.shadowMesh;
+      sm.position.y = 0.038 - (u.y || 0);
+      const airScale = Math.max(0.35, 1.0 - (u.y || 0) * 0.12);
+      sm.scale.set(airScale, airScale, airScale);
+      if (sm.material) sm.material.opacity = Math.max(0.18, 0.80 - (u.y || 0) * 0.1);
+    }
+
     // M6.1: RUN autentico quando ha deslocamento real no frame
     // (nao sobrescreve attack/jutsu/ult/down — so promove idle<->run)
     const _mvd = (u.deadTimer <= 0) &&
@@ -5844,6 +5998,11 @@ function updateMatch(dt, elapsed) {
       v.mesh.scale.multiplyScalar(Math.max(0.01, 1 - dt * 0.45));
       if (v.mesh.material && v.mesh.material.opacity !== undefined) {
         v.mesh.material.opacity = Math.max(0, (1 - t) * 0.95);
+      }
+    } else if (v.style === 'decal') {
+      if (v.mesh.material) {
+        const fade = v.age > 2.0 ? Math.max(0, 1.0 - (v.age - 2.0) / 1.5) : 1.0;
+        v.mesh.material.opacity = fade * 0.88;
       }
     } else if (v.style !== 'log') {
       v.mesh.scale.setScalar(1 + t * 0.85);
