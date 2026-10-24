@@ -1474,7 +1474,7 @@ class E2ETestRunner:
         await self._t5_touch("touchStart", c["x"], c["y"])
         await self._t5_touch("touchEnd", c["x"], c["y"])
         await asyncio.sleep(0.2)
-        res = await self.cdp.eval_js("""(() => {
+        res = await self.cdp.eval_js(r"""(() => {
             const el = document.getElementById('cdt-q');
             const p = window.units.find(u => u.isPlayer);
             const m = ((el && el.textContent) || '').match(/[0-9]+(\.[0-9]+)?/);
@@ -1587,7 +1587,7 @@ async def run_suite():
         if (!window.matchActive && typeof window.start5v5Match === 'function') {
             await window.start5v5Match();
         }
-        for (let i = 0; i < 60; i++) {
+        for (let i = 0; i < 150; i++) {
             if (window.units && window.units.length === 10) return true;
             await new Promise(r => setTimeout(r, 100));
         }

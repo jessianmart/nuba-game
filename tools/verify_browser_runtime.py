@@ -745,9 +745,31 @@ async def test_page(port=9333):
             print("VERIFY FAILURE DETAIL:", __import__("json").dumps(_failed))
         return len(_failed) == 0
 
+def _assert_cache_busters():
+    """W7.1: cache-buster floor — falha se o index.html regredir o ?v= abaixo
+    do piso (o pipeline paralelo W-REAL ja regrediu game.js v43->v42 uma vez;
+    numero re-servido = clientes com cache nao baixam o bundle novo)."""
+    import io
+    import re as _re
+    floors = {"game.js": 44, "styles.css": 38}
+    html = open("public/index.html", encoding="utf-8", errors="replace").read()
+    failed = []
+    for name, floor in floors.items():
+        m = _re.search(_re.escape(name) + r"[?]v=(\d+)", html)
+        if not m:
+            failed.append(f"{name}: referencia ?v= ausente")
+        elif int(m.group(1)) < floor:
+            failed.append(f"{name}: v={m.group(1)} < piso v={floor} (regressao de cache-buster)")
+    if failed:
+        print("CACHE-BUSTER FAILURE:", "; ".join(failed))
+        sys.exit(1)
+    print("CACHE-BUSTER OK: game.js v>=%d, styles.css v>=%d" % (floors["game.js"], floors["styles.css"]))
+
+
 def main():
     import tempfile
     import socket
+    _assert_cache_busters()
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind(('127.0.0.1', 0))
         free_port = s.getsockname()[1]

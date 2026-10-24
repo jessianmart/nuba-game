@@ -13,7 +13,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="NUBA" />
-  <link rel="stylesheet" href="styles.css?v=37" />
+  <link rel="stylesheet" href="styles.css?v=38" />
   <script type="importmap">
     {
       "imports": {
@@ -32,8 +32,42 @@
   <!-- 3D WebGL Canvas -->
   <canvas id="game-canvas"></canvas>
 
+  <!-- ==================== TITLE SCREEN (W-MENU T1) ==================== -->
+  <div id="title-screen" class="screen active" data-skin="title">
+    <div class="title-bg" aria-hidden="true">
+      <div class="title-sun"></div>
+      <div class="title-chakra title-chakra-a"></div>
+      <div class="title-chakra title-chakra-b"></div>
+      <div class="title-chakra title-chakra-c"></div>
+      <div class="title-mist"></div>
+    </div>
+    <div class="title-inner">
+      <div class="title-kanji-top" aria-hidden="true">忍</div>
+      <h1 class="title-logo">
+        <span class="title-logo-jp">N U B A</span>
+        <span class="title-logo-rule" aria-hidden="true"></span>
+        <span class="title-logo-sub">NINJA ULTIMATE BATTLE ARENA</span>
+      </h1>
+      <p class="title-tagline">忍 − Arena MOBA mobile</p>
+      <button id="btn-title-play" class="title-play" type="button">
+        <span class="title-play-kanji" aria-hidden="true">始</span>
+        <span class="title-play-text">
+          <strong>TOCAR PARA INICIAR</strong>
+          <small>PRESS TO START</small>
+        </span>
+      </button>
+      <div class="title-footer">
+        <span id="title-version">v0.9.0-WMENU</span>
+        <span class="title-dot" aria-hidden="true">•</span>
+        <span>CONVIDADO</span>
+        <span class="title-dot" aria-hidden="true">•</span>
+        <span>PT-BR</span>
+      </div>
+    </div>
+  </div>
+
   <!-- ==================== MAIN LOBBY / HERO SELECT OVERLAY ==================== -->
-  <div id="lobby-screen" class="screen active" data-skin="lobby">
+  <div id="lobby-screen" class="screen" data-skin="lobby">
     <!-- MOBA CLIENT TOP BAR: logo, navegacao, identidade e moeda -->
     <header class="lobby-header">
       <div class="brand-row-flex">
@@ -757,6 +791,6 @@
     </div>
 
   <script src="vendor/gsap.min.js"></script>
-  <script type="module" src="game.js?v=43"></script>
+  <script type="module" src="game.js?v=44"></script>
 </body>
 </html>

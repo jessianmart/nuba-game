@@ -327,6 +327,36 @@ window.MUSIC = MUSIC;
 })();
 MUSIC.play('menu'); // W6: trilha do lobby (modeslct)
 
+// ==================== TITLE SCREEN (W-MENU T1) ====================
+// Ritual de entrada: o jogo abre na tela-titulo; o 1o clique/Enter atravessa pra Home.
+function isTitleActive() {
+  const t = document.getElementById('title-screen');
+  return !!t && t.classList.contains('active');
+}
+function dismissTitle() {
+  if (!isTitleActive()) return false;
+  const t = document.getElementById('title-screen');
+  t.classList.remove('active');
+  document.getElementById('lobby-screen').classList.add('active');
+  if (typeof setLobbyPage === 'function') setLobbyPage('play');
+  try { sfx.init(); } catch (e) {}
+  try { AUTH_SFX.play('menu_slct', { vol: 0.65 }); } catch (e) {}
+  window.__TITLE_DISMISSED = performance.now();
+  return true;
+}
+window.dismissTitle = dismissTitle; // EXPORT E2E
+(function initTitleScreen() {
+  const t = document.getElementById('title-screen');
+  if (!t || t.dataset.wired) return;
+  t.dataset.wired = '1';
+  t.addEventListener('click', () => dismissTitle());
+  window.addEventListener('keydown', (e) => {
+    if (!isTitleActive()) return;
+    if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') { e.preventDefault(); dismissTitle(); }
+  });
+})();
+
+
 // W7: Framer Motion vanilla (dom/+esm vendored em assets/vendor) — spring
 // física para os HUDs. Import dinâmico: se falhar, GSAP/CSS seguram o fallback.
 let MOTION = null;
@@ -2282,6 +2312,7 @@ async function startMatch(configId) {
   JUICE.trauma = 0;
   JUICE.fovPunch = 0;
 
+  document.getElementById('title-screen').classList.remove('active'); // W-MENU T1: E2E chama startMatch direto
   document.getElementById('lobby-screen').classList.remove('active');
   document.getElementById('hud-screen').classList.add('active');
   lobbyPedestalGroup.visible = false;
@@ -2303,6 +2334,11 @@ async function startMatch(configId) {
   if (CFG.mode === 'br') { if (CFG.arena) { await applyArena(CFG.arena); } await startBRMatch(CFG, playerHero, others); return; } // PV2: branch total — forca a arena do config e spawna solo na vila
   if (CFG.mode === 'training') { for (let _trnWait = 0; _trnWait < 150 && !window.__ARENA_BOOT_DONE; _trnWait++) { await new Promise(r => setTimeout(r, 100)); } await applyArena('sd00a'); TRN.active = true; } else { TRN.active = false; } // W-TRN: campo de treinamento forçado (os troncos) — boot-guard espera o applyArena do boot (race da L5737); outro modo encerra treino anterior
   cleanupBRVisuals(); // PV2: partida DM nova — remove zona/baús de um BR anterior
+  // Shuffle others so all 12 heroes have equal chance to appear in matches
+  for (let i = others.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const tmp = others[i]; others[i] = others[j]; others[j] = tmp;
+  }
   const blueRoster = [playerHero, ...others.slice(0, CFG.teamSize - 1)];
   const redRoster = CFG.mode === 'training' ? [] : others.slice(CFG.teamSize - 1, 2 * CFG.teamSize - 1); // W-TRN: treino nao tem time vermelho humano — so bonecos
 
@@ -3330,6 +3366,161 @@ function createKirinMesh(x, z) {
     shock.position.y = 0.2;
     shock.userData.rotSpeed = new THREE.Vector3(0, 0, 16);
     grp.add(shock);
+  }
+  return grp;
+}
+
+function createTsunadeUltRuptureMesh(radius = 5.5) {
+  const grp = new THREE.Group();
+  // Ground rupture fracture mesh (1efc_grd01 / 1efc_brk01)
+  const rupture = buildExtractedVfxMeshGroup('common', 0x10b981, radius * 0.022, '1efc_grd01') ||
+                  buildExtractedVfxMeshGroup('common', 0x10b981, radius * 0.022, '1efc_brk01_01');
+  if (rupture) {
+    rupture.position.y = 0.05;
+    rupture.userData = { rotSpeed: new THREE.Vector3(0, 1.5, 0) };
+    grp.add(rupture);
+  }
+
+  // Emerald & gold celestial healing & shockwave disc burst
+  const shockTex = loadTex('assets/skills/1efc_shock02.png');
+  const shockRing = new THREE.Mesh(
+    new THREE.RingGeometry(1.0, radius * 1.15, 32),
+    new THREE.MeshBasicMaterial({
+      color: 0x10b981,
+      map: shockTex,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0.78,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false
+    })
+  );
+  shockRing.rotation.x = -Math.PI / 2;
+  shockRing.position.y = 0.08;
+  shockRing.userData = { rotSpeed: new THREE.Vector3(0, 0, 12) };
+  grp.add(shockRing);
+
+  const goldRing = new THREE.Mesh(
+    new THREE.RingGeometry(0.5, radius * 0.75, 32),
+    new THREE.MeshBasicMaterial({
+      color: 0xfbbf24,
+      map: shockTex,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0.85,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false
+    })
+  );
+  goldRing.rotation.x = -Math.PI / 2;
+  goldRing.position.y = 0.12;
+  goldRing.userData = { rotSpeed: new THREE.Vector3(0, 0, -16) };
+  grp.add(goldRing);
+
+  // Celestial healing chakra pillar burst (1efc_chakra10a / 1efc_chakra02)
+  const pillar = buildExtractedVfxMeshGroup('common', 0x34d399, radius * 0.025, '1efc_chakra10a') ||
+                 buildExtractedVfxMeshGroup('common', 0xfbbf24, radius * 0.025, '1efc_chakra02');
+  if (pillar) {
+    pillar.position.y = radius * 0.6;
+    pillar.userData = { rotSpeed: new THREE.Vector3(0, 10, 0), uvScroll: { x: 0, y: 3.2 } };
+    grp.add(pillar);
+  }
+
+  // Tsutenkyaku ground break stone shards
+  const brkMesh = buildExtractedVfxMeshGroup('common', 0xd97706, radius * 0.018, '1efc_brk01_02');
+  if (brkMesh) {
+    brkMesh.rotation.x = -Math.PI / 2;
+    brkMesh.position.y = 0.15;
+    grp.add(brkMesh);
+  }
+  return grp;
+}
+
+function createOrochimaruDemonicBarrierMesh(radius = 5.5) {
+  const grp = new THREE.Group();
+  // Authentic Storm 1 extracted ground serpents (Sen'nejashu surge - 1orceff1_01)
+  const serpents = buildExtractedVfxMeshGroup('1orc', 0x84cc16, radius * 0.024, '1orceff1_01');
+  if (serpents) {
+    serpents.position.set(0, 0.08, 0);
+    serpents.userData = { rotSpeed: new THREE.Vector3(0, 1.8, 0) };
+    grp.add(serpents);
+  }
+  const serpents2 = buildExtractedVfxMeshGroup('1orc', 0xa855f7, radius * 0.020, '1orceff1_02') ||
+                    buildExtractedVfxMeshGroup('1orc', 0x65a30d, radius * 0.020, '1orceff1_03');
+  if (serpents2) {
+    serpents2.position.set(0, 0.15, radius * 0.2);
+    serpents2.userData = { rotSpeed: new THREE.Vector3(0, -2.4, 0) };
+    grp.add(serpents2);
+  }
+
+  // Dark purple demonic barrier (Rashomon Gate / Edo Tensei)
+  const gateMat = new THREE.MeshBasicMaterial({
+    color: 0x3b0764,
+    transparent: true,
+    opacity: 0.88,
+    side: THREE.DoubleSide
+  });
+
+  const pillarGeo = new THREE.CylinderGeometry(0.55, 0.75, 7.0, 12);
+  const leftPillar = new THREE.Mesh(pillarGeo, gateMat);
+  leftPillar.position.set(-radius * 0.65, 3.5, 0);
+  grp.add(leftPillar);
+
+  const rightPillar = new THREE.Mesh(pillarGeo, gateMat);
+  rightPillar.position.set(radius * 0.65, 3.5, 0);
+  grp.add(rightPillar);
+
+  const lintelGeo = new THREE.BoxGeometry(radius * 1.55, 0.85, 0.95);
+  const lintel = new THREE.Mesh(lintelGeo, gateMat);
+  lintel.position.set(0, 6.8, 0);
+  grp.add(lintel);
+
+  // Demonic barrier face / barrier wall
+  const wall = buildExtractedVfxMeshGroup('common', 0x581c87, radius * 0.028, '1efc_wall01');
+  if (wall) {
+    wall.position.set(0, 3.2, 0);
+    grp.add(wall);
+  } else {
+    const barrierPlane = new THREE.Mesh(
+      new THREE.PlaneGeometry(radius * 1.3, 6.0),
+      new THREE.MeshBasicMaterial({
+        color: 0x7e22ce,
+        transparent: true,
+        opacity: 0.75,
+        side: THREE.DoubleSide,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+      })
+    );
+    barrierPlane.position.set(0, 3.2, 0);
+    grp.add(barrierPlane);
+  }
+
+  // Dark purple demonic shockwave ring
+  const darkShockTex = loadTex('assets/skills/1efc_shock02.png');
+  const darkDisc = new THREE.Mesh(
+    new THREE.RingGeometry(0.8, radius * 1.2, 32),
+    new THREE.MeshBasicMaterial({
+      color: 0x6b21a8,
+      map: darkShockTex,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0.80,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false
+    })
+  );
+  darkDisc.rotation.x = -Math.PI / 2;
+  darkDisc.position.y = 0.06;
+  darkDisc.userData = { rotSpeed: new THREE.Vector3(0, 0, 7) };
+  grp.add(darkDisc);
+
+  // Purple demonic aura flame (1efc_chakra04)
+  const demonAura = buildExtractedVfxMeshGroup('common', 0x9333ea, radius * 0.022, '1efc_chakra04');
+  if (demonAura) {
+    demonAura.position.set(0, 2.5, 0);
+    demonAura.userData = { rotSpeed: new THREE.Vector3(0, 10, 0), uvScroll: { x: 0, y: 2.8 } };
+    grp.add(demonAura);
   }
   return grp;
 }
@@ -4616,6 +4807,39 @@ function executeSkill(unit, slot) {
       giantRas.position.set(ux, 3.0, uz);
       arenaGroup.add(giantRas);
       vfxList.push({ mesh: giantRas, age: 0, duration: 1.35, style: 'compound' });
+    } else if (unit.heroId === '1tnd') {
+      const ruptureMesh = createTsunadeUltRuptureMesh(5.5);
+      ruptureMesh.position.set(ux, 0.1, uz);
+      ruptureMesh.rotation.y = unit.rotY;
+      arenaGroup.add(ruptureMesh);
+      vfxList.push({ mesh: ruptureMesh, age: 0, duration: 1.45, style: 'compound', directional: true });
+      spawnVFX(ux, 1.5, uz, 0x10b981, 6.5, 0.70, 'ring', unit.heroId);
+      spawnVFX(ux, 2.0, uz, 0xfbbf24, 5.5, 0.65, 'sphere', unit.heroId);
+
+      // heal_chakra burst centered on Tsunade (Souzou Saisei)
+      const healChakraGrp = new THREE.Group();
+      healChakraGrp.position.set(unit.x, 0.1, unit.z);
+      const healPillar = buildExtractedVfxMeshGroup('common', 0x10b981, 0.065, '1efc_chakra05') ||
+                         buildExtractedVfxMeshGroup('common', 0x34d399, 0.065, '1efc_chakra00');
+      if (healPillar) {
+        healPillar.position.y = 2.0;
+        healPillar.userData = { rotSpeed: new THREE.Vector3(0, 8, 0) };
+        healChakraGrp.add(healPillar);
+      }
+      arenaGroup.add(healChakraGrp);
+      vfxList.push({ mesh: healChakraGrp, age: 0, duration: 1.35, style: 'compound' });
+      spawnVFX(unit.x, 1.5, unit.z, 0x10b981, 5.5, 0.70, 'ring', unit.heroId);
+      spawnVFX(unit.x, 2.2, unit.z, 0x34d399, 4.0, 0.60, 'sphere', unit.heroId);
+      unit.hp = Math.min(unit.maxHp, unit.hp + 380);
+    } else if (unit.heroId === '1orc') {
+      const gateMesh = createOrochimaruDemonicBarrierMesh(5.5);
+      gateMesh.position.set(ux, 0.1, uz);
+      gateMesh.rotation.y = unit.rotY;
+      arenaGroup.add(gateMesh);
+      vfxList.push({ mesh: gateMesh, age: 0, duration: 1.45, style: 'compound', directional: true });
+      spawnVFX(ux, 1.8, uz, 0x84cc16, 6.0, 0.70, 'ring', unit.heroId);
+      spawnVFX(ux, 2.4, uz, 0x7e22ce, 5.0, 0.65, 'sphere', unit.heroId);
+      spawnSmokePuff(ux, 2.0, uz, 4.2);
     }
 
     if (unit.isPlayer) {
@@ -4745,6 +4969,7 @@ function returnToLobby() {
   hideMatchResults();
   cancelMatchIntro(); // INTRO/STREAK: limpa timers e esconde overlays ao voltar
   document.getElementById('hud-screen').classList.remove('active');
+  document.getElementById('title-screen').classList.remove('active'); // W-MENU T1: nunca volta direto pro titulo
   document.getElementById('lobby-screen').classList.add('active');
   arenaGroup.visible = false;
   lobbyPedestalGroup.visible = true;
@@ -6048,6 +6273,8 @@ window.SKILL_VFX_MAP = SKILL_VFX_MAP; // M7 (inspecao)
 window.SKILL_VFX_ANIM = SKILL_VFX_ANIM; // SPP (inspecao)
 window.__shadowClones = () => shadowClones; // SPP (validacao E2E)
 window.HERO_STATS = HERO_STATS; // P2 (validacao)
+window.HERO_KITS = HERO_KITS;
+window.loadCharacter3DModel = loadCharacter3DModel;
 window.__matchState = {
   get time() { return matchTimeRemaining; },
   get br() { return brState; }, // PV2: estado BR p/ E2E
