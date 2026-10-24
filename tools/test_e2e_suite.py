@@ -1308,6 +1308,126 @@ class E2ETestRunner:
         assert res["rematchActive"] is True, "Rematch did not restart the match."
         assert res["overlayHidden"] is True, "Results overlay not hidden after rematch."
 
+    async def test_s07_title_to_draft_to_match(self):
+        """S07 (W-MENU): titulo -> home -> openDraft(3v3) -> pick -> lock -> reveal -> partida."""
+        res = await self.cdp.eval_js("""
+            (async () => {
+                const out = {};
+                // estado deterministico: de volta ao boot/titulo
+                window.returnToLobby();
+                await new Promise(r => setTimeout(r, 250));
+                const title = document.getElementById('title-screen');
+                const lobby = document.getElementById('lobby-screen');
+                if (title.classList.contains('active')) window.dismissTitle();
+                out.lobbyActive = lobby.classList.contains('active');
+                await window.openDraft('dm_3v3');
+                await new Promise(r => setTimeout(r, 500));
+                const draft = document.getElementById('draft-screen');
+                out.draftActive = draft.classList.contains('active');
+                out.cards = document.querySelectorAll('#draft-board .draft-card').length;
+                out.slotsBlue = document.querySelectorAll('#draft-blue-slots .draft-slot').length;
+                out.slotsRed = document.querySelectorAll('#draft-red-slots .draft-slot').length;
+                out.phase0 = window.DRAFT.phase;
+                window.draftPick('1skr');
+                await new Promise(r => setTimeout(r, 200));
+                out.sel = window.DRAFT.sel;
+                out.selCard = !!document.querySelector('#draft-board .draft-card.sel');
+                window.draftLock();
+                out.phaseLock = window.DRAFT.phase;
+                out.blue0 = window.DRAFT.blue[0];
+                out.lockDisabled = document.getElementById('btn-draft-lock').disabled;
+                // poll-deadline: reveal -> startMatch (bota com delays reais)
+                const t0 = performance.now();
+                while (performance.now() - t0 < 25000) {
+                    if (window.DRAFT.phase === 'done' && window.matchActive) break;
+                    await new Promise(r => setTimeout(r, 250));
+                }
+                out.phaseDone = window.DRAFT.phase;
+                out.matchActive = window.matchActive;
+                const us = window.units || [];
+                out.units = us.length;
+                out.player = us.find(u => u.isPlayer) ? us.find(u => u.isPlayer).heroId : null;
+                out.blue = us.filter(u => u.team === 'blue').map(u => u.heroId).sort();
+                out.red = us.filter(u => u.team === 'red').map(u => u.heroId).sort();
+                const blue = window.DRAFT.blue, red = window.DRAFT.red;
+                out.draftBlue = blue.join(','); out.draftRed = red.join(',');
+                out.noDupCross = ![...blue, ...red].some((id, i, a) => a.filter(x => x === id).length > 1);
+                window.returnToLobby();
+                await new Promise(r => setTimeout(r, 200));
+                out.titleBack = document.getElementById('title-screen').classList.contains('active');
+                return out;
+            })()
+        """, await_promise=True)
+        assert res["lobbyActive"] is True, "dismissTitle nao levou ao lobby."
+        assert res["draftActive"] is True, "draft-screen nao ativou."
+        assert res["cards"] == 12, f"board deve ter 12 cards: {res['cards']}"
+        assert res["slotsBlue"] == 3 and res["slotsRed"] == 3, f"slots 3/3 esperados: {res['slotsBlue']}/{res['slotsRed']}"
+        assert res["phase0"] == "pick", f"phase inicial: {res['phase0']}"
+        assert res["sel"] == "1skr", f"pick nao selecionou: {res['sel']}"
+        assert res["selCard"] is True, "card .sel nao aplicado."
+        assert res["phaseLock"] == "lock", f"lock nao aplicado: {res['phaseLock']}"
+        assert res["blue0"] == "1skr", f"blue[0] deveria ser a pick: {res['blue0']}"
+        assert res["lockDisabled"] is True, "botao SELAR deveria desabilitar."
+        assert res["phaseDone"] == "done", f"draft nao completou: {res['phaseDone']}"
+        assert res["matchActive"] is True, "partida nao iniciou apos reveal."
+        assert res["units"] == 6, f"3v3 deveria ter 6 units: {res['units']}"
+        assert res["player"] == "1skr", f"player hero deveria ser a pick: {res['player']}"
+        assert res["blue"] == sorted(res["draftBlue"].split(",")), "blue da partida divergiu do draft."
+        assert res["red"] == sorted(res["draftRed"].split(",")), "red da partida divergiu do draft."
+        assert res["noDupCross"] is True, "heroi repetido entre os times."
+        assert res["titleBack"] is False, "titulo reapareceu ao voltar do lobby."
+
+
+    async def test_s08_draft_timer_autolock(self):
+        """S08 (W-MENU): timer do draft zera -> auto-lock automatico (sem clique)."""
+        res = await self.cdp.eval_js("""
+            (async () => {
+                const out = {};
+                window.returnToLobby();
+                await new Promise(r => setTimeout(r, 250));
+                const title = document.getElementById('title-screen');
+                if (title.classList.contains('active')) window.dismissTitle();
+                await window.openDraft('dm_3v3');
+                await new Promise(r => setTimeout(r, 400));
+                out.timerTxt = document.getElementById('draft-timer').textContent;
+                const m = /00:([0-9]+)$/.exec(out.timerTxt || '');
+                out.timerRange = !!m && parseInt(m[1]) >= 14 && parseInt(m[1]) <= 20;
+                out.phase = window.DRAFT.phase;
+                window.DRAFT.remaining = 0.3; // acelera: timer legitimo, apenas encurtado
+                const t0 = performance.now();
+                while (performance.now() - t0 < 10000) {
+                    if (window.DRAFT.phase !== 'pick') break;
+                    await new Promise(r => setTimeout(r, 150));
+                }
+                out.phaseAfter = window.DRAFT.phase;
+                out.blue0 = window.DRAFT.blue[0];
+                out.lockDisabled = document.getElementById('btn-draft-lock').disabled;
+                const t1 = performance.now();
+                while (performance.now() - t1 < 20000) {
+                    if (window.DRAFT.phase === 'reveal') break;
+                    await new Promise(r => setTimeout(r, 200));
+                }
+                out.phaseReveal = window.DRAFT.phase;
+                out.ready = window.DRAFT.redReady.every(Boolean);
+                // limpa antes da partida (fecha o draft e mata os timers pendentes)
+                window.closeDraft();
+                await new Promise(r => setTimeout(r, 200));
+                out.closed = !document.getElementById('draft-screen').classList.contains('active');
+                out.matchActiveAfterClose = window.matchActive;
+                return out;
+            })()
+        """, await_promise=True)
+        assert res["timerRange"] is True, f"timer fora de 14-20s: {res['timerTxt']}"
+        assert res["phase"] == "pick", f"phase inicial: {res['phase']}"
+        assert res["phaseAfter"] == "lock", f"auto-lock por timer falhou: {res['phaseAfter']}"
+        assert res["blue0"], "blue[0] vazio apos auto-lock."
+        assert res["lockDisabled"] is True, "SELAR deveria desabilitar no auto-lock."
+        assert res["phaseReveal"] == "reveal", f"bots nao levaram ao reveal: {res['phaseReveal']}"
+        assert res["ready"] is True, "rivais nao ficaram prontos."
+        assert res["closed"] is True, "closeDraft nao escondeu a tela."
+        assert res["matchActiveAfterClose"] is False, "closeDraft deveria cancelar a partida pendente."
+
+
 
     # =========================================================================
     # TIER 5: MOBILE PIVOT — PV1.6 + PV2.6 formais (docs/PIVOT_MOBILE.md)
@@ -1657,6 +1777,8 @@ async def run_suite():
     await runner.run_test("T4_S04", "Kill & Respawn Cycle Verification", "Tier 4", runner.test_s04_kill_and_respawn_cycle_scenario)
     await runner.run_test("T4_S05", "Awakening & Ultimate Clash", "Tier 4", runner.test_s05_awakening_and_ultimate_clash)
     await runner.run_test("T4_S06", "Match Results: Victory Board + MVP + Rematch", "Tier 4", runner.test_s06_match_results_mvp_flow)
+    await runner.run_test("T4_S07", "W-MENU: Title -> Draft (pick/lock/reveal) -> Match", "Tier 4", runner.test_s07_title_to_draft_to_match)
+    await runner.run_test("T4_S08", "W-MENU: Draft Timer Auto-Lock (bots + reveal)", "Tier 4", runner.test_s08_draft_timer_autolock)
 
     # -------------------------------------------------------------------------
     # Tier 5 Tests — Mobile Pivot formal (PV1.6 + PV2.6)

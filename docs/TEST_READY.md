@@ -370,3 +370,37 @@ Validacao (`wphase_probe.py`): pending consumido nos casts, 0 console
 errors; pixels de fase: puffs brancos 21.620 px @meio -> 632 px @fim
 (nascem e morrem como no Storm); folhas 19.684 px; 2a onda areia 6.748;
 odoama 5.972. Bateria: verify + suite + whs + wvis-full 48 celulas.
+
+## 27. W-MENU — tela-titulo + draft MOBA mobile (pick/lock/reveal) (2026-10-24)
+
+Pedido do usuario: loop de jogo completo no padrao dos MOBAs mobile
+(referencias pesquisadas: Wild Rift, MLBB/HoK, DOTA2/LoL champ select UX).
+Plano completo: docs/PLAN_MENU_DRAFT.md.
+
+- Task 1 — tela-titulo (`#title-screen`): logo NUBA com gradiente Storm, sol
+  radial respirando, particulas de chakra, botao "TOCAR PARA INICIAR 始"
+  pulsando (1,8 Hz), footer versao/convidado/PT-BR. Boot = titulo; 1o clique
+  ou Enter atravessa pra Home. `dismissTitle` exportado (`window.dismissTitle`).
+  Conflito resolvido: o agente paralelo commitou "lobby ativo por padrao"
+  (2e7f7b2) — revertido o boot (o pedido explicito do usuario vence).
+- Task 2 — draft screen (`#draft-screen`): grid 3 colunas (seu time / pedestal
+  + board / rivais), header com timer topo-centro, board de 12 cards
+  (padrao DOTA2 — tudo visivel sem scroll), filtros por classe ( derivados do
+  campo role), botao SELAR SELEÇÃO 選, slots flip 3D, badge VS, blackout.
+- Tasks 3/4 — state machine `DRAFT` (pick -> lock -> reveal -> done):
+  preview do heroi no pedestal 3D do lobby (reusa selectLobbyHero); timer de
+  20s no relogio rAF com tick SFX < 5s e auto-lock; bots "pensam" com delays
+  humanos (0,4–2,2 s) e nunca repetem heroi (12 >= 2*teamSize); revelacao dos
+  rivais um a um (340 ms) + oogi + blackout -> startMatch.
+- Task 5 — hand-off: `startMatch(configId, draft)` — se draft.blue/red tem
+  teamSize, spawna EXATAMENTE esses herois; senao shuffle padrao (compat:
+  47 testes E2E intactos). Treino e BR pulam o draft (fluxo proprio).
+- Task 6 — suite E2E: T4_S07 (titulo -> draft -> pick -> lock -> reveal ->
+  partida, composicao fiel) e T4_S08 (auto-lock por timer + closeDraft) — 49/49.
+
+Validacao: `wmenu_title_probe` PASS (boot titulo -> home -> startMatch direto
+sem vazamento -> retorno sem reabrir titulo, 0 console errors);
+`wmenu_draft_probe` PASS (12 cards, 3/3 slots, preview, auto-lock, bots,
+reveal, 6 units, blue/red identicos ao draft, sem heroi cruzado, BR sem draft);
+`wmenu_draft_layout` (3 colunas sem sobreposicao, board 308px, lock 61px,
+timer 48px). Bateria: verify + suite 49/49 + W-HS 10/10 + 48 celulas.

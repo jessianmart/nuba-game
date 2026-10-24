@@ -751,6 +751,32 @@ const TRN = {
     if (bb) bb.textContent = this.bell.active ? 'ENCERRAR (B)' : 'TESTE DOS SINOS';
   }
 };
+// W-TRN: numero de dano flutuante — projeta world->tela a cada frame e desvanece
+function TRN_FLOATT(target, dmg) {
+  const layer = document.getElementById('dmg-float-layer');
+  if (!layer || !window.__camera) return;
+  const el = document.createElement('div');
+  el.className = 'dmg-text' + (dmg >= 300 ? ' crit' : (dmg >= 180 ? ' high' : ''));
+  el.textContent = String(dmg);
+  el.style.left = '-100px';
+  layer.appendChild(el);
+  const t0 = performance.now();
+  const life = 900;
+  const step = () => {
+    if (!el.isConnected) return;
+    const t = (performance.now() - t0) / life;
+    if (t >= 1) { el.remove(); return; }
+    const v = new THREE.Vector3(target.x, 2.2, target.z);
+    v.project(window.__camera);
+    const w = layer.clientWidth, h = layer.clientHeight;
+    el.style.left = ((v.x * 0.5 + 0.5) * w) + 'px';
+    el.style.top = ((-v.y * 0.5 + 0.5) * h) + 'px';
+    el.style.opacity = String(1 - t);
+    el.style.transform = 'translate(-50%,-' + (50 + t * 90) + '%) scale(' + (1.15 - t * 0.25) + ')';
+    requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
 window.__TRN = TRN; // W-TRN: telemetria E2E
 (function trnWireButtons() {
   const bb = document.getElementById('trn-bell-btn');
@@ -2269,7 +2295,299 @@ function buildMOBA3DArena() {
 // ============================================================================
 // SPAWN 10 NINJAS (5 BLUE vs 5 RED) WITH REAL 3D SKINNED MODELS
 // ============================================================================
-async function startMatch(configId) {
+// ==================== DRAFT (W-MENU T3/T4 — pick -> lock -> reveal) ====================
+// Fluxo mobile-MOBA: board de 12 cards (padrao DOTA2), preview no pedestal 3D do lobby,
+// timer de 20s com lock explicito ("SELAR"), bots "pensam" (delays humanos), reveal dos
+// rivais um a um, badge VS, blackout -> startMatch(configId, {blue, red}).
+const DRAFT = {
+  phase: 'idle',          // idle | pick | lock | reveal | done
+  modeId: null,
+  sel: null,              // heroId em preview
+  teamSize: 3,
+  timer: 20,
+  remaining: 20,
+  blue: [], red: [],      // heroIds (null = vazio)
+  redReady: [], redRevealed: [],
+  filter: 'TODOS',
+  lastWholeTick: -1,
+  timers: [],
+  raf: null
+};
+window.DRAFT = DRAFT; // EXPORT E2E
+
+const DRAFT_FILTERS = ['TODOS', 'LUTADOR', 'ASSASSINO', 'MAGO', 'TANQUE', 'SUPORTE'];
+const draftHeroById = (id) => rosterMeta.find(h => h.id === id) || null;
+const draftClassOf = (h) => (h.role || '').split('/')[0].split(' ')[0].toUpperCase();
+
+function draftClearTimers() {
+  for (const t of DRAFT.timers) clearTimeout(t);
+  DRAFT.timers = [];
+  if (DRAFT.raf) cancelAnimationFrame(DRAFT.raf);
+  DRAFT.raf = null;
+}
+
+async function openDraft(modeId) {
+  const CFG = MATCH_CONFIGS[modeId];
+  // Treino e BR tem fluxo proprio (sem times) — vao direto pra partida
+  if (!CFG || CFG.mode === 'training' || CFG.mode === 'br') { await startMatch(modeId); return; }
+
+  draftClearTimers();
+  DRAFT.modeId = modeId;
+  DRAFT.teamSize = CFG.teamSize;
+  DRAFT.phase = 'pick';
+  DRAFT.timer = 20;
+  DRAFT.remaining = 20;
+  DRAFT.filter = 'TODOS';
+  DRAFT.lastWholeTick = 99;
+  DRAFT.blue = Array(CFG.teamSize).fill(null);
+  DRAFT.red = Array(CFG.teamSize).fill(null);
+  DRAFT.redReady = Array(CFG.teamSize).fill(false);
+  DRAFT.redRevealed = Array(CFG.teamSize).fill(false);
+
+  document.getElementById('title-screen').classList.remove('active');
+  document.getElementById('lobby-screen').classList.remove('active');
+  document.getElementById('draft-screen').classList.add('active');
+  document.getElementById('draft-mode-name').textContent = CFG.label || modeId;
+  document.getElementById('draft-vs').hidden = true;
+  const bo = document.getElementById('draft-blackout');
+  bo.hidden = true; bo.classList.remove('on');
+  const lockBtn = document.getElementById('btn-draft-lock');
+  lockBtn.disabled = false;
+  document.getElementById('draft-phase').textContent = 'ESCOLHA SEU NINJA';
+
+  lobbyPedestalGroup.visible = true;
+  await selectLobbyHero(selectedHeroId || '1nrt');
+  draftPick(selectedHeroId || '1nrt');
+  draftRenderFilters();
+  draftRenderBoard();
+  draftRenderTeams();
+  draftStartTimer();
+
+  try { sfx.init(); AUTH_SFX.play('chakura_use', { vol: 0.5 }); } catch (e) {}
+  window.__DRAFT_READY = performance.now();
+}
+window.openDraft = openDraft; // EXPORT E2E
+
+function closeDraft() {
+  draftClearTimers();
+  DRAFT.phase = 'idle';
+  document.getElementById('draft-screen').classList.remove('active');
+  document.getElementById('lobby-screen').classList.add('active');
+  setLobbyPage('play');
+  window.__DRAFT_CLOSED = performance.now();
+}
+window.closeDraft = closeDraft; // EXPORT E2E
+
+function draftHeroInfo(hero) {
+  const name = document.getElementById('draft-hero-name');
+  const role = document.getElementById('draft-hero-role');
+  const kit = document.getElementById('draft-hero-kit');
+  if (!hero) { name.textContent = '—'; role.textContent = ''; kit.textContent = ''; return; }
+  name.textContent = hero.name;
+  role.textContent = (hero.role || '').toUpperCase();
+  kit.textContent = `${hero.clan || ''} · ${hero.heightCm || 150}cm · ATQ ${hero.atk || 4.5} / DEF ${hero.def || 4} / VEL ${hero.spd || 4}`;
+}
+
+function draftPick(heroId) {
+  if (DRAFT.phase !== 'pick') return;
+  const taken = [...DRAFT.blue, ...DRAFT.red].filter(Boolean);
+  if (taken.includes(heroId)) return;
+  DRAFT.sel = heroId;
+  selectLobbyHero(heroId);
+  draftHeroInfo(draftHeroById(heroId));
+  draftRenderBoard();
+  try { AUTH_SFX.play('menu_slct', { vol: 0.6 }); } catch (e) {}
+}
+window.draftPick = draftPick; // EXPORT E2E
+
+function draftRenderFilters() {
+  const el = document.getElementById('draft-filters');
+  el.innerHTML = DRAFT_FILTERS.map(f =>
+    `<button class="draft-chip ${DRAFT.filter === f ? 'on' : ''}" data-f="${f}" type="button">${f}</button>`
+  ).join('');
+  el.querySelectorAll('.draft-chip').forEach(ch => {
+    ch.addEventListener('click', () => {
+      DRAFT.filter = ch.dataset.f;
+      draftRenderFilters();
+      draftRenderBoard();
+      try { sfx.click(); } catch (e) {}
+    });
+  });
+}
+
+function draftRenderBoard() {
+  const el = document.getElementById('draft-board');
+  const taken = [...DRAFT.blue, ...DRAFT.red].filter(Boolean);
+  const heroes = rosterMeta.filter(h => DRAFT.filter === 'TODOS' || draftClassOf(h) === DRAFT.filter);
+  el.innerHTML = heroes.map(h => {
+    const cls = [
+      DRAFT.sel === h.id ? 'sel' : '',
+      taken.includes(h.id) ? 'taken' : '',
+      DRAFT.blue.includes(h.id) ? 'ally' : '',
+      DRAFT.redRevealed.includes(h.id) ? 'foe' : ''
+    ].filter(Boolean).join(' ');
+    return `<div class="draft-card ${cls}" data-id="${h.id}">
+      <img src="${h.portrait}" alt="${h.name}" loading="lazy" />
+      <span class="draft-card-name">${h.name}</span>
+      <span class="draft-card-tag">${(h.role || '').toUpperCase()}</span>
+    </div>`;
+  }).join('');
+  el.querySelectorAll('.draft-card').forEach(card => {
+    card.addEventListener('click', () => draftPick(card.dataset.id));
+  });
+}
+
+function draftSlotHtml(heroId, opts) {
+  const h = heroId ? draftHeroById(heroId) : null;
+  if (h) {
+    return `<div class="draft-slot filled ${opts.player ? 'is-player' : ''}">
+      <img src="${h.portrait}" alt="${h.name}" />
+      <div class="draft-slot-meta">
+        <span class="draft-slot-name">${h.name}</span>
+        <span class="draft-slot-tag ${opts.player ? 'you' : ''}">${opts.player ? 'VOCÊ' : (opts.ally ? 'ALIADO' : 'RIVAL')}</span>
+      </div>
+    </div>`;
+  }
+  if (opts.thinking) {
+    return `<div class="draft-slot thinking"><span class="draft-slot-tag">ESCOLHENDO…</span></div>`;
+  }
+  return `<div class="draft-slot unknown"><span class="draft-slot-q">${opts.q || '?'}</span></div>`;
+}
+
+function draftRenderTeams() {
+  const blueEl = document.getElementById('draft-blue-slots');
+  const redEl = document.getElementById('draft-red-slots');
+  if (blueEl) blueEl.innerHTML = DRAFT.blue.map((id, i) =>
+    draftSlotHtml(id, { player: i === 0, ally: true })).join('');
+  if (redEl) redEl.innerHTML = DRAFT.red.map((id, i) =>
+    DRAFT.redRevealed[i]
+      ? draftSlotHtml(id, {})
+      : (DRAFT.redReady[i]
+        ? `<div class="draft-slot thinking"><span class="draft-slot-tag">PRONTO ✓</span></div>`
+        : `<div class="draft-slot unknown"><span class="draft-slot-q">?</span></div>`)).join('');
+  const hint = document.getElementById('draft-blue-hint');
+  if (hint) hint.textContent = DRAFT.phase === 'pick' ? 'toque num card para inspecionar' : '';
+}
+
+function draftPaintTimer() {
+  const el = document.getElementById('draft-timer');
+  if (!el) return;
+  const t = Math.max(0, DRAFT.remaining);
+  el.textContent = `00:${String(Math.floor(t)).padStart(2, '0')}`;
+  el.classList.toggle('urgent', t < 5.001 && DRAFT.phase === 'pick');
+}
+
+function draftStartTimer() {
+  if (DRAFT.raf) cancelAnimationFrame(DRAFT.raf);
+  let last = performance.now();
+  const step = () => {
+    if (DRAFT.phase !== 'pick') { DRAFT.raf = null; return; }
+    const now = performance.now();
+    const dt = (now - last) / 1000;
+    last = now;
+    DRAFT.remaining = Math.max(0, DRAFT.remaining - dt);
+    const whole = Math.ceil(DRAFT.remaining);
+    if (DRAFT.remaining < 5 && whole !== DRAFT.lastWholeTick && whole > 0) {
+      DRAFT.lastWholeTick = whole;
+      try { AUTH_SFX.play('kunai_swing', { vol: 0.5 }); } catch (e) {}
+    }
+    draftPaintTimer();
+    if (DRAFT.remaining <= 0) { DRAFT.raf = null; draftLock(); return; }
+    DRAFT.raf = requestAnimationFrame(step);
+  };
+  DRAFT.raf = requestAnimationFrame(step);
+  draftPaintTimer();
+}
+
+function draftLock() {
+  if (DRAFT.phase !== 'pick') return;
+  if (!DRAFT.sel) draftPick(selectedHeroId || '1nrt');
+  DRAFT.phase = 'lock';
+  DRAFT.remaining = 0;
+  draftPaintTimer();
+  document.getElementById('btn-draft-lock').disabled = true;
+  document.getElementById('draft-phase').textContent = 'SELEÇÃO SELADA';
+  try { AUTH_SFX.play('menu_fix', { vol: 0.7 }); } catch (e) {}
+
+  DRAFT.blue[0] = DRAFT.sel;
+  draftRenderBoard();
+  draftRenderTeams();
+
+  // Pool sem o heroi do jogador — aliados e rivais consomem sem repetir (12 herois >= 2*teamSize)
+  const pool = rosterMeta.filter(h => h.id !== DRAFT.sel).map(h => h.id);
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const [a, b] = [pool[i], pool[j]]; pool[i] = b; pool[j] = a;
+  }
+  const blueN = DRAFT.teamSize - 1;
+  const delays = [];
+  for (let i = 0; i < blueN; i++) {
+    const id = pool[i];
+    delays.push(400 + Math.random() * 900 + i * 260);
+    DRAFT.timers.push(setTimeout(() => {
+      DRAFT.blue[i + 1] = id;
+      draftRenderBoard();
+      draftRenderTeams();
+      try { AUTH_SFX.play('sword_hit', { vol: 0.45 }); } catch (e) {}
+    }, delays[i]));
+  }
+  for (let i = 0; i < DRAFT.teamSize; i++) {
+    const id = pool[blueN + i];
+    delays.push(650 + Math.random() * 1200 + i * 300);
+    DRAFT.timers.push(setTimeout(() => {
+      DRAFT.red[i] = id;
+      DRAFT.redReady[i] = true;
+      draftRenderBoard();
+      draftRenderTeams();
+    }, delays[blueN + i]));
+  }
+  DRAFT.timers.push(setTimeout(draftReveal, Math.max(...delays) + 520));
+}
+window.draftLock = draftLock; // EXPORT E2E
+
+function draftReveal() {
+  if (DRAFT.phase !== 'lock') return;
+  DRAFT.phase = 'reveal';
+  const phaseEl = document.getElementById('draft-phase');
+  if (phaseEl) phaseEl.textContent = 'REVELAÇÃO DOS TIMES';
+  const vs = document.getElementById('draft-vs');
+  if (vs) vs.hidden = false;
+  DRAFT.red.forEach((_, i) => {
+    DRAFT.timers.push(setTimeout(() => {
+      DRAFT.redRevealed[i] = true;
+      draftRenderTeams();
+      draftRenderBoard();
+      try { AUTH_SFX.play('sword_hit', { vol: 0.6 }); } catch (e) {}
+    }, 380 + i * 340));
+  });
+  const totalReveal = 380 + DRAFT.red.length * 340;
+  DRAFT.timers.push(setTimeout(() => {
+    try { AUTH_SFX.play('oogi', { vol: 0.8 }); } catch (e) {}
+  }, totalReveal));
+  DRAFT.timers.push(setTimeout(() => {
+    const bo = document.getElementById('draft-blackout');
+    bo.hidden = false;
+    requestAnimationFrame(() => bo.classList.add('on'));
+    DRAFT.timers.push(setTimeout(async () => {
+      await startMatch(DRAFT.modeId, { blue: DRAFT.blue, red: DRAFT.red });
+      DRAFT.phase = 'done';
+      document.getElementById('draft-screen').classList.remove('active');
+      bo.classList.remove('on');
+      DRAFT.timers.push(setTimeout(() => { bo.hidden = true; }, 460));
+    }, 420));
+  }, totalReveal + 520));
+}
+window.draftReveal = draftReveal; // EXPORT E2E
+
+(function initDraftUi() {
+  const screen = document.getElementById('draft-screen');
+  if (!screen || screen.dataset.wired) return;
+  screen.dataset.wired = '1';
+  document.getElementById('btn-draft-lock').addEventListener('click', () => draftLock());
+  document.getElementById('btn-draft-cancel').addEventListener('click', () => closeDraft());
+})();
+
+async function startMatch(configId, draft = null) {
   const CFG = MATCH_CONFIGS[configId] || MATCH_CONFIGS.dm_legacy_5v5;
   activeMatchCfg = CFG;
   lastMatchConfigId = MATCH_CONFIGS[configId] ? configId : 'dm_legacy_5v5';
@@ -2329,18 +2647,38 @@ async function startMatch(configId) {
 
   const playerHero = rosterMeta.find(h => h.id === selectedHeroId) || rosterMeta[0];
   const others = rosterMeta.filter(h => h.id !== playerHero.id);
+  // Shuffle others so all 12 heroes have equal chance to appear in matches (5v5 DM and BR)
+  for (let i = others.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const tmp = others[i]; others[i] = others[j]; others[j] = tmp;
+  }
   document.body.classList.toggle('br-mode', CFG.mode === 'br'); // PV2: gate CSS do HUD BR
   document.body.classList.toggle('training-mode', CFG.mode === 'training'); // W-TRN: gate CSS do HUD de treino
   if (CFG.mode === 'br') { if (CFG.arena) { await applyArena(CFG.arena); } await startBRMatch(CFG, playerHero, others); return; } // PV2: branch total — forca a arena do config e spawna solo na vila
   if (CFG.mode === 'training') { for (let _trnWait = 0; _trnWait < 150 && !window.__ARENA_BOOT_DONE; _trnWait++) { await new Promise(r => setTimeout(r, 100)); } await applyArena('sd00a'); TRN.active = true; } else { TRN.active = false; } // W-TRN: campo de treinamento forçado (os troncos) — boot-guard espera o applyArena do boot (race da L5737); outro modo encerra treino anterior
   cleanupBRVisuals(); // PV2: partida DM nova — remove zona/baús de um BR anterior
-  // Shuffle others so all 12 heroes have equal chance to appear in matches
-  for (let i = others.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    const tmp = others[i]; others[i] = others[j]; others[j] = tmp;
+  let blueRoster, redRoster;
+  if (draft && Array.isArray(draft.blue) && draft.blue.filter(Boolean).length === CFG.teamSize &&
+      Array.isArray(draft.red) && draft.red.filter(Boolean).length === CFG.teamSize) {
+    // W-MENU: draft explicito (pick/lock/reveal) — rosters vindos do DRAFT
+    blueRoster = draft.blue.map(draftHeroById).filter(Boolean);
+    blueRoster[0] = playerHero; // seguranca: o jogador SEMPRE no slot 0 (isPlayer)
+    redRoster = draft.red.map(draftHeroById).filter(Boolean);
+    if (blueRoster.length < CFG.teamSize || redRoster.length < CFG.teamSize) {
+      // draft degenerado (herois duplicados?) — cai pro shuffle padrao
+      for (let i = others.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); const tmp = others[i]; others[i] = others[j]; others[j] = tmp; }
+      blueRoster = [playerHero, ...others.slice(0, CFG.teamSize - 1)];
+      redRoster = others.slice(CFG.teamSize - 1, 2 * CFG.teamSize - 1);
+    }
+  } else {
+    // Shuffle others so all 12 heroes have equal chance to appear in matches
+    for (let i = others.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const tmp = others[i]; others[i] = others[j]; others[j] = tmp;
+    }
+    blueRoster = [playerHero, ...others.slice(0, CFG.teamSize - 1)];
+    redRoster = CFG.mode === 'training' ? [] : others.slice(CFG.teamSize - 1, 2 * CFG.teamSize - 1); // W-TRN: treino nao tem time vermelho humano — so bonecos
   }
-  const blueRoster = [playerHero, ...others.slice(0, CFG.teamSize - 1)];
-  const redRoster = CFG.mode === 'training' ? [] : others.slice(CFG.teamSize - 1, 2 * CFG.teamSize - 1); // W-TRN: treino nao tem time vermelho humano — so bonecos
 
   const spawnTeam = async (teamRoster, teamName, baseX, baseZ) => {
     const meshes = await Promise.all(teamRoster.map(h => loadCharacter3DModel(h.id)));
@@ -3377,7 +3715,6 @@ function createTsunadeUltRuptureMesh(radius = 5.5) {
                   buildExtractedVfxMeshGroup('common', 0x10b981, radius * 0.022, '1efc_brk01_01');
   if (rupture) {
     rupture.position.y = 0.05;
-    rupture.userData = { rotSpeed: new THREE.Vector3(0, 1.5, 0) };
     grp.add(rupture);
   }
 
@@ -3442,14 +3779,12 @@ function createOrochimaruDemonicBarrierMesh(radius = 5.5) {
   const serpents = buildExtractedVfxMeshGroup('1orc', 0x84cc16, radius * 0.024, '1orceff1_01');
   if (serpents) {
     serpents.position.set(0, 0.08, 0);
-    serpents.userData = { rotSpeed: new THREE.Vector3(0, 1.8, 0) };
     grp.add(serpents);
   }
   const serpents2 = buildExtractedVfxMeshGroup('1orc', 0xa855f7, radius * 0.020, '1orceff1_02') ||
                     buildExtractedVfxMeshGroup('1orc', 0x65a30d, radius * 0.020, '1orceff1_03');
   if (serpents2) {
     serpents2.position.set(0, 0.15, radius * 0.2);
-    serpents2.userData = { rotSpeed: new THREE.Vector3(0, -2.4, 0) };
     grp.add(serpents2);
   }
 
@@ -3664,6 +3999,7 @@ function dealDamage(attacker, target, amount, skillName) {
   const dmgRaw = Math.round(amount * mult * (1 + (attacker.level - 1) * 0.08));
   const dmg = Math.max(1, Math.round(dmgRaw * HERO_DMG_SCALE * ((HERO_STATS[target.heroId] || HERO_STATS.__d).dr))); // T5 escala global + P2 dano por heroi
   if (TRN.active && attacker.isPlayer && target !== attacker) TRN.recordHit(attacker, target, dmg, skillName); // W-TRN: medição de dano do treino
+  if (TRN.active && attacker.isPlayer && target !== attacker) TRN_FLOATT(target, dmg); // W-TRN: numero de dano flutuante
   target.hp = Math.max(0, target.hp - dmg);
 
   // PV3.3: haptics — levou dano (18ms) > acertou (12ms)
