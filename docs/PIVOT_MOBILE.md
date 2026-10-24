@@ -356,6 +356,28 @@ na vítima (`DmgS`/`DmgM`), KO (`DmgL` — gemido de queda), cast
 Probe `tools/probe_w5f2.py` **8/8** (oggs 200, voz da vítima posicionada,
 gate, defensivo, 0 console errors).
 
+### 8.6 W6 — Música de fundo + settings de áudio funcionais (2026-10-23)
+
+O APK tem o banco `bgm.awb` (84 MB, 45 trilhas HCA stereo 48 kHz com **loop
+points nativos e nomes por wave**) dentro do `adx2.awb` — `tools/list_bgm_tracks.py`
+inventaria tudo (`modeslct`, `charaslct`, `stage00-13`, `titleJP`, `staff`,
+`mini_win`...). Decodificadas: **`modeslct`** (loop 44,8 s — a autêntica de
+seleção de modo) pro lobby e **`stage00`** (loop 78,7 s) leve na batalha —
+`tools/extract_bgm_tracks.py` (vgmstream `-l 0` = 1 passada + `Audio.loop`
+no browser cobre a repetição) -> `public/assets/audio/music/*.ogg` (1,7 MB).
+
+`MUSIC` (game.js): `play('menu'|'battle')` com volume-base por contexto
+(menu 0,70 · batalha **0,38 — leve de propósito, não briga com SFX/vozes**)
+× `musicVol` do perfil; autoplay policy tratada com unlock no primeiro
+pointerdown/keydown. Hooks: boot (menu), `startMatch` (battle, L2003),
+`returnToLobby` (menu, L5020).
+
+**Settings FUNCIONAIS** no painel PREFERÊNCIAS (DOM aditivo): toggle
+`#pref-music` + slider `#pref-music-vol` (0-100) + slider `#pref-sfx-vol`
+(0-100) — aplicam LIVE (`MUSIC.applySettings()` / `AUTH_SFX.volume`) e
+persistem no perfil (`music`, `musicVol`, `sfxVol` no schema do
+loadProfileData). Probe `tools/probe_w6_music.py` **7/7**.
+
 Fora do escopo original das fases 8.2 (o escopo dizia "áudio permanece como
 está") — o usuário pediu explicitamente as **vozes originais do APK** no momento
 da batalha de cada ninja, **com volume obedecendo à distância** e os **sons

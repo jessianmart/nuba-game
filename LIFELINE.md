@@ -299,3 +299,20 @@ herói, com DmgS/M/L, AtkS/M/L, Combo, Awake por ninja.
 subsongs inline HCA) -> ffmpeg mono q2 -> decoded/voice/<hero>/.
 w5f2_voice_patcher 5 edições; probe_w5f2 8/8 com Math.random mockado
 (determinismo dos checks de dano em bots).
+
+### [2026-10-23] W6 — Música de fundo + settings funcionais
+**Agente:** human · **Provider:** none · **Model:** human
+
+**O quê:** trilhas autênticas do APK (`bgm.awb`, 45 faixas com loop nativo)
+no jogo — `modeslct` no lobby, `stage00` LEVE na batalha — e painel de
+PREFERÊNCIAS com toggle de música + sliders de volume (música e SFX)
+aplicando live e persistindo no perfil.
+
+**Por quê:** pedido direto do usuário pós-W5-F2 ("extrai musica de fundo e
+adiciona, nos menus, e uma de leve na batalha, com settings funcionais").
+Batalha "de leve" para não competir com SFX/vozes (0,38 vs 0,70 do menu).
+
+**Como:** TOC CPK do adx2.awb -> bgm.awb (AFS2) -> vgmstream -l 0 ->
+ogg q2; modulo MUSIC com unlock de autoplay (primeiro gesto); DOM aditivo
+pref-music/pref-music-vol/pref-sfx-vol; schema do perfil ganha
+music/musicVol/sfxVol; probe 7/7.

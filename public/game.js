@@ -283,6 +283,49 @@ const AUTH_SFX = {
 };
 window.AUTH_SFX = AUTH_SFX; // W1.1: validação E2E
 window.SKILL_SFX_MAP = SKILL_SFX_MAP;
+// W6: música de fundo autêntica (bgm.awb do APK — modeslct no lobby, stage00
+// leve na batalha). Settings FUNCIONAIS no painel PREFERÊNCIAS (toggle música,
+// volume música, volume SFX) persistidos no perfil. Autoplay policy: o play()
+// sem gesto é engolido; o unlock no primeiro pointerdown/keydown retoma.
+const MUSIC = {
+  el: null, track: null,
+  baseVol: { menu: 0.7, battle: 0.38 },
+  settings() {
+    try {
+      const d = loadProfileData();
+      return { on: d.music !== false, vol: d.musicVol != null ? d.musicVol : 0.55 };
+    } catch (e) { return { on: true, vol: 0.55 }; }
+  },
+  file(track) { return 'assets/audio/music/' + (track === 'battle' ? 'battle_stage00' : 'menu_modeslct') + '.ogg'; },
+  play(track) {
+    this.track = track;
+    const s = this.settings();
+    if (!s.on) { this.stop(); return false; }
+    if (!this.el) { this.el = new Audio(); this.el.loop = true; }
+    if (this.el.dataset.track !== track) { this.el.src = this.file(track); this.el.dataset.track = track; }
+    const base = this.baseVol[track] != null ? this.baseVol[track] : 0.6;
+    this.el.volume = Math.max(0, Math.min(1, base * s.vol));
+    const p = this.el.play(); if (p && p.catch) p.catch(function () {});
+    return true;
+  },
+  applySettings() {
+    const s = this.settings();
+    if (!s.on) { this.stop(); return; }
+    if (!this.track) return;
+    if (!this.el) { this.play(this.track); return; }
+    const base = this.baseVol[this.track] != null ? this.baseVol[this.track] : 0.6;
+    this.el.volume = Math.max(0, Math.min(1, base * s.vol));
+    if (this.el.paused) { const p = this.el.play(); if (p && p.catch) p.catch(function () {}); }
+  },
+  stop() { if (this.el) { try { this.el.pause(); } catch (e) {} } }
+};
+window.MUSIC = MUSIC;
+(function () { // W6: unlock da autoplay policy — retoma a música no 1º gesto
+  const unlock = () => { MUSIC.applySettings(); window.removeEventListener('pointerdown', unlock); window.removeEventListener('keydown', unlock); };
+  window.addEventListener('pointerdown', unlock);
+  window.addEventListener('keydown', unlock);
+})();
+MUSIC.play('menu'); // W6: trilha do lobby (modeslct)
 
 // W5-F2: vozes de batalha POR HERÓI — bancos PL_1XXX do APK (21 cues/ninja:
 // dano leve/médio/pesado, ataque leve/médio/ult, combo, despertar). Gate por
@@ -1438,7 +1481,7 @@ let collectionFilter = 'ALL';
 let matchRecorded = false;
 
 function loadProfileData() {
-  const fallback = { matches: 0, wins: 0, losses: 0, ties: 0, kills: 0, deaths: 0, assists: 0, history: [], arenas: [], sound: true, volume: 0.85, quality: 'high', juice: true };
+  const fallback = { matches: 0, wins: 0, losses: 0, ties: 0, kills: 0, deaths: 0, assists: 0, history: [], arenas: [], sound: true, volume: 0.85, quality: 'high', juice: true, music: true, musicVol: 0.55, sfxVol: 0.85 };
   try {
     const raw = localStorage.getItem(PROFILE_KEY);
     if (!raw) return fallback;
@@ -1691,6 +1734,14 @@ function renderProfilePage() {
   const sound = document.getElementById('pref-sound');
   if (sound) sound.checked = data.sound !== false;
   sfx.enabled = data.sound !== false;
+  const _pm = document.getElementById('pref-music'); // W6
+  if (_pm) _pm.checked = data.music !== false;
+  const _pmv = document.getElementById('pref-music-vol');
+  if (_pmv) _pmv.value = Math.round((data.musicVol != null ? data.musicVol : 0.55) * 100);
+  const _psv = document.getElementById('pref-sfx-vol');
+  if (_psv) _psv.value = Math.round((data.sfxVol != null ? data.sfxVol : 0.85) * 100);
+  AUTH_SFX.volume = data.sfxVol != null ? data.sfxVol : 0.85;
+  MUSIC.applySettings();
 
   let streak = 0;
   for (const m of data.history) {
@@ -1774,6 +1825,22 @@ function initLobbyNav() {
       if (prefSound.checked) { sfx.init(); sfx.clink(); }
     });
   }
+
+  const prefMusic = document.getElementById('pref-music'); // W6: settings funcionais
+  if (prefMusic) prefMusic.addEventListener('change', () => {
+    const d = loadProfileData(); d.music = prefMusic.checked; saveProfileData(d);
+    MUSIC.applySettings();
+  });
+  const prefMusicVol = document.getElementById('pref-music-vol');
+  if (prefMusicVol) prefMusicVol.addEventListener('input', () => {
+    const d = loadProfileData(); d.musicVol = prefMusicVol.value / 100; saveProfileData(d);
+    MUSIC.applySettings();
+  });
+  const prefSfxVol = document.getElementById('pref-sfx-vol');
+  if (prefSfxVol) prefSfxVol.addEventListener('input', () => {
+    const d = loadProfileData(); d.sfxVol = prefSfxVol.value / 100; saveProfileData(d);
+    AUTH_SFX.volume = d.sfxVol;
+  });
 
   const btnReset = document.getElementById('btn-profile-reset');
   if (btnReset) {
@@ -1933,6 +2000,7 @@ async function startMatch(configId) {
   sfx.init();
   matchActive = true;
   matchEnding = false; // M5.2: nova partida libera a guarda do fim (fim natural nao pode matar partidas futuras)
+  MUSIC.play('battle'); // W6: trilha leve de batalha (stage00)
   scoreBlue = 0;
   scoreRed = 0;
   matchRecorded = false;
@@ -4949,6 +5017,7 @@ function returnToLobby() {
   arenaGroup.visible = false;
   lobbyPedestalGroup.visible = true;
   setLobbyPage('play');
+  MUSIC.play('menu'); // W6: volta a trilha do lobby
 }
 
 function toggleCameraMode() {

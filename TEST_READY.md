@@ -545,6 +545,16 @@ ode --check do game.js (como .mjs) -> OK.
 
 
 ### W5 — SFX AUTÊNTICOS DO APK POSICIONADOS (vozes no momento da batalha + volume por distância) — validado 2026-10-22
+### W6 — MÚSICA DE FUNDO + SETTINGS FUNCIONAIS — validado 2026-10-23
+- `python tools/probe_w6_music.py` -> **7/7** (C1 2 trilhas HEAD 200; C2 boot
+  menu vol 0.385=0.70x0.55 loop=true; C3 battle vol 0.209=0.38x0.55 LEVE;
+  C4 toggle off->paused; C5 sliders live musicVol 100 -> 0.38 e sfxVol 20 ->
+  AUTH_SFX.volume 0.2; C6 persistência em `nuba.profile.v1`
+  {music, musicVol 1.0, sfxVol 0.2}; C7 zero console errors).
+- C6 do probe lê `localStorage` DIRETO — `loadProfileData` é module-scoped
+  (não está em window; lição §6.13 da skill).
+- Trilhas: `bgm.awb` (84 MB, 45 faixas com loop nativo) extraído de
+  `adx2.awb` via TOC CPK; decode `vgmstream -l 0` + ffmpeg q2 stereo.
 ### W5-F2 — VOZES DE BATALHA POR HERÓI (PL_1XXX) — validado 2026-10-23
 - `python tools/probe_w5f2.py` -> **8/8** (C1 62 paths HEAD 200; C2 dano leve
   -> `voice/<hero>/S_PL_DmgS*` na vítima posicionado; C3 pesado -> DmgM+ground_hit;

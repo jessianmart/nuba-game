@@ -13,7 +13,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="NUBA" />
-  <link rel="stylesheet" href="styles.css?v=35" />
+  <link rel="stylesheet" href="styles.css?v=36" />
   <script type="importmap">
     {
       "imports": {
@@ -289,6 +289,17 @@
             <div class="pref-row">
               <div><strong>Efeitos sonoros</strong><span>Impactos, jutsus e ougi</span></div>
               <label class="pref-switch"><input type="checkbox" id="pref-sound" checked /><span></span></label>
+            </div>
+            <div class="pref-row">
+              <div><strong>Música</strong><span>Lobby e batalha — volume</span></div>
+              <div class="pref-audio">
+                <input type="range" id="pref-music-vol" min="0" max="100" value="55" aria-label="Volume da música" />
+                <label class="pref-switch"><input type="checkbox" id="pref-music" checked /><span></span></label>
+              </div>
+            </div>
+            <div class="pref-row">
+              <div><strong>Volume de efeitos</strong><span>Impactos, jutsus e vozes</span></div>
+              <input type="range" id="pref-sfx-vol" min="0" max="100" value="85" aria-label="Volume dos efeitos" />
             </div>
             <div class="pref-row">
               <div><strong>Progresso local</strong><span>Histórico de partidas e vitórias</span></div>
@@ -724,6 +735,6 @@
     </div>
 
   <script src="vendor/gsap.min.js"></script>
-  <script type="module" src="game.js?v=41"></script>
+  <script type="module" src="game.js?v=42"></script>
 </body>
 </html>

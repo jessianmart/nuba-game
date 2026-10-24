@@ -4871,6 +4871,9 @@ body.touch button, body.touch .nav-tab { touch-action: manipulation; }
 #mode-picker .mode-chip.selected small { color: #fdba74; }
 #mode-picker .mode-chip:disabled { opacity: 0.45; cursor: default; }
 
+/* W6: settings de audio funcionais (musica + volume SFX) */
+.pref-audio { display: flex; align-items: center; gap: 10px; }
+.pref-audio input[type="range"], .pref-row input[type="range"] { accent-color: #f97316; cursor: pointer; width: 110px; }
 /* ==== PV1.3/PV1.4 TOUCH CONTROLS (docs/PIVOT_MOBILE.md §2.4) ==== */
 /* FIX pv1b2: HUD overlays usam pointer-events:none (pass-through pro canvas) — heranca
    matava a zona do joystick. A camada de INPUT touch reativa explicitamente.
