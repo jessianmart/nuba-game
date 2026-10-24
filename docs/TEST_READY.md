@@ -314,3 +314,59 @@ Cine: Y nos ults do player (1tnd, 1orc, 1nrt), n nos bots (por design).
 Pixels de efeito nos 20 frames: ults 4.5k-10.6k px (1gar Shukaku 10.596;
 1nej kaiten azul/ciano; 1tnd 3.647 ciano), icônicos 1ssk q Chidori 4.743,
 trails 1hnt w 6.436 / 1orc w 4.661.
+
+## 25. W-REAL — fakes removidos, corpos 3D reais do APK em 100% dos efeitos de skill (2026-10-23)
+
+Diagnostico: os 14 create*Mesh eram hibridos — corpo extraido miniaturizado sob
+2-4 camadas procedurais (Sphere/Torus/Cone/Cylinder/Dodecahedron) que ofuscavam
+o formato autentico. Acao:
+- `tools/extract_skill_bodies.py`: +32 corpos NDP3 com textura NTP3 do mesmo
+  xfbin (1ssveff1 chamas 12x / 1szneff chak01 330v chidori / 1skneff fist01
+  368v + leg01 769v Okasho / 1kmmeff1 blt01 170v raikiri-kirin / 1nrveff1
+  chakra01-03 460-495v + sonic01_air 145-304v / 1jryeff01-03). Merge cirurgico
+  idempotente, allow_nan=False. Fallback de textura externa (1skn/1jry) via
+  common chakra05.
+- `tools/wreal_rewrite.py`: rewrite cirurgico dos 14 creates (10.163 chars de
+  procedural removidos) — cada um agora so corpos extraidos calibrados
+  (extent = targetScale x 250: rasengan 2,75u na mao, punho Okasho 7u,
+  fire03 5,25u, chidori 2,85u, bolt kirin 70u) + anims autenticos
+  (rotSpeed/uvScroll/jitter). Zero geometria inventada nos efeitos de jutsu.
+- Amaterasu: corpos de chama do 1ssv tintados escuros (0x7f1d1d/0x991b1b)
+  sobre billboards 1itc — chamas negras com forma em blending aditivo.
+- Sons: SKILL_SFX_MAP 12x4 reais do APK (rasen/chidori/goukakyu/raikiri/
+  kaiten/sabaku/senpu/oogi...) + vozes PL por heroi (W5-F2), chamada no
+  executeSkill.
+
+Validacao: `wreal_visual_probe.py` 13 casts iconicos camera free de perto,
+0 console errors; debug do rasengan: 2 grupos de corpo (3,65u + 2,72u)
+exatamente na posicao da mao (bone 13), textura viva, cor tinge.
+Pixels cor-alvo: sand hand 79k / amaterasu 37k / tornado 27k / okasho 4,2k /
+chidori 3,9k. Bateria: verify + suite + whs + wvis-full 48 celulas (ver abaixo).
+
+## 26. W-VFX-SEQ — emissores reais por fase do cast + lifetimes autenticos (2026-10-23)
+
+Gap de percepcao: o Storm emite partículas em FASES ao longo da coreografia
+(prep -> ativo -> impacto); nos emiamos tudo no instante do cast. Forense:
+os Anms de VFX dos eff1 sao os LIFETIMES reais (chakra00 31f; chakra00l 101f
+loop = rasengan girando; kwr01 61f loop) — parse estendido revelou canais
+c0/c1/c2/c3 (trans/rot/scale/alpha const por efeito) e nomenclatura
+semantica dos chunks = timeline (sht=disparo, blt=trajetoria, hit=impacto,
+end=dissipacao, *l=loop).
+
+- `tools/extract_vfx_lifetimes.py`: +58 lifetimes (frames/loop/fps) de
+  1nrt/1ssk/1kks/1gar/1jry no skill_vfx.json (vfx_anims). 7 herois tem eff1
+  sem Anm (estaticos) — default sensato.
+- `tools/wphase_patch.py`: SKILL_VFX_PHASES (12 herois; emissores REAIS com
+  at=fracao do cast, s=extent em unidades, fd/dx offsets de facing, tinta)
+  + motor no tick do animTimer (PAUSA no hitstop como o Storm) — spawn por
+  frac do cast, limpeza em cancel.
+- Entradas: 1nrt w = puffs de clones (smk01 x2 + ptc01), q = ondas do dash
+  (sonic01_air02), r = odoama chakra03 + anel ring01; 1skr q = perna de
+  chakra (leg01 769v); 1roc q/w = folhas reais (leaf_flurry); 1gar q/w =
+  2a onda + jato; 1kks q = burst raikiri, w = jato wtr03; 1ssk q = shock01;
+  1orc w = slash; 1tnd r = terremoto brk.
+
+Validacao (`wphase_probe.py`): pending consumido nos casts, 0 console
+errors; pixels de fase: puffs brancos 21.620 px @meio -> 632 px @fim
+(nascem e morrem como no Storm); folhas 19.684 px; 2a onda areia 6.748;
+odoama 5.972. Bateria: verify + suite + whs + wvis-full 48 celulas.
