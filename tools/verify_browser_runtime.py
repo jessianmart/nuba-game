@@ -751,7 +751,7 @@ def _assert_cache_busters():
     numero re-servido = clientes com cache nao baixam o bundle novo)."""
     import io
     import re as _re
-    floors = {"game.js": 44, "styles.css": 38}
+    floors = {"game.js": 55, "styles.css": 38}
     html = open("public/index.html", encoding="utf-8", errors="replace").read()
     failed = []
     for name, floor in floors.items():
