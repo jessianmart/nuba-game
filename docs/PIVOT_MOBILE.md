@@ -439,3 +439,23 @@ corretos de combate, sem nada genérico**. Entregue em W5:
 3. Patchers re-ancorados (dev paralelo mexe nos mesmos arquivos): .bak_pv* + re-leitura antes de cada patch.
 4. Telas 5e2 offline: nunca rodar a suite com outro headless Edge concorrente (regra de CPU).
 
+
+### 8.8 W8 — Mix equalizado (voz / skills / musica)
+Medicao real RMS (ffmpeg astats): musica -14.0dB | skills -16.6dB (picos -9.2dB) |
+voz -15.8dB. Causa raiz do desequilibrio: boost `1.4x` no falloff do playAt saturava
+voz/tombo/cast NO MESMO CLAMP (play faz `master 0.85 x min(falloff*boost*cue, 1)`).
+Mix novo (audio eff = master 0.85 x cue):
+| canal | cue | eff | papel |
+|---|---|---|---|
+| voz (unitVoice) | 0.92 | 0.78 | referencia do mix (gated 1.7s) |
+| tombo (ground_hit) | 0.90 | 0.765 | impacto dramatico empatado a voz |
+| cast skill | 0.80 | 0.68 | 1.8dB abaixo |
+| melee soco/chute | 0.80 | 0.68 | 1.8dB abaixo (antes 0.62) |
+| hit_s | 0.70 | 0.595 | 2.9dB abaixo |
+| kunai | 0.70 | 0.595 | agudo, percebido como alto |
+| sword | 0.65 | 0.5525 | 3.2dB abaixo (antes 0.45/0.6) |
+| musica menu | baseVol 0.70 | 0.385 x musicVol | ~12dB abaixo da voz |
+| musica battle | baseVol 0.55 | 0.3025 x musicVol | ~8dB abaixo (audivel, "de leve") |
+Falloff do playAt: boost `1.4 -> 1.0` (headroom real pra degraus diferenciaveis).
+Nota de runtime: playAt usa `cam.position` (camera THREE) desde W-REAL do pipeline paralelo.
+

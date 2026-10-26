@@ -55,6 +55,18 @@ orchestrator/sandbox, NOT a workflow engine, does NOT replace git, is NOT an exe
 **Body**:
 Meta do usuário: entregar tudo validado e publicar GitHub+Vercel inicialmente. Executado: repo github.com/jessianmart/nuba-game (master, 1858+ arquivos, ~541MB assets, sem files >100MB); deploy https://goofy-mendeleev.vercel.app com .vercelignore enxuto (541MB->~150MB, exclui ui/raw, ui/_sheets, models/puppets, banks de audio brutos). Validação: tools/prod_proxy.py (reverse proxy localhost:8080 -> URL Vercel) permitiu rodar verify_browser_runtime.py + test_e2e_suite.py INALTERADOS contra bytes de produção: 38/38, zero console errors. Bugs de deploy corrigidos pela bateria: (1) public/assets/arena é symlink -> stage/arena e o uploader Vercel não segue symlinks (50 texturas 404) — fix via rewrites /assets/arena/:path* -> /assets/stage/arena/:path*; (2) regra ampla de Cache-Control cacheava 404s na edge — removida; (3) .vercel/build-output stale entre deploys — rm antes de redeploy. W2.1 discovery (Temari 1tmr model+anims+vfx extraídos e validados estruturalmente) permanece em w21_out/ aguardando integração serial. Próximos passos: W1.2 Settings, W1.3 Tutorial, integração Temari, fan-out roster.
 
+- **W8 (equalizacao de mix)**: medicao RMS astats — musica -14.0dB, skills -16.6dB (picos
+  -9.2dB), voz -15.8dB. Causa raiz do desequilibrio: boost 1.4x no falloff do playAt saturava
+  voz/tombo/cast NO MESMO CLAMP (`master 0.85 x min(falloff*boost*cue,1)`), sem degrau
+  perceptivel. Solucao: boost 1.4->1.0 + cue vols escalonados (voz 0.92 referencia, tombo 0.9,
+  cast/melee 0.8, hit/kunai 0.7, sword 0.65) + musica battle 0.38->0.55 (menu mantem 0.70).
+  Falloff por cam.position (THREE camera) desde W-REAL do pipeline paralelo — probe mocka
+  `{position:{x,z}}`. Probe 5/5 (voz 0.92 e skill 0.9 sem clamp), suite 51/51. Verify vermelho
+  so por 404 combo_digit_5..9.png do HUD MOBA do paralelo (nao e do mix).
+**Body**:
+Medicao guia equalizacao (nao chute): ffmpeg astats RMS dB por canal antes de calibrar ganhos;
+master 0.85 multiplica tudo (slider do perfil escala proporcional, mix relativo preservado).
+
 <!-- lifeline:end -->
 
 ### #0002 — 2026-10-21T13:44:27.356955+00:00 — decision
@@ -169,171 +181,50 @@ ACHADO QUE MUDOU O ALVO: instrumentando o jogo com window.__ARENA_LOADED (asset 
 
 <!-- lifeline:end -->
 
-### #0009 — 2026-10-22T13:20:08.696769+00:00 — decision
+### #0009 — 2026-10-24T17:43:38.061076+00:00 — decision
 
 - **author**: unknown
 - **agent**: human
 - **provider**: none
 - **model**: human
 - **kind**: decision
-- **summary**: Deploy PV2+PV-B em producao validado (Tiers 1-4 verdes); T5 novo dos agentes 7/9
+- **summary**: W-MENU: tela-titulo + draft MOBA mobile (pick/lock/reveal) live
 - **parents**: 647fc499bffafa09c70dd87915e98c2dde857b7de76ad71d84566e84ee11c456
-- **id**: fe070072ec2d8fae837d4c71805a37397204c8a8f8e277728123efbdb3e3c371
+- **id**: 64eae7f3fbdc4af747a142cf3bc0e78b8d613a818b9ee893f4a32fdd6c0a52bb
 
 **Body**:
-Deploy 433d8d7 -> goofy-mendeleev.vercel.app (mapMobile sd03b + roster 12 + 450 webp + gzip). Validacao prod: verify EXIT 0 com Assets Sanity {vfxKeys 11, roster 12, anim 12}; suite Tiers 1-4 100% verdes (23/23+5/5+4/4+6/6), 0 console errors. Tier 5 (mobile, +250 linhas adicionadas HOJE pelos agentes, nao-commitado): 7/9 — falhas T5_M03 (le __matchState.mode, handle a frente do snapshot atual) e T5_M09 (clearUserAgentOverride), ambas em teste novo paralelo, nao regressao do deploy. Primeira run da suite prod morreu porque o prod_proxy caiu (lancado sem log; relancado com log — 2a run fluiu ate o fim, proxy vivo, ConnectionReset 10054 benignos). Licao: proxy sempre com redirect de log; suite via proxy depende do proxy vivo — cascata de FAILs vazios = proxy morto, nao bug do jogo. Dev server local restaurado com gzip (PV-B.5).
+Pedido: loop de jogo completo no padrao dos MOBAs mobile. Referencias pesquisadas (Wild Rift, MLBB/HoK, DOTA2/LoL champ select): pool pequena -> sem bans; velocidade > estrategia; lock e timer em destaque; board unico sem scroll. Entregue: (1) #title-screen com logo NUBA, sol radial, particulas de chakra, botao TOCAR PARA INICIAR pulsando — boot no titulo, clique/Enter -> Home; (2) #draft-screen com grid 3 colunas, board de 12 cards (padrao DOTA2), filtros por classe, timer 20s com auto-lock e tick <5s, preview do heroi no pedestal 3D, bots que pensam (0,4-2,2s, sem heroi repetido), revelacao dos rivais um a um + badge VS + blackout; (3) hand-off startMatch(configId, draft) com assinatura retrocompativel (treino/BR sem draft). Conflito resolvido: agente paralelo commitou boot=lobby (2e7f7b2) — revertido, o pedido do usuario vence. Bateria: verify + suite 49/49 (novos T4_S07/T4_S08) + W-HS + 48 celulas + probes de titulo/draft/layout, 0 console errors. Commit 2dcf79a pushed, live game.js?v=46. Plano canonico em docs/PLAN_MENU_DRAFT.md.
 
 <!-- lifeline:end -->
 
-### #0010 — 2026-10-22T13:56:32.960213+00:00 — decision
+### #0010 — 2026-10-24T19:27:31.559110+00:00 — decision
 
 - **author**: unknown
 - **agent**: human
 - **provider**: none
 - **model**: human
 - **kind**: decision
-- **summary**: PV1.6+PV2.6 — Tier 5 E2E mobile formal na suite canonica (38->47)
-- **parents**: fe070072ec2d8fae837d4c71805a37397204c8a8f8e277728123efbdb3e3c371
-- **id**: a7f8e013c60be8a047c2c0e0d7937d5e09b3f05005f3d3b41d7e38e8317b654b
+- **summary**: Sync front: deploy defasado recuperado (outline+trails v47) — local==live
+- **parents**: 64eae7f3fbdc4af747a142cf3bc0e78b8d613a818b9ee893f4a32fdd6c0a52bb
+- **id**: f4b8a2b1f3ac087d179a1da90b1a8523bba242579d3366c7174d73a7033c2600
 
 **Body**:
-Fechada a pendencia formal do pivot: os testes mobile deixaram de ser so probes ad-hoc e entraram NA SUITE canonica como Tier 5 (9 testes, M01-M09), com toque REAL via Input.dispatchTouchEvent e emulacao iPhone 844x390 verificada ANTES de navegar (o setUserAgentOverride pode chegar atrasado ao processo e bootar com UA antigo — race medida na fase PV3.2; a suporte agora espera navigator.userAgent conter iPhone antes do Page.navigate). Cobertura: boot mobile+governor, arena variante .mobile.json in-suite, 3v3 (6 units/3 retratos/META 15/cluster), joystick real (vetor INPUT + movimento + reset), ATK hold, tap Q + espelho de CD #cdt-q, chakra hold, Realeza na Vila mobile (zona 65->6, 12 baus, sa00z.mobile.json) e rotate overlay + restauracao desktop no fim. Bateria: 47/47 + verify 0 erros (decima verde). Tres armadilhas CDP descobertas com diag reproduzivel e registradas na skill: (1) returnByValue DESCARTA valores undefined — ler __matchState.mode (campo inexistente) vira KeyError no Python; as chaves reais sao time/br/overtime/suddenDeath/blue/red e o discriminador de modo DM e br===null; (2) startMatch br_vila em MOBILE demora ~32s vs 8.6s desktop e estoura o timeout CDP de 30s com TimeoutError de mensagem VAZIA (FAIL sem texto) — helper _t5_eval_slow(90s); (3) Emulation.clearUserAgentOverride NAO propaga no headless — restaurar via setUserAgentOverride desktop + setDeviceMetricsOverride, nunca via clear. Aprendizado geral: FAIL com mensagem vazia em teste async = suspeitar de TimeoutError de send(); e todo campo JS lido via CDP deve ter fallback explicito porque undefined some do JSON.
+Diagnostico do desalinhamento: o DEPLOY estava correto (live==HEAD) mas o WORKING TREE tinha 132 linhas a mais nao commitadas (sessao paralela: outline anime cel-shaded inverted-hull + sombra de contato 1efc_shadow02 + SKILL_TRAIL_MAP 12 herois x q/atk/w com 1efc_trl01) — por isso o local via o codigo novo e o Vercel servia o antigo. Passos: 1) confirmar 1 branch / 45+ commits / zero commits orfaos / zero stashes (todas as sessoes ja estavam em origin/master); 2) hash local vs live por arquivo: index/styles/json IGUAIS, game.js DIVERGIA; 3) esperar o arquivo estabilizar (mtime 16:04:25, 100s sem escrita) antes de commitar; 4) servidor local 8080 estava MORTO (ERR_CONNECTION_REFUSED) — religado; 5) bateria: verify+suite 49/49+W-HS+wvis 48 celulas+wreal 13 casts, 0 console errors (uma falha de suite foi flake de boot com carga, verde na re-run); 6) commit 4e08dc3 + push; 7) deploy verificado por hash: index/game.js/styles.css/skill_vfx.json 100% iguais local==live, index serve game.js?v=47. Regra: nunca commitar arquivo que outra sessao esta escrevendo (mtime/hash estavel obrigatorio).
 
 <!-- lifeline:end -->
 
-### #0011 — 2026-10-22T21:47:22.242811+00:00 — decision
+### #0011 — 2026-10-24T22:06:37.479182+00:00 — decision
 
 - **author**: unknown
 - **agent**: human
 - **provider**: none
 - **model**: human
 - **kind**: decision
-- **summary**: W-ORC + W-VIS-ALL: VFX autenticos do APK em todas as skills dos 12 herois
-- **parents**: a7f8e013c60be8a047c2c0e0d7937d5e09b3f05005f3d3b41d7e38e8317b654b
-- **id**: d131a4dc9830a1f4d69a8fb504724364226819b72c50500594c10a0ec18e781e
+- **summary**: W-PROG fase 2 publicada: progressao real (XP/nivel/RYO/missoes diarias) — commit 2e4e8fe, v49
+- **parents**: f4b8a2b1f3ac087d179a1da90b1a8523bba242579d3366c7174d73a7033c2600
+- **id**: d4379f3e2855f90e0457fbcd5cfa5385328ee8c1443145a455df4fc4cf49cdc2
 
 **Body**:
-Causa raiz do gap: ROSTER do pipeline extract tinha so 10 herois (1tnd/1orc fora) e escala fixa radius*0.022 sobre bbox raw 17-472u. Fix: extrator dedicado 1orceff1 (3 modelos + textura, merge cirurgico allow_nan=False), normalizacao de tamanho no buildExtractedVfxMeshGroup (extent ~ targetScale*250u), multiplicador 0.006, binds de mao em chidori/raikiri/lion/chou_rasengan. Alinhamento 100% analitico (centroid + bbox + facing) — Blender nao foi necessario; probes runtime validam antes de patchear. Commit 2ea4267, suite 47/47 + verify + smoke 10/10, 0 console errors. Deploy verificado: game.js?v=37 + skill_vfx.json 12 chaves live.
+Fase 2 do plano do menu (pedido 'segue'): a page-perfil tinha UI de progressao com valores HARDCODED (nivel 12, xp 1240, 12.450 RYO) — substituida por dados reais persistidos no perfil local nuba.profile.v1. Recompensas por partida (100+60win+15/abate XP; 25+10win+2/abate RYO) aplicadas no recordMatchResult via progApplyMatch; niveis 800+400(lvl-1); 3 missoes diarias de pool de 5 via PRNG deterministico por data (mesma lista o dia todo, virada renova e zera); heroUse define ninja favorito; contador de Ougi no cast real de R. UI: renderProgressUI atualiza perfil + header do lobby + painel novo #profile-missions (kanji 戦勝討奥忍) — aditivo, nenhum ID removido (contrato DOM). Licoes: (1) comentario Python '#' vazado de patcher para JS da SyntaxError no Edge enquanto node --check PASSA — validar JS gerado por patcher com Runtime.compileScript no browser (da lineNumber exata); (2) NUNCA editar public/ com bateria em voo — o boot da suite fez fetch do game.js durante minha reescrita e quebrou S09/S10 falsamente (re-run com disco estavel: 51/51); (3) testes que mutam estado de reload-dependent APIs (progDailyRefresh recarrega do storage a cada chamada) devem persistir a mutacao com localStorage.setItem ANTES do segundo refresh. Validacao: wprog_probe 18/18, suite 51/51 (S09/S10 novos), bateria verify+whs+wvis 48 celulas+wreal 13 casts 0 errors. Commit 2e4e8fe, push, deploy verificado por hash (index/game.js v49/styles IGUAL local==live).
 
 <!-- lifeline:end -->
-
-### #0012 — 2026-10-22T22:34:00.296289+00:00 — decision
-
-- **author**: unknown
-- **agent**: human
-- **provider**: none
-- **model**: human
-- **kind**: decision
-- **summary**: W-SKL: coreografias FK completas por skill executadas a 60fps
-- **parents**: d131a4dc9830a1f4d69a8fb504724364226819b72c50500594c10a0ec18e781e
-- **id**: 9631e1aefd9f49cc227b058b4ec4f92a4f5bdb32482a4a943910d77deda078db
-
-**Body**:
-Causa raiz do 'falta o formato da execucao': clips de skill vinham com concatenacao de segs misturados (cha10+cha11+cuts) truncados em ~32 frames com canais identity congelados, tocados a numFrames/24 (Anm do Storm é 60fps) e percorridos a 56% da janela. Fix: extract_skill_choreo.py — clip LIMPO (Anm unico) e COMPLETO (frames reais) por slot: Q=cha10, W=cha20, R=cha14 ou fallback Anm pesado de corpo (1orc cha24 167f, 1hnt cha21, 1tnd cha24, 1orc cha11 146f c/ camera; 1gar rejeitado — cha24 dele é anim da areia <12 canais, Gaara parado é fiel). game.js: fps-aware duration (clip.fps||24) — zero regressao pros clips de locomocao. 39 clips, animations.json v10. Commit 943611d, bateria verde (verify+47/47+smoke), deploy verificado. Nota: frames congelados nos canais 7-19 eram artefato do bake concatenado, nao do Anm original — os Anm de skill tem 82-105 canais completos.
-
-<!-- lifeline:end -->
-
-### #0013 — 2026-10-23T12:09:48.787527+00:00 — decision
-
-- **author**: unknown
-- **agent**: human
-- **provider**: none
-- **model**: human
-- **kind**: decision
-- **summary**: W-TRAIL + janelas de ult em velocidade real (W-SKL+)
-- **parents**: 9631e1aefd9f49cc227b058b4ec4f92a4f5bdb32482a4a943910d77deda078db
-- **id**: d4051c954322bc7a627eeb8f7309464cac3b431af716eeaef2287c44c7bae8ec
-
-**Body**:
-Trail chunk do APK é referência de bone (ribbon procedural no engine Storm): ribbon de 14 pts na worldPos da mão, fade+largura decrescente, additive, congela no juice. Mapeado fiel aos chunks: 1hnt W Twin Lion (9+13 roxo), 1orc W Kusanagi (13 prateado). Janela do ult agora casada ao clip real: clamp(60fps-frames, 1.15, 1.8) — 1skr/1roc/1orc 2.4-2.8s agora 1.8s (~1.4x em vez de 2.4x); 1nrt/1kks/1nej/1jry mantêm 1.15. Câmera cinematográfica descartada de propósito: cutscene quebraria o fluxo MOBA (cuts do Storm são de single-player). Commit 02a2702, bateria verde, deploy verificado.
-
-<!-- lifeline:end -->
-
-### #0014 — 2026-10-23T12:54:19.537061+00:00 — decision
-
-- **author**: unknown
-- **agent**: human
-- **provider**: none
-- **model**: human
-- **kind**: decision
-- **summary**: W-CINE: cut cinematico do ult + fix anti-race T4_S04
-- **parents**: d4051c954322bc7a627eeb8f7309464cac3b431af716eeaef2287c44c7bae8ec
-- **id**: 15c25097a7fa1c9fb01158fa0b9338082eb79069bfa409f0944910be1104fd29
-
-**Body**:
-Camera chunk do APK é stub de 8B (keyframes em pacotes de cutscene fora do repo) — cut procedural fiel ao sabor Storm: aproximação baixa atrás do caster, tele punch 6 graus via escritor único de FOV (delta dentro do updateJuice, autorrestaura), blend 0-24%/hold-62%/decai, janela = animDuration do ult, congela no hitstop, player-only com coreografia fps=60 (1ssk/1itc fora, fiel). Probe: camY 38->3.06, fov 48->42, retorno limpo. Suite: T4_S04 flake por cast lock vazando do S03 (rerun 47/47 confirmou) — fix anti-race igual ao S05 (reset animTimer/state/awakenedTimer). Commit 89fe988, deploy verificado.
-
-<!-- lifeline:end -->
-
-### #0015 — 2026-10-23T14:20:02.689252+00:00 — checkpoint
-
-- **author**: unknown
-- **agent**: human
-- **provider**: none
-- **model**: human
-- **kind**: checkpoint
-- **summary**: W-VIS-FULL: validacao visual 48/48 (12 herois x 4 slots) toda verde
-- **parents**: 15c25097a7fa1c9fb01158fa0b9338082eb79069bfa409f0944910be1104fd29
-- **id**: 69e0919617e1cc7d82e1f0a99e910da1ac3b1c0130244f61c1e2dfc75e6e99d8
-
-**Body**:
-Probe em 3 etapas: bots 5v5 (10 herois), lobby player (1tnd/1orc/1nrt), shot-analyze por pixels. Toda celula: VFX extraido vivo (kids>=1, grupos Box3), coreografia FK ativa (quats bone13), 0 console errors. Trails 84 verts, cine Y nos ults do player. 2 rig negativos eram sutis/late: 1nrt w selo de mao sob 42 VFX; 1skr r windup de 151f move so apos ~0.5s (confirmado amostra tardia). Pixels nos 20 frames: ults 4.5k-10.6k (Shukaku top), Chidori 4.743, trails 6.4k/4.7k. Commit 9d70817. Validacao completa da linha de execucao autentica.
-
-<!-- lifeline:end -->
-
-### [2026-10-23] W5-F2 — Vozes de batalha por herói: bancos PL_1XXX do APK
-**Agente:** human · **Provider:** none · **Model:** human
-
-**O quê:** cada ninja do Storm tem um voice bank próprio (`PL_<nexo>.xfbin`)
-no `sound.awb` com 78 cues de batalha. Decodificadas 21 cues × 12 heróis do
-Nuba (252 oggs, 2,6 MB) e ligadas nos momentos de combate via `unitVoice`
-(gate por unidade 1,7 s, bots esparsos, falloff por distância).
-
-**Por quê:** o pedido do usuário era voz original no momento de cada
-hit/jutsu/morte *de cada herói* — os 78 grunts `S_dXX_rear` do battle ACB
-eram compartilhados (sem mapa char->dXX em data algum; scan do APK inteiro
-deu 0 hits). Os PL_1XXX eliminam a necessidade do mapa: o arquivo É por
-herói, com DmgS/M/L, AtkS/M/L, Combo, Awake por ninja.
-
-**Como:** extract_pl_banks (ACB embutido no xfbin) -> vgmstream (56
-subsongs inline HCA) -> ffmpeg mono q2 -> decoded/voice/<hero>/.
-w5f2_voice_patcher 5 edições; probe_w5f2 8/8 com Math.random mockado
-(determinismo dos checks de dano em bots).
-
-### [2026-10-23] W6 — Música de fundo + settings funcionais
-**Agente:** human · **Provider:** none · **Model:** human
-
-**O quê:** trilhas autênticas do APK (`bgm.awb`, 45 faixas com loop nativo)
-no jogo — `modeslct` no lobby, `stage00` LEVE na batalha — e painel de
-PREFERÊNCIAS com toggle de música + sliders de volume (música e SFX)
-aplicando live e persistindo no perfil.
-
-**Por quê:** pedido direto do usuário pós-W5-F2 ("extrai musica de fundo e
-adiciona, nos menus, e uma de leve na batalha, com settings funcionais").
-Batalha "de leve" para não competir com SFX/vozes (0,38 vs 0,70 do menu).
-
-**Como:** TOC CPK do adx2.awb -> bgm.awb (AFS2) -> vgmstream -l 0 ->
-ogg q2; modulo MUSIC com unlock de autoplay (primeiro gesto); DOM aditivo
-pref-music/pref-music-vol/pref-sfx-vol; schema do perfil ganha
-music/musicVol/sfxVol; probe 7/7.
-
-### [2026-10-23] W7 — HUDs com estética shadcn + Framer Motion vanilla
-**Agente:** human · **Provider:** none · **Model:** human
-
-**O quê:** os informativos de SEQUÊNCIA e ULT saem do meio da tela —
-streak vira toast compacto no canto sup. direito, ult vira pill discreta
-top 28% — ambos com blur, border fino e spring física do Framer Motion.
-
-**Por quê:** pedido do usuário ("pode usar um shadcn, e framer motion,
-para huds da batalha? aliviar o peso dos informativos no meio da tela,
-de sequencia, e ulti, com excelência, busque pesquisa e referências").
-Pesquisa: pattern Sonner (toast no canto, não-bloqueante) + motion.dev
-(spring física). Decisão: shadcn/ui literal (React+Tailwind+bundler)
-inviável no runtime vanilla com DOM inviolável — tokens/pattern aplicados
-no CSS puro; Motion vanilla vendored entra de verdade.
-
-**Como:** bundle framer-motion@12/dom/+esm (141KB, imports jsdelivr
-rescritos local) + w7Spring helper com fallback GSAP; CSS compacto
-(blur 10-12px, border 1px rgba white/9-10%, radius 12-16px); flare
-infinito OFF; keyframes streakPop OFF (translateX(-50%) voaria no
-canto); probe 6/6 desktop+mobile com screenshots.

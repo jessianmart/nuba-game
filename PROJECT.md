@@ -159,3 +159,10 @@ NUBA is a 5v5 3D WebGL MOBA Deathmatch built on Three.js (v0.169.0), Web Audio A
     skin e auto-aim, chakra hold, câmera thirdperson auto, gate de atk fantasma; smoke Tier 5
     CDP landscape PASS (player anda, jutsu executa); 3v3 default já ativo no lobby (PV1.1/PV1.2
     dos agentes); desktop intacto.
+
+
+39. **W8 Mix equalizado (RMS medido)** — voz 0.92 / skills 0.65-0.9 com headroom real
+    (boost do falloff 1.4->1.0 elimina o clamp que empatava voz/tombo/cast no topo);
+    musica battle 0.38->0.55 baseVol (eff 0.3025, ~8dB abaixo da voz). Medicao:
+    musica -14dB, skills -16.6dB picos -9.2dB, voz -15.8dB. Probe 5/5, suite 51/51.
+

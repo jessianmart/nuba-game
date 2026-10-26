@@ -273,7 +273,7 @@ const AUTH_SFX = {
     if (!cam) return this.play(name, opts);
     const d = Math.hypot(cam.position.x - (x || 0), cam.position.z - (z || 0));
     const base = (opts && opts.vol) || 1;
-    const v = Math.pow(1 - Math.min(d / 60, 1), 1.2) * 1.4 * base;
+    const v = Math.pow(1 - Math.min(d / 60, 1), 1.2) * base; // W8: boost 1.4->1.0 (equalizacao)
     if (v < 0.06) return false;
     const played = this.play(name, { vol: Math.min(v, 1), min: opts && opts.min });
     if (played) { this.lastPlays = this.lastPlays || []; this.lastPlays.push({ n: name, v: Math.round(Math.min(v, 1) * 100) / 100, d: Math.round(d) }); if (this.lastPlays.length > 60) this.lastPlays.shift(); }
@@ -289,7 +289,7 @@ window.SKILL_SFX_MAP = SKILL_SFX_MAP;
 // sem gesto é engolido; o unlock no primeiro pointerdown/keydown retoma.
 const MUSIC = {
   el: null, track: null,
-  baseVol: { menu: 0.7, battle: 0.38 },
+  baseVol: { menu: 0.7, battle: 0.55 }, // W8: equalizado (eff 0.55 x musicVol)
   settings() {
     try {
       const d = loadProfileData();
@@ -408,7 +408,7 @@ window.unitVoice = function (u, kind, opts) {
   if (window._voiceGate[key] && now - window._voiceGate[key] < min) return false;
   AUTH_SFX._vAlt = (AUTH_SFX._vAlt || 0) + 1;
   const cue = set[AUTH_SFX._vAlt % set.length];
-  const played = AUTH_SFX.playAt('voice/' + u.heroId + '/' + cue, u.x, u.z, { vol: (opts && opts.vol) || 0.95 });
+    const played = AUTH_SFX.playAt('voice/' + u.heroId + '/' + cue, u.x, u.z, { vol: (opts && opts.vol) || 0.92 }); // W8
   if (played) window._voiceGate[key] = now;
   return played;
 }; // W5-F2
@@ -1169,7 +1169,7 @@ const SKILL_TRAIL_MAP = {
 function startSkillTrail(unit, slot) {
   const cfg = SKILL_TRAIL_MAP[unit.heroId + ':' + slot];
   if (!cfg || !unit.mesh || !unit.mesh.userData.bones) return;
-  const trailTex = loadTex('assets/skills/1efc_trl01.png');
+  const trailTex = loadSkillVfxTex('assets/skills/1efc_trl01.png', 'trail');
   cfg.bones.forEach(bi => {
     const pts = [];
     const nSeg = 14;
@@ -1486,16 +1486,119 @@ async function selectLobbyHero(heroId) {
   lobbyPedestalGroup.add(lobbyHeroMesh);
 }
 
+const LOBBY_MODE_UI = {
+  dm_3v3: {
+    kicker: 'FILA RANQUEADA • KONOHA',
+    title: '3v3 SHINOBI COMBATE MORTAL',
+    sub: 'Meta: 15 abates • 3 min • Renascimento no santuário',
+    squadTitle: 'ESQUADRÃO 3v3',
+    blueLabel: 'TIME AZUL • FOLHA (VOCÊ)',
+    redLabel: 'TIME VERMELHO • AKATSUKI (IA)',
+    vsCaption: 'COMBATE MORTAL 3v3',
+    queueSub: '3/6 prontos • 00:08',
+    ctaSub: '6 ninjas 3D • Meta 15 abates'
+  },
+  dm_legacy_5v5: {
+    kicker: 'FILA CLÁSSICA • KONOHA',
+    title: '5v5 SHINOBI COMBATE MORTAL',
+    sub: 'Meta: 30 abates • 5 min • Renascimento no santuário',
+    squadTitle: 'ESQUADRÃO 5v5',
+    blueLabel: 'TIME AZUL • FOLHA (VOCÊ)',
+    redLabel: 'TIME VERMELHO • AKATSUKI (IA)',
+    vsCaption: 'COMBATE MORTAL 5v5',
+    queueSub: '5/10 prontos • 00:12',
+    ctaSub: '10 ninjas 3D • Arena Exame Chūnin'
+  },
+  br_vila: {
+    kicker: 'SOBREVIVÊNCIA SOLO • VILA KONOHA',
+    title: 'REALEZA NA VILA (BATTLE ROYALE)',
+    sub: '10 ninjas solo • Zona 結界 encolhe • Último de pé vence',
+    squadTitle: 'SALA REAL (10 SOLO)',
+    blueLabel: 'COMPETIDORES (1–5) • SOLO',
+    redLabel: 'COMPETIDORES (6–10) • SOLO',
+    vsCaption: 'TODOS CONTRA TODOS',
+    queueSub: '10/10 solo • Vila Konoha',
+    ctaSub: '10 ninjas solo • Vila Konoha'
+  },
+  training: {
+    kicker: 'MODO LIVRE • CAMPO DE TREINAMENTO 3',
+    title: 'TREINO SHINOBI • TESTE DOS SINOS',
+    sub: 'Chakra e recargas livres • Bonecos de treino • Desafio Kakashi 鈴',
+    squadTitle: 'CAMPO 3 (TREINO)',
+    blueLabel: 'SHINOBI EM TREINO (VOCÊ)',
+    redLabel: 'INSTRUTOR & ALVOS (CAMPO 3)',
+    vsCaption: 'TESTE DOS SINOS 鈴',
+    queueSub: 'Solo • Sem tempo limite',
+    ctaSub: 'Campo de Treinamento 3 • Sinos 鈴'
+  }
+};
+
+function selectLobbyMode(modeId) {
+  if (!modeId || !MATCH_CONFIGS[modeId]) return selectedModeId;
+  selectedModeId = modeId;
+
+  document.querySelectorAll('#mode-picker .mode-chip').forEach(c => {
+    const isSel = c.dataset.mode === modeId;
+    c.classList.toggle('selected', isSel);
+    c.setAttribute('aria-selected', isSel ? 'true' : 'false');
+  });
+
+  const ui = LOBBY_MODE_UI[modeId] || LOBBY_MODE_UI.dm_3v3;
+  const kickerEl = document.querySelector('#lobby-screen .mode-banner .mode-kicker');
+  const titleEl = document.querySelector('#lobby-screen .mode-banner strong');
+  const subEl = document.querySelector('#lobby-screen .mode-banner .mode-sub');
+  if (kickerEl) kickerEl.textContent = ui.kicker;
+  if (titleEl) titleEl.textContent = ui.title;
+  if (subEl) subEl.textContent = ui.sub;
+
+  const squadTitleEl = document.querySelector('#lobby-screen .squad-panel .panel-title > span:first-child');
+  if (squadTitleEl) squadTitleEl.textContent = ui.squadTitle;
+  const blueLabelEl = document.querySelector('#lobby-screen .squad-block.blue-team .team-label');
+  if (blueLabelEl) blueLabelEl.textContent = ui.blueLabel;
+  const redLabelEl = document.querySelector('#lobby-screen .squad-block.red-team .team-label');
+  if (redLabelEl) redLabelEl.textContent = ui.redLabel;
+  const vsCaptionEl = document.querySelector('#lobby-screen .vs-caption');
+  if (vsCaptionEl) vsCaptionEl.textContent = ui.vsCaption;
+
+  const queueSubEl = document.querySelector('#lobby-screen .queue-status small');
+  if (queueSubEl) queueSubEl.textContent = ui.queueSub;
+  const ctaSubEl = document.querySelector('#btn-start-match small');
+  if (ctaSubEl) ctaSubEl.textContent = ui.ctaSub;
+
+  updateLobbyTeamsPreview(selectedHeroId || '1nrt');
+  return selectedModeId;
+}
+
 function updateLobbyTeamsPreview(playerHeroId) {
   if (!Array.isArray(rosterMeta) || !rosterMeta.length) return; // P1 hardening: cold-load
-  const others = rosterMeta.filter(h => h.id !== playerHeroId);
-  const blueHeroes = [rosterMeta.find(h => h.id === playerHeroId) || rosterMeta[0], ...others.slice(0, 4)];
-  const redHeroes = others.slice(4, 9);
+  const playerHero = rosterMeta.find(h => h.id === playerHeroId) || rosterMeta[0];
+  const others = rosterMeta.filter(h => h.id !== playerHero.id);
+  const cfg = MATCH_CONFIGS[selectedModeId] || MATCH_CONFIGS.dm_3v3;
+
+  let blueHeroes, redHeroes;
+  if (cfg.mode === 'training') {
+    blueHeroes = [playerHero];
+    const kakashi = rosterMeta.find(h => h.id === '1kks') || others[0] || playerHero;
+    redHeroes = [
+      { name: `${kakashi.name} (Sinos 鈴)`, role: 'Instrutor • Teste dos Sinos', portrait: kakashi.portrait, stateOverride: 'ALVO' },
+      { name: 'Boneco Estático (10k HP)', role: 'Alvo Fixo • Medidor DPS', portrait: playerHero.portrait, stateOverride: 'ALVO' },
+      { name: 'Boneco de Esquiva', role: 'Alvo Móvel • Combos', portrait: (others[1] || playerHero).portrait, stateOverride: 'ALVO' }
+    ];
+  } else if (cfg.mode === 'br') {
+    blueHeroes = [playerHero, ...others.slice(0, 4)];
+    redHeroes = others.slice(4, 9);
+  } else {
+    const teamSize = cfg.teamSize || 3;
+    blueHeroes = [playerHero, ...others.slice(0, teamSize - 1)];
+    redHeroes = others.slice(teamSize - 1, 2 * teamSize - 1);
+  }
 
   const squadSlot = (h, idx, side) => {
     const role = (h.role || 'Lutador').split('/')[0].trim();
     const isYou = side === 'blue' && idx === 0;
-    const state = isYou ? 'VOCÊ' : (side === 'blue' ? 'PRONTO' : 'BOT');
+    const isSolo = cfg.mode === 'br' && !isYou;
+    const state = h.stateOverride || (isYou ? 'VOCÊ' : (isSolo ? 'SOLO' : (side === 'blue' ? 'PRONTO' : 'BOT')));
+    const stateCls = isYou ? 'you' : ((side === 'red' || isSolo || h.stateOverride) ? 'bot' : 'ready');
     return `
       <div class="squad-slot ${isYou ? 'is-you' : ''}" title="${isYou ? 'VOCÊ: ' : ''}${h.name}">
         <img class="team-slot-icon" src="${h.portrait}" alt="${h.name}" />
@@ -1503,7 +1606,7 @@ function updateLobbyTeamsPreview(playerHeroId) {
           <span class="squad-name">${h.name}</span>
           <span class="squad-role">${role}</span>
         </div>
-        <span class="squad-state ${isYou ? 'you' : (side === 'red' ? 'bot' : 'ready')}">${state}</span>
+        <span class="squad-state ${stateCls}">${state}</span>
       </div>`;
   };
 
@@ -2742,7 +2845,7 @@ function draftLock() {
       DRAFT.blue[i + 1] = id;
       draftRenderBoard();
       draftRenderTeams();
-      try { AUTH_SFX.play('sword_hit', { vol: 0.45 }); } catch (e) {}
+      try { AUTH_SFX.play('sword_hit', { vol: 0.65 }); } catch (e) {} // W8
     }, delays[i]));
   }
   for (let i = 0; i < DRAFT.teamSize; i++) {
@@ -2771,7 +2874,7 @@ function draftReveal() {
       DRAFT.redRevealed[i] = true;
       draftRenderTeams();
       draftRenderBoard();
-      try { AUTH_SFX.play('sword_hit', { vol: 0.6 }); } catch (e) {}
+      try { AUTH_SFX.play('sword_hit', { vol: 0.65 }); } catch (e) {} // W8
     }, 380 + i * 340));
   });
   const totalReveal = 380 + DRAFT.red.length * 340;
@@ -3215,34 +3318,101 @@ function loadSkinManifest() {
     });
 }
 
+const hudComboState = {
+  hits: 0,
+  dmg: 0,
+  timer: 0,
+  lastTarget: null,
+  lastTargetTime: 0
+};
+
+function renderComboDigits(el, text) {
+  if (!el) return;
+  const value = text === null || text === undefined ? '' : String(text);
+  el.dataset.value = value;
+  if (!skinManifest) {
+    el.textContent = value;
+    return;
+  }
+  el.textContent = '';
+  for (const ch of value) {
+    if (ch >= '0' && ch <= '9') {
+      const digit = document.createElement('img');
+      digit.className = 'skin-combo-digit';
+      digit.dataset.digit = ch;
+      digit.alt = ch;
+      digit.src = `${SKIN_URL}combo_digit_${ch}.png`;
+      el.appendChild(digit);
+    } else {
+      el.appendChild(document.createTextNode(ch));
+    }
+  }
+}
+
+function recordPlayerComboHit(target, dmg) {
+  hudComboState.hits += 1;
+  hudComboState.dmg += dmg;
+  hudComboState.timer = 2.6;
+  hudComboState.lastTarget = target;
+  hudComboState.lastTargetTime = performance.now();
+  const el = document.getElementById('hud-combo-counter');
+  if (!el) return;
+  const hitsEl = document.getElementById('hud-combo-hits');
+  const dmgEl = document.getElementById('hud-combo-dmg');
+  const rankEl = document.getElementById('hud-combo-rank');
+  if (hitsEl) renderComboDigits(hitsEl, hudComboState.hits);
+  if (dmgEl) dmgEl.textContent = String(hudComboState.dmg);
+  if (rankEl) {
+    rankEl.textContent = hudComboState.hits >= 8 ? '神技' : (hudComboState.hits >= 5 ? '無双' : (hudComboState.hits >= 3 ? '猛攻' : '連撃'));
+  }
+  el.classList.remove('hidden', 'combo-pop');
+  void el.offsetWidth;
+  el.classList.add('combo-pop');
+  el.dataset.tier = hudComboState.hits >= 8 ? 'god' : (hudComboState.hits >= 5 ? 'ultra' : (hudComboState.hits >= 3 ? 'super' : 'normal'));
+}
+
 function setupHUDPlayerInfo(hero) {
   document.getElementById('hud-player-portrait').src = hero.portrait;
+  const heroNameEl = document.getElementById('hud-player-hero-name');
+  if (heroNameEl) heroNameEl.textContent = (hero.name || 'SHINOBI').toUpperCase();
   const kit = HERO_KITS[hero.id] || HERO_KITS['1nrt'];
   document.getElementById('sk-name-atk').textContent = kit.atk.name;
   document.getElementById('sk-name-q').textContent = kit.q.name;
   document.getElementById('sk-name-w').textContent = kit.w.name;
   document.getElementById('sk-name-e').textContent = kit.e.name;
   document.getElementById('sk-name-r').textContent = kit.r.name;
+  for (const s of ['q', 'w', 'e', 'r']) {
+    const costEl = document.getElementById(`sk-cost-${s}`);
+    if (costEl && kit[s]) costEl.textContent = `${kit[s].cost} CK`;
+  }
+  const subTag = document.querySelector('.hud-brand-pill .nuba-sub-tag');
+  if (subTag && activeMatchCfg) {
+    subTag.textContent = activeMatchCfg.mode === 'br' ? 'SOLO BR' : (activeMatchCfg.mode === 'training' ? 'TREINO' : (activeMatchCfg.teamSize === 3 ? '3v3 ARENA' : '5v5 MOBA'));
+  }
+  hudComboState.hits = 0;
+  hudComboState.dmg = 0;
+  hudComboState.timer = 0;
+  hudComboState.lastTarget = null;
+  const comboEl = document.getElementById('hud-combo-counter');
+  if (comboEl) comboEl.classList.add('hidden');
+  const targetEl = document.getElementById('hud-target-frame');
+  if (targetEl) targetEl.classList.add('hidden');
 }
 
 function renderTopTeamPortraits() {
   const blueEl = document.getElementById('hud-blue-icons');
   const redEl = document.getElementById('hud-red-icons');
   if (!blueEl || !redEl) return;
-  blueEl.innerHTML = units.filter(u => u.team === 'blue').map(u => `
-    <div class="mini-p ${u.deadTimer > 0 ? 'dead' : ''}" id="top-icon-${u.id}">
+  const renderIcon = (u) => `
+    <div class="mini-p ${u.deadTimer > 0 ? 'dead' : ''} ${u.isPlayer ? 'is-player' : ''}" id="top-icon-${u.id}" title="${u.name}">
       <img src="${u.portrait}" alt="${u.name}" />
       <span class="alive-dot"></span>
+      <div class="mini-hp-bar"><div class="mini-hp-fill" id="top-hp-${u.id}" style="width: ${Math.max(0, Math.min(100, Math.round((u.hp / u.maxHp) * 100)))}%"></div></div>
       <span class="respawn-countdown" id="respawn-cd-${u.id}">${u.deadTimer > 0 ? Math.ceil(u.deadTimer) : ''}</span>
     </div>
-  `).join('');
-  redEl.innerHTML = units.filter(u => u.team === 'red').map(u => `
-    <div class="mini-p ${u.deadTimer > 0 ? 'dead' : ''}" id="top-icon-${u.id}">
-      <img src="${u.portrait}" alt="${u.name}" />
-      <span class="alive-dot"></span>
-      <span class="respawn-countdown" id="respawn-cd-${u.id}">${u.deadTimer > 0 ? Math.ceil(u.deadTimer) : ''}</span>
-    </div>
-  `).join('');
+  `;
+  blueEl.innerHTML = units.filter(u => u.team === 'blue').map(renderIcon).join('');
+  redEl.innerHTML = units.filter(u => u.team === 'red').map(renderIcon).join('');
 
   for (const u of units) {
     if (u.deadTimer > 0) renderSkinDigits(document.getElementById(`respawn-cd-${u.id}`), Math.ceil(u.deadTimer));
@@ -3311,6 +3481,163 @@ function addKillFeed(killer, victim, skillName) {
 // ============================================================================
 // 3D SKILL VFX & COMBAT JUTSU ENGINE
 // ============================================================================
+const skillVfxTexCache = new Map();
+
+function loadSkillVfxTex(texPath, mTag = '') {
+  const key = `${texPath || ''}::${mTag}`;
+  if (skillVfxTexCache.has(key)) return skillVfxTexCache.get(key);
+
+  const tag = `${texPath || ''} ${mTag}`.toLowerCase();
+  const c = document.createElement('canvas');
+  c.width = 128;
+  c.height = 128;
+  const ctx = c.getContext('2d');
+
+  // 1. Restore corrupted palletized NTP3 textures (log01, grd01, brk01, snd) for APK 3D meshes
+  if (tag.includes('1efc_log01') || tag.includes('log')) {
+    // Authentic cedar wood bark & end-grain rings for APK 1efc_log01 cylinder mesh
+    const bg = ctx.createLinearGradient(0, 0, 128, 0);
+    bg.addColorStop(0, '#5c3416');
+    bg.addColorStop(0.3, '#7c471e');
+    bg.addColorStop(0.55, '#8f5424');
+    bg.addColorStop(0.8, '#693b18');
+    bg.addColorStop(1, '#4f2c12');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, 128, 128);
+    ctx.strokeStyle = 'rgba(38, 19, 6, 0.55)';
+    ctx.lineWidth = 2;
+    for (let x = 4; x < 128; x += 9) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.bezierCurveTo(x + 3, 42, x - 3, 86, x, 128);
+      ctx.stroke();
+    }
+    const tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.wrapS = THREE.RepeatWrapping;
+    tex.wrapT = THREE.RepeatWrapping;
+    skillVfxTexCache.set(key, tex);
+    return tex;
+  }
+
+  if (tag.includes('1efc_grd01')) {
+    // Authentic shattered earth crater decal with radial alpha falloff for APK 1efc_grd01 mesh
+    const rg = ctx.createRadialGradient(64, 64, 4, 64, 64, 60);
+    rg.addColorStop(0, 'rgba(28, 19, 12, 0.96)');
+    rg.addColorStop(0.45, 'rgba(68, 46, 28, 0.85)');
+    rg.addColorStop(0.78, 'rgba(92, 64, 38, 0.45)');
+    rg.addColorStop(1, 'rgba(92, 64, 38, 0)');
+    ctx.fillStyle = rg;
+    ctx.fillRect(0, 0, 128, 128);
+    ctx.strokeStyle = 'rgba(15, 10, 6, 0.92)';
+    ctx.lineWidth = 2.2;
+    for (let a = 0; a < 10; a++) {
+      const ang = (a / 10) * Math.PI * 2 + 0.2;
+      ctx.beginPath();
+      ctx.moveTo(64, 64);
+      ctx.lineTo(64 + Math.cos(ang) * 32, 64 + Math.sin(ang) * 32);
+      ctx.lineTo(64 + Math.cos(ang + 0.14) * 56, 64 + Math.sin(ang + 0.14) * 56);
+      ctx.stroke();
+    }
+    const tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    skillVfxTexCache.set(key, tex);
+    return tex;
+  }
+
+  if (tag.includes('1efc_brk01') || tag.includes('1gareff1_hnd') || tag.includes('1gareff1_snd') || tag.includes('1gareff1_bd_snd')) {
+    // Clean sandstone / earth rock shading for APK 3D rock & sand meshes (no white cutout blocks)
+    const rg = ctx.createRadialGradient(64, 64, 8, 64, 64, 62);
+    rg.addColorStop(0, 'rgba(245, 222, 179, 0.98)');
+    rg.addColorStop(0.65, 'rgba(210, 175, 125, 0.92)');
+    rg.addColorStop(0.92, 'rgba(175, 140, 95, 0.65)');
+    rg.addColorStop(1, 'rgba(160, 125, 80, 0.0)');
+    ctx.fillStyle = rg;
+    ctx.fillRect(0, 0, 128, 128);
+    const tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.wrapS = THREE.RepeatWrapping;
+    tex.wrapT = THREE.RepeatWrapping;
+    skillVfxTexCache.set(key, tex);
+    return tex;
+  }
+
+  // 2. Default soft radial energy falloff while the APK skill texture loads,
+  // then strip 4x4 colored DXT compression artifact blocks & hard rectangular borders
+  const initGrad = ctx.createRadialGradient(64, 64, 4, 64, 64, 60);
+  initGrad.addColorStop(0, 'rgba(255, 255, 255, 1)');
+  initGrad.addColorStop(0.45, 'rgba(255, 255, 255, 0.82)');
+  initGrad.addColorStop(0.82, 'rgba(255, 255, 255, 0.24)');
+  initGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+  ctx.fillStyle = initGrad;
+  ctx.fillRect(0, 0, 128, 128);
+
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.flipY = false;
+  tex.wrapS = THREE.RepeatWrapping;
+  tex.wrapT = THREE.RepeatWrapping;
+  skillVfxTexCache.set(key, tex);
+
+  if (texPath) {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      try {
+        ctx.clearRect(0, 0, 128, 128);
+        ctx.drawImage(img, 0, 0, 128, 128);
+        const imgData = ctx.getImageData(0, 0, 128, 128);
+        const d = imgData.data;
+        for (let y = 0; y < 128; y++) {
+          const ny = (y - 63.5) / 63.5;
+          const ey = Math.min(1, Math.min(y, 127 - y) / 14);
+          for (let x = 0; x < 128; x++) {
+            const nx = (x - 63.5) / 63.5;
+            const ex = Math.min(1, Math.min(x, 127 - x) / 14);
+            const idx = (y * 128 + x) * 4;
+            const r = d[idx], g = d[idx + 1], b = d[idx + 2], a = d[idx + 3];
+            const lum = Math.max(r, g, b);
+            const minCh = Math.min(r, g, b);
+            // Strip 4x4 colored DXT block artifacts & bake clean luminance + alpha
+            const effA = (a < 245) ? (a / 255) * (0.35 + 0.65 * (lum / 255)) : (lum / 255);
+            const radDist = Math.hypot(nx, ny);
+            const radialFade = Math.max(0, Math.min(1, (1.08 - radDist) / 0.42));
+            const borderFade = ex * ey * (0.35 + 0.65 * radialFade);
+            const finalAlpha = Math.round(Math.max(0, Math.min(255, effA * borderFade * 255)));
+            // Pure white RGB so material.color tints chakra cleanly without muddy DXT color blocks
+            const boost = minCh > 180 ? 255 : Math.min(255, Math.round(lum * 1.15 + 40));
+            d[idx] = boost;
+            d[idx + 1] = boost;
+            d[idx + 2] = boost;
+            d[idx + 3] = finalAlpha < 10 ? 0 : finalAlpha;
+          }
+        }
+        ctx.putImageData(imgData, 0, 0);
+        tex.needsUpdate = true;
+      } catch (e) {}
+    };
+    img.src = texPath;
+  }
+  return tex;
+}
+
+function setVfxGroupOpacity(grp, factor) {
+  if (!grp) return;
+  const f = Math.max(0, Math.min(1, factor));
+  if (grp.material && grp.material.opacity !== undefined) {
+    const baseOp = (grp.material.userData && grp.material.userData.baseOpacity !== undefined) ? grp.material.userData.baseOpacity : 0.88;
+    grp.material.opacity = baseOp * f;
+  }
+  if (grp.traverse) {
+    grp.traverse(child => {
+      if (child.material && child.material.opacity !== undefined) {
+        const baseOp = (child.material.userData && child.material.userData.baseOpacity !== undefined) ? child.material.userData.baseOpacity : 0.88;
+        child.material.opacity = baseOp * f;
+      }
+    });
+  }
+}
+
 function buildExtractedVfxMeshGroup(heroId, colorHex, targetScale = 0.08, modelName = null) {
   const vfxDef = skillVfxData[heroId] || skillVfxData['common'] || skillVfxData['1ssk'] || skillVfxData['1gar'];
   if (!vfxDef) return null;
@@ -3321,32 +3648,57 @@ function buildExtractedVfxMeshGroup(heroId, colorHex, targetScale = 0.08, modelN
   } else if (modelName && skillVfxData['common'] && skillVfxData['common'].models && skillVfxData['common'].models[modelName]) {
     meshesToUse = skillVfxData['common'].models[modelName];
   } else if (vfxDef.meshes && vfxDef.meshes.length > 0) {
-    meshesToUse = vfxDef.meshes.slice(0, 3);
+    meshesToUse = vfxDef.meshes.slice(0, 4);
   } else if (skillVfxData['common'] && skillVfxData['common'].models) {
     meshesToUse = skillVfxData['common'].models['1efc_chakra00'] || null;
   }
   if (!meshesToUse || meshesToUse.length === 0) return null;
 
+  // Compute unified bounding box across ALL submeshes first so multi-part APK models
+  // preserve their relative submesh assembly instead of collapsing onto (0,0,0).
+  let _rawX0 = 1e9, _rawX1 = -1e9, _rawY0 = 1e9, _rawY1 = -1e9, _rawZ0 = 1e9, _rawZ1 = -1e9;
+  let _totalVerts = 0;
+  for (const sm of meshesToUse) {
+    const pos = sm.positions || [];
+    for (let i = 0; i < pos.length; i += 3) {
+      const vx = pos[i], vy = pos[i + 1], vz = pos[i + 2];
+      if (vx < _rawX0) _rawX0 = vx; if (vx > _rawX1) _rawX1 = vx;
+      if (vy < _rawY0) _rawY0 = vy; if (vy > _rawY1) _rawY1 = vy;
+      if (vz < _rawZ0) _rawZ0 = vz; if (vz > _rawZ1) _rawZ1 = vz;
+      _totalVerts++;
+    }
+  }
+  if (_totalVerts === 0) return null;
+
+  const _mTag = String(modelName || '').toLowerCase();
+  const _isCenteredOrb = /(rasengan|chakra01|lion|fist|leg|fire03|fire04|fire05|fireball|toad_fire|jryeff01|blt01|spk|sharin)/i.test(_mTag);
+  const _isGroundUpright = !_isCenteredOrb && (_rawY0 >= -18.0 && _rawY1 > 20.0 && _rawY0 < _rawY1 * 0.35);
+
+  const _ox = Math.abs((_rawX0 + _rawX1) * 0.5) > 0.5 ? (_rawX0 + _rawX1) * 0.5 : 0;
+  const _oz = Math.abs((_rawZ0 + _rawZ1) * 0.5) > 0.5 ? (_rawZ0 + _rawZ1) * 0.5 : 0;
+  // Ground-standing 3D models keep their base at Y=0 so they never sink 50% underground;
+  // spherical/projectile models center around their vertical midpoint.
+  const _oy = _isGroundUpright ? _rawY0 : (Math.abs((_rawY0 + _rawY1) * 0.5) > 0.5 ? (_rawY0 + _rawY1) * 0.5 : 0);
+
+  // CRITICAL FIX: Bake normalized world scale directly into BufferGeometry vertices
+  // so grp.scale starts at (1, 1, 1) and baseScale = 1.0. This prevents jitter,
+  // aura rings, and vfxList scale animations from exploding 100x-300x across the arena!
+  const _ext = Math.max(_rawX1 - _rawX0, _rawY1 - _rawY0, _rawZ1 - _rawZ0);
+  const _vScale = (_ext > 1.0) ? (targetScale * (320 / _ext)) : targetScale;
+
   const grp = new THREE.Group();
-  grp.scale.setScalar(targetScale);
-  let _bx0 = 1e9, _bx1 = -1e9, _by0 = 1e9, _by1 = -1e9, _bz0 = 1e9, _bz1 = -1e9; // W-VIS-ALL bbox
+  grp.scale.set(1, 1, 1);
+  grp.userData.baseScale = 1.0;
 
   for (const sm of meshesToUse) {
     const geom = new THREE.BufferGeometry();
-    geom.setAttribute('position', new THREE.BufferAttribute(new Float32Array(sm.positions), 3));
-    // SPP ALIGN: recentra no proprio centroide — modelos extraidos off-origin
-    // (fireball/amaterasu/toad_fire ~144u — Blender audit) giravam como braco de
-    // catapulta na rotacao de facing; recentrados, o facing aponta a ponta pro alvo
-    const _pa = geom.getAttribute('position');
-    if (_pa && _pa.count > 3) {
-      let _cx = 0, _cy = 0, _cz = 0;
-      for (let _i = 0; _i < _pa.count; _i++) { _cx += _pa.getX(_i); _cy += _pa.getY(_i); _cz += _pa.getZ(_i); }
-      _cx /= _pa.count; _cy /= _pa.count; _cz /= _pa.count;
-      if (Math.hypot(_cx, _cy, _cz) > 0.5) { // so mexe nos realmente off-origin
-        for (let _i = 0; _i < _pa.count; _i++) { _pa.setXYZ(_i, _pa.getX(_i) - _cx, _pa.getY(_i) - _cy, _pa.getZ(_i) - _cz); }
-        _pa.needsUpdate = true;
-      }
+    const posArr = new Float32Array(sm.positions);
+    for (let i = 0; i < posArr.length; i += 3) {
+      posArr[i] = (posArr[i] - _ox) * _vScale;
+      posArr[i + 1] = (posArr[i + 1] - _oy) * _vScale;
+      posArr[i + 2] = (posArr[i + 2] - _oz) * _vScale;
     }
+    geom.setAttribute('position', new THREE.BufferAttribute(posArr, 3));
     if (sm.uvs && sm.uvs.length > 0) {
       geom.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(sm.uvs), 2));
     }
@@ -3355,49 +3707,50 @@ function buildExtractedVfxMeshGroup(heroId, colorHex, targetScale = 0.08, modelN
     }
 
     const texPath = sm.texture ? `assets/${sm.texture}` : 'assets/skills/1efc_chakra00.png';
-    const mapTex = loadTex(texPath);
+    const mapTex = loadSkillVfxTex(texPath, _mTag);
+    const isTrueSolid3D = /(1efc_log01|1efc_brk01|1gareff1_hnd01|1orceff1_0)/i.test(_mTag + ' ' + texPath);
+    const isMatteVfx = isTrueSolid3D || /(snd|grd|smk|smoke|dst|dust|crow|jryeff02)/i.test(_mTag + ' ' + texPath);
+    const baseOp = isTrueSolid3D ? 0.96 : (isMatteVfx ? 0.84 : 0.88);
     const mat = new THREE.MeshBasicMaterial({
       map: mapTex,
       color: colorHex || 0xffffff,
       transparent: true,
-      opacity: 0.65,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
+      opacity: baseOp,
+      alphaTest: isTrueSolid3D ? 0.05 : 0.01,
+      blending: isMatteVfx ? THREE.NormalBlending : THREE.AdditiveBlending,
+      depthWrite: isTrueSolid3D,
       side: THREE.DoubleSide
     });
+    mat.userData = { baseOpacity: baseOp };
     const m = new THREE.Mesh(geom, mat);
+    m.userData.baseScale = 1.0;
     grp.add(m);
-    const _pos = geom.getAttribute('position');
-    for (let _i = 0; _i < _pos.count; _i++) {
-      const _vx = _pos.getX(_i), _vy = _pos.getY(_i), _vz = _pos.getZ(_i);
-      if (_vx < _bx0) _bx0 = _vx; if (_vx > _bx1) _bx1 = _vx;
-      if (_vy < _by0) _by0 = _vy; if (_vy > _by1) _by1 = _vy;
-      if (_vz < _bz0) _bz0 = _vz; if (_vz > _bz1) _bz1 = _vz;
-    }
   }
-  // W-VIS-ALL: bbox raw dos modelos extraidos varia de ~17u a ~472u — escala
-  // fixa deixava rasengan gigante e caco micro. Normaliza: extent final do
-  // grupo ~ targetScale * 250u (chakra medio), proporcional em TODAS as skills.
-  const _ext = Math.max(_bx1 - _bx0, _by1 - _by0, _bz1 - _bz0);
-  if (_ext > 1) grp.scale.setScalar(targetScale * (250 / _ext));
   return grp;
 }
 
 function createHeroAwakeningAuraMesh(heroId, colorHex) {
   const grp = new THREE.Group();
-  const aura = buildExtractedVfxMeshGroup(heroId, colorHex, 0.065) ||
-               buildExtractedVfxMeshGroup('common', colorHex, 0.065, '1efc_chakra05');
+  const aura = buildExtractedVfxMeshGroup(heroId, colorHex, 0.014) ||
+               buildExtractedVfxMeshGroup('common', colorHex, 0.014, '1efc_chakra05');
   if (aura) {
-    aura.position.y = 2.2;
+    aura.position.y = 0.08;
     aura.userData.rotSpeed = new THREE.Vector3(0, 6, 0);
     grp.add(aura);
   }
-  const ring = buildExtractedVfxMeshGroup('common', colorHex, 0.010, '1efc_ring01');
-  if (ring) {
-    ring.rotation.x = -Math.PI / 2;
-    ring.position.y = 0.12;
-    ring.userData.rotSpeed = new THREE.Vector3(0, 0, 10);
-    grp.add(ring);
+  const ring1 = buildExtractedVfxMeshGroup('common', colorHex, 0.012, '1efc_ring01');
+  if (ring1) {
+    ring1.name = 'groundRing1';
+    ring1.position.y = 0.10;
+    ring1.userData.rotSpeed = new THREE.Vector3(0, 10, 0);
+    grp.add(ring1);
+  }
+  const ring2 = buildExtractedVfxMeshGroup('common', 0xffffff, 0.015, '1efc_shock01');
+  if (ring2) {
+    ring2.name = 'groundRing2';
+    ring2.position.y = 0.06;
+    ring2.userData.rotSpeed = new THREE.Vector3(0, -8, 0);
+    grp.add(ring2);
   }
   return grp;
 }
@@ -3463,439 +3816,414 @@ function findNearestEnemy(unit, maxDist = 45) {
 }
 
 function spawnVFX(x, y, z, color, radius = 3.5, duration = 0.45, style = 'sphere', heroId = null) {
-  // Spawn 3D VFX mesh alongside procedural shockwave
-  if (heroId && (style === 'sphere' || style === 'pillar' || style === 'ring')) {
-    const extGrp = buildExtractedVfxMeshGroup(heroId, color, radius * 0.006, activeSkillVfxModel); // M7 // W-VIS-ALL: extent ~ radius*1.5u
-    if (extGrp) {
-      extGrp.position.set(x, y, z);
-      arenaGroup.add(extGrp);
-      if (activeSkillVfxFaceY !== null) extGrp.rotation.y = activeSkillVfxFaceY; // SPP: direcao do cast
-      vfxList.push({ mesh: extGrp, age: 0, duration: duration * 1.7, style: 'extracted', anim: activeSkillVfxAnim, faceDir: activeSkillVfxFaceY !== null ? { x: Math.sin(activeSkillVfxFaceY), z: Math.cos(activeSkillVfxFaceY) } : null }); // SPP
+  const fallbackModel = style === 'ring' ? '1efc_ring01' : (style === 'pillar' ? '1efc_chakra10a' : '1efc_chakra00');
+  const modelToUse = (heroId && activeSkillVfxModel) ? activeSkillVfxModel : fallbackModel;
+  const clampedR = Math.min(radius, 5.2);
+  const extGrp = buildExtractedVfxMeshGroup(heroId || 'common', color, clampedR * 0.0032, modelToUse) ||
+                 buildExtractedVfxMeshGroup('common', color, clampedR * 0.0032, fallbackModel);
+  if (extGrp) {
+    extGrp.position.set(x, y, z);
+    arenaGroup.add(extGrp);
+    if (activeSkillVfxFaceY !== null) extGrp.rotation.y = activeSkillVfxFaceY;
+    vfxList.push({
+      mesh: extGrp,
+      age: 0,
+      duration: duration * 1.15,
+      style: 'extracted',
+      anim: activeSkillVfxAnim || (style === 'ring' ? 'spin' : (style === 'pillar' ? 'rise' : 'pulse')),
+      faceDir: activeSkillVfxFaceY !== null ? { x: Math.sin(activeSkillVfxFaceY), z: Math.cos(activeSkillVfxFaceY) } : null
+    });
+  }
+  // If style is 'ring' and the primary model was a hero skill model, also spawn the authentic APK ring shockwave
+  if (style === 'ring' && modelToUse !== '1efc_ring01') {
+    const ringGrp = buildExtractedVfxMeshGroup('common', color, clampedR * 0.0030, '1efc_ring01') ||
+                    buildExtractedVfxMeshGroup('common', color, clampedR * 0.0030, '1efc_shock01');
+    if (ringGrp) {
+      ringGrp.position.set(x, Math.max(0.08, y * 0.35), z);
+      arenaGroup.add(ringGrp);
+      vfxList.push({ mesh: ringGrp, age: 0, duration: duration * 1.05, style: 'extracted', anim: 'spin' });
     }
   }
-
-  let geo;
-  let op = 0.40;
-  if (style === 'ring') {
-    geo = new THREE.TorusGeometry(radius * 0.5, 0.08, 6, 24);
-    op = 0.45;
-  } else if (style === 'pillar') {
-    geo = new THREE.CylinderGeometry(radius * 0.12, radius * 0.18, radius * 1.6, 12);
-    op = 0.35;
-  } else {
-    geo = new THREE.IcosahedronGeometry(radius * 0.32, 1);
-    op = 0.35;
-  }
-  const mat = new THREE.MeshBasicMaterial({
-    color,
-    transparent: true,
-    opacity: op,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false,
-    wireframe: false
-  });
-  const mesh = new THREE.Mesh(geo, mat);
-  mesh.position.set(x, y, z);
-  if (style === 'ring') mesh.rotation.x = Math.PI / 2;
-  arenaGroup.add(mesh);
-  vfxList.push({ mesh, age: 0, duration, style });
 }
 
 // ============================================================================
-// 3D NINJA WEAPONS (SHURIKEN & KUNAI) & CUSTOM JUTSU VFX GENERATORS
+// 3D NINJA WEAPONS & APK-EXTRACTED JUTSU VFX GENERATORS
 // ============================================================================
 function createShurikenMesh() {
-  const shape = new THREE.Shape();
-  const numPoints = 4;
-  const rOuter = 0.82;
-  const rInner = 0.24;
-  for (let i = 0; i < numPoints * 2; i++) {
-    const angle = (i * Math.PI) / numPoints;
-    const r = (i % 2 === 0) ? rOuter : rInner;
-    const x = Math.cos(angle) * r;
-    const y = Math.sin(angle) * r;
-    if (i === 0) shape.moveTo(x, y);
-    else shape.lineTo(x, y);
-  }
-  shape.closePath();
-
-  const holePath = new THREE.Path();
-  holePath.absarc(0, 0, 0.11, 0, Math.PI * 2, true);
-  shape.holes.push(holePath);
-
-  const extrudeSettings = {
-    depth: 0.05,
-    bevelEnabled: true,
-    bevelSegments: 2,
-    steps: 1,
-    bevelSize: 0.03,
-    bevelThickness: 0.03
-  };
-  const geo = new THREE.ExtrudeGeometry(shape, extrudeSettings);
-  geo.center();
-  const mat = new THREE.MeshStandardMaterial({
-    color: 0x1e293b,
-    metalness: 0.92,
-    roughness: 0.22,
-    side: THREE.DoubleSide
-  });
-  const mesh = new THREE.Mesh(geo, mat);
-  mesh.rotation.x = Math.PI / 2;
-  return mesh;
+  const apkStar = buildExtractedVfxMeshGroup('common', 0x94a3b8, 0.0055, '1efc_slash01') ||
+                  buildExtractedVfxMeshGroup('common', 0x94a3b8, 0.0055, '1efc_hit01');
+  if (apkStar) return apkStar;
+  return new THREE.Group();
 }
 
 function createKunaiMesh() {
-  const grp = new THREE.Group();
-  const bladeShape = new THREE.Shape();
-  bladeShape.moveTo(0, 1.35);
-  bladeShape.lineTo(0.24, 0.45);
-  bladeShape.lineTo(0.10, 0.0);
-  bladeShape.lineTo(-0.10, 0.0);
-  bladeShape.lineTo(-0.24, 0.45);
-  bladeShape.closePath();
-
-  const bladeGeo = new THREE.ExtrudeGeometry(bladeShape, {
-    depth: 0.05,
-    bevelEnabled: true,
-    bevelSegments: 2,
-    steps: 1,
-    bevelSize: 0.03,
-    bevelThickness: 0.03
-  });
-  bladeGeo.center();
-  const steelMat = new THREE.MeshStandardMaterial({
-    color: 0x334155,
-    metalness: 0.88,
-    roughness: 0.24
-  });
-  const bladeMesh = new THREE.Mesh(bladeGeo, steelMat);
-  bladeMesh.position.y = 0.68;
-  grp.add(bladeMesh);
-
-  const collarGeo = new THREE.CylinderGeometry(0.12, 0.12, 0.08, 12);
-  const collarMesh = new THREE.Mesh(collarGeo, steelMat);
-  collarMesh.position.y = 0.0;
-  grp.add(collarMesh);
-
-  const handleGeo = new THREE.CylinderGeometry(0.065, 0.065, 0.75, 10);
-  const handleMat = new THREE.MeshStandardMaterial({
-    color: 0xf8fafc,
-    roughness: 0.85,
-    metalness: 0.05
-  });
-  const handleMesh = new THREE.Mesh(handleGeo, handleMat);
-  handleMesh.position.y = -0.42;
-  grp.add(handleMesh);
-
-  const ringGeo = new THREE.TorusGeometry(0.13, 0.035, 8, 16);
-  const ringMesh = new THREE.Mesh(ringGeo, steelMat);
-  ringMesh.position.y = -0.88;
-  grp.add(ringMesh);
-
-  grp.scale.setScalar(1.25);
-  return grp;
+  const apkKunai = buildExtractedVfxMeshGroup('common', 0xcbd5e1, 0.006, '1efc_strk01') ||
+                   buildExtractedVfxMeshGroup('common', 0xcbd5e1, 0.006, '1efc_slash01');
+  if (apkKunai) return apkKunai;
+  return new THREE.Group();
 }
 
-function createProceduralLightningArcs(radius = 1.35, count = 10, color = 0x93c5fd) {
-  const segmentsPerArc = 5;
-  const totalPoints = count * segmentsPerArc * 2;
-  const positions = new Float32Array(totalPoints * 3);
-  const geom = new THREE.BufferGeometry();
-  geom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-
-  function randomizeArcs() {
-    let pIdx = 0;
-    for (let a = 0; a < count; a++) {
-      const u = Math.random();
-      const v = Math.random();
-      const theta = u * 2.0 * Math.PI;
-      const phi = Math.acos(2.0 * v - 1.0);
-      const sinPhi = Math.sin(phi);
-      const startR = radius * (0.35 + Math.random() * 0.25);
-      const endR = radius * (1.15 + Math.random() * 0.55);
-
-      const sX = startR * sinPhi * Math.cos(theta);
-      const sY = startR * sinPhi * Math.sin(theta);
-      const sZ = startR * Math.cos(phi);
-
-      const thetaE = theta + (Math.random() - 0.5) * 1.2;
-      const phiE = phi + (Math.random() - 0.5) * 1.2;
-      const eX = endR * Math.sin(phiE) * Math.cos(thetaE);
-      const eY = endR * Math.sin(phiE) * Math.sin(thetaE);
-      const eZ = endR * Math.cos(phiE);
-
-      let prevX = sX, prevY = sY, prevZ = sZ;
-      for (let s = 1; s <= segmentsPerArc; s++) {
-        const frac = s / segmentsPerArc;
-        let curX = sX + (eX - sX) * frac;
-        let curY = sY + (eY - sY) * frac;
-        let curZ = sZ + (eZ - sZ) * frac;
-        if (s < segmentsPerArc) {
-          const jitter = radius * 0.32;
-          curX += (Math.random() - 0.5) * jitter;
-          curY += (Math.random() - 0.5) * jitter;
-          curZ += (Math.random() - 0.5) * jitter;
-        }
-        positions[pIdx++] = prevX;
-        positions[pIdx++] = prevY;
-        positions[pIdx++] = prevZ;
-        positions[pIdx++] = curX;
-        positions[pIdx++] = curY;
-        positions[pIdx++] = curZ;
-        prevX = curX;
-        prevY = curY;
-        prevZ = curZ;
-      }
+function createApkLightningArcs(radius = 1.35, color = 0x93c5fd) {
+  const grp = new THREE.Group();
+  const models = ['1kmmeff1_blt01', '1efc_spk01', '1efc_spk02', '1efc_spk03'];
+  for (let i = 0; i < models.length; i++) {
+    const mName = models[i];
+    const owner = mName.startsWith('1kmm') ? '1kks' : 'common';
+    const bolt = buildExtractedVfxMeshGroup(owner, color, radius * 0.0085, mName);
+    if (bolt) {
+      bolt.rotation.set((i * Math.PI) / 3, (i * Math.PI) / 2, (i * Math.PI) / 4);
+      bolt.userData.rotSpeed = new THREE.Vector3(10 + i * 4, -18 + i * 7, 12 - i * 3);
+      bolt.userData.jitter = 0.38;
+      bolt.userData.uvScroll = { x: 0.4, y: 2.6 };
+      grp.add(bolt);
     }
-    geom.attributes.position.needsUpdate = true;
   }
-
-  randomizeArcs();
-  const mat = new THREE.LineBasicMaterial({
-    color,
-    transparent: true,
-    opacity: 0.95,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false
-  });
-  const lines = new THREE.LineSegments(geom, mat);
-  let arcTimer = 0;
-  lines.userData = {
-    updateArcs: function(dt) {
-      arcTimer += dt;
-      if (arcTimer > 0.04) {
-        arcTimer = 0;
-        randomizeArcs();
-      }
-    }
-  };
-  return lines;
+  return grp;
 }
 
 function createRasenganMesh(radius = 1.0, color = 0x00d4ff) {
   const grp = new THREE.Group();
-  const core = buildExtractedVfxMeshGroup('1nrt', color, radius * 0.011, '1nrveff1_chakra01') ||
-               buildExtractedVfxMeshGroup('1nrt', color, radius * 0.011, 'rasengan') ||
-               buildExtractedVfxMeshGroup('common', color, radius * 0.011, '1efc_chakra00');
+  const core = buildExtractedVfxMeshGroup('1nrt', color, radius * 0.0082, '1nrveff1_chakra01') ||
+               buildExtractedVfxMeshGroup('1nrt', color, radius * 0.0082, 'rasengan') ||
+               buildExtractedVfxMeshGroup('common', color, radius * 0.0082, '1efc_chakra00');
   if (core) {
-    core.userData.rotSpeed = new THREE.Vector3(0, 15, 0);
-    core.userData.uvScroll = { x: 0.5, y: 1.1 };
+    core.userData.rotSpeed = new THREE.Vector3(6, 18, 4);
+    core.userData.uvScroll = { x: 0.6, y: 1.4 };
     grp.add(core);
   }
-  const outer = buildExtractedVfxMeshGroup('1nrt', color, radius * 0.013, 'spl_rasengan');
+  const outer = buildExtractedVfxMeshGroup('1nrt', color, radius * 0.0095, 'spl_rasengan');
   if (outer) {
-    outer.userData.rotSpeed = new THREE.Vector3(0, -9, 0);
-    outer.userData.uvScroll = { x: -0.3, y: 0.8 };
+    outer.userData.rotSpeed = new THREE.Vector3(-4, -12, 5);
+    outer.userData.uvScroll = { x: -0.4, y: 1.0 };
     grp.add(outer);
+  }
+  const ring = buildExtractedVfxMeshGroup('1nrt', 0xe0f2fe, radius * 0.0105, '1nrveff1_ring01') ||
+               buildExtractedVfxMeshGroup('common', 0xe0f2fe, radius * 0.0105, '1efc_ring01');
+  if (ring) {
+    ring.userData.rotSpeed = new THREE.Vector3(10, 22, -8);
+    grp.add(ring);
+  }
+  const ptc = buildExtractedVfxMeshGroup('1nrt', 0xffffff, radius * 0.009, '1nrveff1_ptc01');
+  if (ptc) {
+    ptc.userData.rotSpeed = new THREE.Vector3(0, -16, 12);
+    grp.add(ptc);
   }
   return grp;
 }
 
 function createChidoriMesh(radius = 0.95, color = 0x60a5fa) {
   const grp = new THREE.Group();
-  const body = buildExtractedVfxMeshGroup('1ssk', color, radius * 0.012, '1szneff_chak01') ||
-               buildExtractedVfxMeshGroup('1ssk', color, radius * 0.012, 'chidori_spark') ||
-               buildExtractedVfxMeshGroup('common', color, radius * 0.012, '1efc_spk01');
-  if (body) {
-    body.userData.rotSpeed = new THREE.Vector3(4, 10, 3);
-    body.userData.jitter = 0.30;
-    body.userData.uvScroll = { x: 0.2, y: 1.6 };
-    grp.add(body);
+  // 1efc_spk01 / chidori_spark has vertices on Y=0; layer 3 orthogonal crossed planes for full 3D volume
+  const planeRotations = [
+    [0, 0, 0],
+    [Math.PI / 2, 0, 0],
+    [0, 0, Math.PI / 2]
+  ];
+  for (let i = 0; i < planeRotations.length; i++) {
+    const body = buildExtractedVfxMeshGroup('1ssk', color, radius * 0.0095, '1szneff_chak01') ||
+                 buildExtractedVfxMeshGroup('1ssk', color, radius * 0.0095, 'chidori_spark') ||
+                 buildExtractedVfxMeshGroup('common', color, radius * 0.0095, '1efc_spk01');
+    if (body) {
+      body.rotation.set(planeRotations[i][0], planeRotations[i][1], planeRotations[i][2]);
+      body.userData.rotSpeed = new THREE.Vector3(6 + i * 3, 14 - i * 4, 5 + i * 2);
+      body.userData.jitter = 0.32;
+      body.userData.uvScroll = { x: 0.3, y: 1.8 };
+      grp.add(body);
+    }
   }
-  const sparks = buildExtractedVfxMeshGroup('common', color, radius * 0.009, '1efc_spk01');
+  const sparks = buildExtractedVfxMeshGroup('common', 0xe0f2fe, radius * 0.009, '1efc_spk03');
   if (sparks) {
-    sparks.userData.rotSpeed = new THREE.Vector3(0, 22, 0);
-    sparks.userData.jitter = 0.5;
+    sparks.rotation.x = Math.PI / 3;
+    sparks.userData.rotSpeed = new THREE.Vector3(12, 24, -10);
+    sparks.userData.jitter = 0.45;
     grp.add(sparks);
   }
+  const arcs = createApkLightningArcs(radius * 1.15, 0xbae6fd);
+  grp.add(arcs);
   return grp;
 }
 
 function createKaitenMesh(radius = 3.2) {
   const grp = new THREE.Group();
-  const dome = buildExtractedVfxMeshGroup('1nej', 0x60a5fa, radius * 0.026, 'kaiten_dome') ||
-               buildExtractedVfxMeshGroup('common', 0x60a5fa, radius * 0.026, '1efc_wind01');
+  const dome = buildExtractedVfxMeshGroup('1nej', 0x60a5fa, radius * 0.0072, 'kaiten_dome') ||
+               buildExtractedVfxMeshGroup('common', 0x60a5fa, radius * 0.0072, '1efc_wind01');
   if (dome) {
-    dome.userData.rotSpeed = new THREE.Vector3(0, 24, 0);
-    dome.userData.uvScroll = { x: 2.5, y: 1.0 };
+    dome.position.y = -2.0;
+    dome.userData.rotSpeed = new THREE.Vector3(0, 26, 0);
+    dome.userData.uvScroll = { x: 2.8, y: 1.2 };
     grp.add(dome);
   }
-  const dust = buildExtractedVfxMeshGroup('common', 0xbae6fd, radius * 0.022, '1efc_shock01');
+  const innerVortex = buildExtractedVfxMeshGroup('common', 0x93c5fd, radius * 0.0062, '1efc_wind02');
+  if (innerVortex) {
+    innerVortex.position.y = -2.0;
+    innerVortex.userData.rotSpeed = new THREE.Vector3(0, -20, 0);
+    innerVortex.userData.uvScroll = { x: -2.0, y: 1.5 };
+    grp.add(innerVortex);
+  }
+  // 1efc_shock01 is already Y-up (Y in [0, 48]); keep upright around base
+  const dust = buildExtractedVfxMeshGroup('common', 0xbae6fd, radius * 0.0065, '1efc_shock01');
   if (dust) {
-    dust.rotation.x = -Math.PI / 2;
-    dust.position.y = 0.12;
-    dust.userData.rotSpeed = new THREE.Vector3(0, 0, 12);
+    dust.position.y = -2.05;
+    dust.userData.rotSpeed = new THREE.Vector3(0, 14, 0);
     grp.add(dust);
+  }
+  const ring = buildExtractedVfxMeshGroup('common', 0xe0f2fe, radius * 0.0070, '1efc_ring01');
+  if (ring) {
+    ring.position.y = -2.1;
+    ring.userData.rotSpeed = new THREE.Vector3(0, -18, 0);
+    grp.add(ring);
   }
   return grp;
 }
 
 function createSandShieldMesh(radius = 3.0) {
   const grp = new THREE.Group();
-  const base = buildExtractedVfxMeshGroup('1gar', 0xd97706, radius * 0.018, '1gareff1_bd_snd02') ||
-               buildExtractedVfxMeshGroup('1gar', 0xd97706, radius * 0.018, 'sand_dust');
-  if (base) { base.rotation.x = -Math.PI / 2; grp.add(base); }
+  // 1gareff1_bd_snd02 and sand_dust already have Y=0 in the horizontal XZ plane
+  const base = buildExtractedVfxMeshGroup('1gar', 0xd97706, radius * 0.0068, '1gareff1_bd_snd02') ||
+               buildExtractedVfxMeshGroup('1gar', 0xd97706, radius * 0.0068, 'sand_dust');
+  if (base) {
+    base.position.y = 0.05;
+    base.userData.rotSpeed = new THREE.Vector3(0, 3, 0);
+    grp.add(base);
+  }
+  const wallModels = ['1gareff1_snd14', '1gareff1_snd15', '1gareff1_snd13'];
   for (let i = 0; i < 3; i++) {
-    const wall = buildExtractedVfxMeshGroup('1gar', 0xd97706, radius * 0.022, '1gareff1_snd14') ||
-                 buildExtractedVfxMeshGroup('1gar', 0xd97706, radius * 0.022, '1gareff1_snd13');
+    const wall = buildExtractedVfxMeshGroup('1gar', 0xd97706, radius * 0.0072, wallModels[i % wallModels.length]) ||
+                 buildExtractedVfxMeshGroup('1gar', 0xd97706, radius * 0.0072, '1gareff1_snd14');
     if (!wall) break;
     wall.rotation.y = (i * Math.PI * 2) / 3;
-    wall.userData.rotSpeed = new THREE.Vector3(0, -5, 2);
-    wall.userData.uvScroll = { x: 0.4, y: 0.2 };
+    wall.userData.rotSpeed = new THREE.Vector3(0, -5, 0);
+    wall.userData.uvScroll = { x: 0.4, y: 0.25 };
     grp.add(wall);
   }
   return grp;
 }
 
-function createSandHandMesh(scale = 0.12) {
+function createSandHandMesh(scale = 0.08) {
   const grp = new THREE.Group();
-  const hand = buildExtractedVfxMeshGroup('1gar', 0xd97706, scale, '1gareff1_hnd01_body');
+  // 1gareff1_hnd01_body and 1gareff1_snd* are already converted to Three.js Y-up (Y in [0, 384]).
+  // Keep rotation.x = 0 so the giant sand hand & tsunami erupt vertically upward!
+  const hand = buildExtractedVfxMeshGroup('1gar', 0xd97706, scale * 0.28, '1gareff1_hnd01_body');
   if (hand) {
-    hand.rotation.x = -Math.PI / 2;
+    hand.position.y = 0.05;
     grp.add(hand);
   }
-  const geyser = buildExtractedVfxMeshGroup('1gar', 0xd97706, scale * 1.1, '1gareff1_snd07') ||
-                 buildExtractedVfxMeshGroup('1gar', 0xd97706, scale * 1.1, '1gareff1_snd02');
+  const geyser = buildExtractedVfxMeshGroup('1gar', 0xb45309, scale * 0.30, '1gareff1_snd07') ||
+                 buildExtractedVfxMeshGroup('1gar', 0xb45309, scale * 0.30, '1gareff1_snd02');
   if (geyser) {
-    geyser.rotation.x = -Math.PI / 2;
-    geyser.userData.rotSpeed = new THREE.Vector3(0, 0, 9);
+    geyser.position.y = 0.05;
+    geyser.userData.rotSpeed = new THREE.Vector3(0, 6, 0);
     grp.add(geyser);
+  }
+  const wave = buildExtractedVfxMeshGroup('1gar', 0xf59e0b, scale * 0.26, '1gareff1_snd15');
+  if (wave) {
+    wave.position.y = 0.05;
+    wave.userData.rotSpeed = new THREE.Vector3(0, -5, 0);
+    grp.add(wave);
+  }
+  const pool = buildExtractedVfxMeshGroup('1gar', 0x92400e, scale * 0.24, '1gareff1_bd_snd02');
+  if (pool) {
+    pool.position.y = 0.04;
+    grp.add(pool);
   }
   return grp;
 }
 
-function createAmaterasuMesh(radius = 4.2) {
+function createAmaterasuMesh(radius = 3.2) {
   const grp = new THREE.Group();
-  const flameA = buildExtractedVfxMeshGroup('1ssk', 0x7f1d1d, radius * 0.020, '1ssveff1_fire06');
+  const flameA = buildExtractedVfxMeshGroup('1ssk', 0x7f1d1d, radius * 0.0070, '1ssveff1_fire06');
   if (flameA) {
-    flameA.position.y = radius * 1.3;
-    flameA.userData.rotSpeed = new THREE.Vector3(0, 5, 0);
+    flameA.position.y = 0.1;
+    flameA.userData.rotSpeed = new THREE.Vector3(0, 6, 0);
     flameA.userData.uvScroll = { x: 0, y: 3.4 };
     grp.add(flameA);
   }
-  const flameB = buildExtractedVfxMeshGroup('1ssk', 0x991b1b, radius * 0.023, '1ssveff1_fire01');
+  const flameB = buildExtractedVfxMeshGroup('1ssk', 0x991b1b, radius * 0.0075, '1ssveff1_fire01');
   if (flameB) {
-    flameB.position.y = radius * 0.7;
-    flameB.userData.rotSpeed = new THREE.Vector3(0, -4, 0);
+    flameB.position.y = 0.1;
+    flameB.userData.rotSpeed = new THREE.Vector3(0, -5, 0);
     flameB.userData.uvScroll = { x: 0.1, y: 2.6 };
     grp.add(flameB);
   }
-  const core = buildExtractedVfxMeshGroup('1itc', 0x450a0a, radius * 0.016, 'amaterasu_flame') ||
-               buildExtractedVfxMeshGroup('common', 0x450a0a, radius * 0.016, '1efc_fire03');
+  const core = buildExtractedVfxMeshGroup('1itc', 0xdc2626, radius * 0.0062, 'amaterasu_flame') ||
+               buildExtractedVfxMeshGroup('common', 0xdc2626, radius * 0.0062, '1efc_fire03');
   if (core) {
-    core.position.y = radius * 0.5;
-    core.userData.uvScroll = { x: 0, y: 2.2 };
+    core.position.y = radius * 0.45;
+    core.userData.rotSpeed = new THREE.Vector3(0, 9, 0);
+    core.userData.uvScroll = { x: 0, y: 2.4 };
     grp.add(core);
   }
-  return grp;
-}
-
-function createLionFistMesh(radius = 1.35) {
-  const grp = new THREE.Group();
-  const lion = buildExtractedVfxMeshGroup('1hnt', 0x8b5cf6, radius * 0.013, 'lion_chakra') ||
-               buildExtractedVfxMeshGroup('common', 0x8b5cf6, radius * 0.013, '1efc_chakra04');
-  if (lion) {
-    lion.userData.rotSpeed = new THREE.Vector3(0, 10, 0);
-    lion.userData.jitter = 0.12;
-    lion.userData.uvScroll = { x: 0.1, y: 1.8 };
-    grp.add(lion);
-  }
-  return grp;
-}
-
-function createTornadoMesh(radius = 4.2) {
-  const grp = new THREE.Group();
-  const funnel = buildExtractedVfxMeshGroup('1roc', 0x22c55e, radius * 0.022, 'air_tornado') ||
-                 buildExtractedVfxMeshGroup('common', 0x4ade80, radius * 0.022, '1efc_wind02');
-  if (funnel) {
-    funnel.position.y = radius * 1.1;
-    funnel.userData.rotSpeed = new THREE.Vector3(0, 20, 0);
-    funnel.userData.uvScroll = { x: 1.6, y: 2.0 };
-    grp.add(funnel);
-  }
-  const gust = buildExtractedVfxMeshGroup('1roc', 0x86efac, radius * 0.024, 'whirlwind') ||
-               buildExtractedVfxMeshGroup('common', 0x86efac, radius * 0.024, '1efc_wind01');
-  if (gust) {
-    gust.position.y = radius * 0.5;
-    gust.userData.rotSpeed = new THREE.Vector3(0, -14, 0);
-    grp.add(gust);
-  }
-  return grp;
-}
-
-function createFireballMesh(radius = 2.4, color = 0xff5500) {
-  const grp = new THREE.Group();
-  const body = buildExtractedVfxMeshGroup('1ssk', color, radius * 0.021, '1ssveff1_fire03') ||
-               buildExtractedVfxMeshGroup('1ssk', color, radius * 0.021, 'fireball') ||
-               buildExtractedVfxMeshGroup('common', color, radius * 0.021, '1efc_fire03');
-  if (body) {
-    body.userData.rotSpeed = new THREE.Vector3(3, 9, 2);
-    body.userData.uvScroll = { x: 0.2, y: 2.6 };
-    grp.add(body);
-  }
-  const tail = buildExtractedVfxMeshGroup('1ssk', color, radius * 0.017, '1ssveff1_fire05') ||
-               buildExtractedVfxMeshGroup('common', color, radius * 0.017, '1efc_fire03');
-  if (tail) {
-    tail.position.z = -radius * 0.8;
-    tail.userData.rotSpeed = new THREE.Vector3(0, -7, 0);
-    tail.userData.uvScroll = { x: 0, y: 1.6 };
-    grp.add(tail);
-  }
-  return grp;
-}
-
-function createWaterDragonMesh(radius = 2.8) {
-  const grp = new THREE.Group();
-  const dragon = buildExtractedVfxMeshGroup('1kks', 0x0ea5e9, radius * 0.024, 'water_dragon') ||
-                 buildExtractedVfxMeshGroup('common', 0x0ea5e9, radius * 0.024, '1efc_wtr02');
-  if (dragon) {
-    dragon.userData.rotSpeed = new THREE.Vector3(0, 0, 14);
-    dragon.userData.uvScroll = { x: 0, y: 3.2 };
-    grp.add(dragon);
-  }
-  const foam = buildExtractedVfxMeshGroup('common', 0xbae6fd, radius * 0.016, '1efc_wav01');
-  if (foam) {
-    foam.position.z = -radius * 1.2;
-    foam.rotation.x = -Math.PI / 2;
-    grp.add(foam);
-  }
-  return grp;
-}
-
-function createGroundShatterMesh(radius = 5.5) {
-  const grp = new THREE.Group();
-  const fist = buildExtractedVfxMeshGroup('1skr', 0xf43f5e, radius * 0.028, '1skneff_fist01');
-  if (fist) {
-    fist.position.y = radius * 0.75;
-    fist.userData.rotSpeed = new THREE.Vector3(0, 8, 0);
-    fist.userData.jitter = 0.10;
-    grp.add(fist);
-  }
-  const shock = buildExtractedVfxMeshGroup('1skr', 0xff5c8a, radius * 0.018, 'shatter') ||
-                buildExtractedVfxMeshGroup('common', 0xff5c8a, radius * 0.018, '1efc_brk01_02');
+  const shock = buildExtractedVfxMeshGroup('common', 0xef4444, radius * 0.0068, '1efc_shock01');
   if (shock) {
-    shock.rotation.x = -Math.PI / 2;
-    shock.position.y = 0.15;
+    shock.position.y = 0.08;
+    shock.userData.rotSpeed = new THREE.Vector3(0, 12, 0);
     grp.add(shock);
   }
   return grp;
 }
 
-function createToadOilFlameMesh(radius = 3.2) {
+function createLionFistMesh(radius = 0.95) {
   const grp = new THREE.Group();
-  const flame = buildExtractedVfxMeshGroup('1jry', 0xf97316, radius * 0.024, '1jryeff01') ||
-               buildExtractedVfxMeshGroup('common', 0xf97316, radius * 0.024, '1efc_fire03');
+  const lion = buildExtractedVfxMeshGroup('1hnt', 0x8b5cf6, radius * 0.0085, 'lion_chakra') ||
+               buildExtractedVfxMeshGroup('common', 0x8b5cf6, radius * 0.0085, '1efc_chakra04');
+  if (lion) {
+    lion.userData.rotSpeed = new THREE.Vector3(4, 12, 3);
+    lion.userData.jitter = 0.14;
+    lion.userData.uvScroll = { x: 0.15, y: 2.0 };
+    grp.add(lion);
+  }
+  const shroud = buildExtractedVfxMeshGroup('common', 0xc4b5fd, radius * 0.0072, '1efc_chakra05');
+  if (shroud) {
+    shroud.userData.rotSpeed = new THREE.Vector3(-3, -15, 4);
+    shroud.userData.uvScroll = { x: -0.1, y: 1.6 };
+    grp.add(shroud);
+  }
+  return grp;
+}
+
+function createTornadoMesh(radius = 3.2) {
+  const grp = new THREE.Group();
+  const funnel = buildExtractedVfxMeshGroup('1roc', 0x22c55e, radius * 0.0072, 'air_tornado') ||
+                 buildExtractedVfxMeshGroup('common', 0x4ade80, radius * 0.0072, '1efc_wind02');
+  if (funnel) {
+    funnel.position.y = 0.08;
+    funnel.userData.rotSpeed = new THREE.Vector3(0, 22, 0);
+    funnel.userData.uvScroll = { x: 1.8, y: 2.2 };
+    grp.add(funnel);
+  }
+  const gust = buildExtractedVfxMeshGroup('1roc', 0x86efac, radius * 0.0076, 'whirlwind') ||
+               buildExtractedVfxMeshGroup('common', 0x86efac, radius * 0.0076, '1efc_wind01');
+  if (gust) {
+    gust.position.y = 0.05;
+    gust.userData.rotSpeed = new THREE.Vector3(0, -16, 0);
+    grp.add(gust);
+  }
+  const leaves = buildExtractedVfxMeshGroup('1roc', 0x4ade80, radius * 0.0068, 'leaf_flurry') ||
+                 buildExtractedVfxMeshGroup('common', 0x4ade80, radius * 0.0068, '1efc_leaf01');
+  if (leaves) {
+    leaves.position.y = 0.2;
+    leaves.userData.rotSpeed = new THREE.Vector3(0, 28, 0);
+    grp.add(leaves);
+  }
+  return grp;
+}
+
+function createFireballMesh(radius = 1.8, color = 0xff5500) {
+  const grp = new THREE.Group();
+  const body = buildExtractedVfxMeshGroup('1ssk', color, radius * 0.0085, '1ssveff1_fire03') ||
+               buildExtractedVfxMeshGroup('1ssk', color, radius * 0.0085, 'fireball') ||
+               buildExtractedVfxMeshGroup('common', color, radius * 0.0085, '1efc_fire03');
+  if (body) {
+    body.userData.rotSpeed = new THREE.Vector3(4, 12, 3);
+    body.userData.uvScroll = { x: 0.25, y: 2.8 };
+    grp.add(body);
+  }
+  const corona = buildExtractedVfxMeshGroup('1ssk', 0xfbbf24, radius * 0.0076, '1ssveff1_fire04') ||
+                 buildExtractedVfxMeshGroup('common', 0xfbbf24, radius * 0.0076, '1efc_fire03');
+  if (corona) {
+    corona.userData.rotSpeed = new THREE.Vector3(-5, -10, 4);
+    corona.userData.uvScroll = { x: -0.2, y: 2.2 };
+    grp.add(corona);
+  }
+  const tail = buildExtractedVfxMeshGroup('1ssk', color, radius * 0.0072, '1ssveff1_fire05') ||
+               buildExtractedVfxMeshGroup('common', color, radius * 0.0072, '1efc_fire03');
+  if (tail) {
+    tail.position.z = -radius * 0.85;
+    tail.userData.rotSpeed = new THREE.Vector3(0, -9, 6);
+    tail.userData.uvScroll = { x: 0, y: 1.8 };
+    grp.add(tail);
+  }
+  return grp;
+}
+
+function createWaterDragonMesh(radius = 2.2) {
+  const grp = new THREE.Group();
+  const dragon = buildExtractedVfxMeshGroup('1kks', 0x0ea5e9, radius * 0.0090, 'water_dragon') ||
+                 buildExtractedVfxMeshGroup('common', 0x0ea5e9, radius * 0.0090, '1efc_wtr02');
+  if (dragon) {
+    dragon.userData.rotSpeed = new THREE.Vector3(0, 0, 14);
+    dragon.userData.uvScroll = { x: 0, y: 3.4 };
+    grp.add(dragon);
+  }
+  const coil = buildExtractedVfxMeshGroup('common', 0x38bdf8, radius * 0.0080, '1efc_wtr01');
+  if (coil) {
+    coil.position.z = -radius * 0.7;
+    coil.userData.rotSpeed = new THREE.Vector3(0, -10, -12);
+    coil.userData.uvScroll = { x: 0.4, y: 2.6 };
+    grp.add(coil);
+  }
+  const splash = buildExtractedVfxMeshGroup('common', 0x7dd3fc, radius * 0.0075, '1efc_wtr03');
+  if (splash) {
+    splash.position.z = -radius * 1.1;
+    splash.userData.rotSpeed = new THREE.Vector3(0, 8, 0);
+    grp.add(splash);
+  }
+  // 1efc_wav01 is already horizontal in the XZ plane (Y=0)
+  const foam = buildExtractedVfxMeshGroup('common', 0xbae6fd, radius * 0.0070, '1efc_wav01');
+  if (foam) {
+    foam.position.z = -radius * 1.2;
+    foam.position.y = -0.8;
+    grp.add(foam);
+  }
+  return grp;
+}
+
+function createGroundShatterMesh(radius = 4.5) {
+  const grp = new THREE.Group();
+  const fist = buildExtractedVfxMeshGroup('1skr', 0xf43f5e, radius * 0.0068, '1skneff_fist01');
+  if (fist) {
+    fist.position.y = radius * 0.35;
+    fist.userData.rotSpeed = new THREE.Vector3(0, 8, 0);
+    fist.userData.jitter = 0.10;
+    grp.add(fist);
+  }
+  // 1efc_grd01 and 1efc_brk01_01..04 are already in Y-up coordinates!
+  const crater = buildExtractedVfxMeshGroup('common', 0xd97706, radius * 0.0065, '1efc_grd01');
+  if (crater) {
+    crater.position.y = 0.04;
+    grp.add(crater);
+  }
+  const brkModels = ['1efc_brk01_01', '1efc_brk01_02', '1efc_brk01_03', '1efc_brk01_04'];
+  for (let i = 0; i < brkModels.length; i++) {
+    const rock = buildExtractedVfxMeshGroup('common', 0xb45309, radius * 0.0058, brkModels[i]);
+    if (rock) {
+      rock.position.y = 0.08;
+      rock.rotation.y = (i * Math.PI) / 2;
+      grp.add(rock);
+    }
+  }
+  const shock = buildExtractedVfxMeshGroup('common', 0xff5c8a, radius * 0.0062, '1efc_shock01');
+  if (shock) {
+    shock.position.y = 0.10;
+    shock.userData.rotSpeed = new THREE.Vector3(0, 12, 0);
+    grp.add(shock);
+  }
+  return grp;
+}
+
+function createToadOilFlameMesh(radius = 2.2) {
+  const grp = new THREE.Group();
+  const flame = buildExtractedVfxMeshGroup('1jry', 0xf97316, radius * 0.0092, '1jryeff01') ||
+                buildExtractedVfxMeshGroup('common', 0xf97316, radius * 0.0092, '1efc_fire03');
   if (flame) {
-    flame.position.z = radius * 1.2;
-    flame.userData.rotSpeed = new THREE.Vector3(0, 0, 7);
+    flame.position.z = radius * 1.1;
+    flame.userData.rotSpeed = new THREE.Vector3(0, 0, 8);
     flame.userData.uvScroll = { x: 0, y: 3.4 };
     grp.add(flame);
   }
-  const smoke = buildExtractedVfxMeshGroup('1jry', 0x94a3b8, radius * 0.016, '1jryeff02');
+  const core = buildExtractedVfxMeshGroup('1jry', 0xfbbf24, radius * 0.0080, 'toad_fire') ||
+               buildExtractedVfxMeshGroup('common', 0xfbbf24, radius * 0.0080, '1efc_fire03');
+  if (core) {
+    core.position.z = radius * 0.5;
+    core.userData.rotSpeed = new THREE.Vector3(0, 10, -6);
+    core.userData.uvScroll = { x: 0.2, y: 2.8 };
+    grp.add(core);
+  }
+  const smoke = buildExtractedVfxMeshGroup('1jry', 0x94a3b8, radius * 0.0075, '1jryeff02');
   if (smoke) {
-    smoke.position.z = radius * 2.2;
-    smoke.position.y = radius * 0.6;
-    smoke.userData.rotSpeed = new THREE.Vector3(0, 4, 0);
+    smoke.position.z = radius * 1.8;
+    smoke.position.y = radius * 0.2;
+    smoke.userData.rotSpeed = new THREE.Vector3(0, 5, 0);
     grp.add(smoke);
   }
   return grp;
@@ -3904,19 +4232,26 @@ function createToadOilFlameMesh(radius = 3.2) {
 function createKirinMesh(x, z) {
   const grp = new THREE.Group();
   grp.position.set(x, 0, z);
-  const bolt = buildExtractedVfxMeshGroup('1kks', 0x93c5fd, 0.28, '1kmmeff1_blt01') ||
-               buildExtractedVfxMeshGroup('common', 0x93c5fd, 0.28, '1efc_spk03');
-  if (bolt) {
-    bolt.position.y = 26;
-    bolt.userData.rotSpeed = new THREE.Vector3(0, 26, 0);
-    bolt.userData.uvScroll = { x: 0, y: 6.5 };
-    grp.add(bolt);
+  for (let i = 0; i < 2; i++) {
+    const bolt = buildExtractedVfxMeshGroup('1kks', 0x93c5fd, 0.022, '1kmmeff1_blt01') ||
+                 buildExtractedVfxMeshGroup('common', 0x93c5fd, 0.022, '1efc_spk03');
+    if (bolt) {
+      bolt.position.y = 3.2;
+      bolt.rotation.x = Math.PI / 2;
+      bolt.rotation.z = (i * Math.PI) / 2;
+      bolt.userData.rotSpeed = new THREE.Vector3(0, i === 0 ? 18 : -14, 0);
+      bolt.userData.uvScroll = { x: 0, y: 6.5 };
+      grp.add(bolt);
+    }
   }
-  const shock = buildExtractedVfxMeshGroup('common', 0x60a5fa, 0.030, '1efc_shock01');
+  const sparkBurst = createChidoriMesh(1.4, 0x60a5fa);
+  sparkBurst.position.y = 1.6;
+  grp.add(sparkBurst);
+  // 1efc_shock01 is already Y-up
+  const shock = buildExtractedVfxMeshGroup('common', 0x60a5fa, 0.016, '1efc_shock01');
   if (shock) {
-    shock.rotation.x = -Math.PI / 2;
-    shock.position.y = 0.2;
-    shock.userData.rotSpeed = new THREE.Vector3(0, 0, 16);
+    shock.position.y = 0.12;
+    shock.userData.rotSpeed = new THREE.Vector3(0, 16, 0);
     grp.add(shock);
   }
   return grp;
@@ -3925,149 +4260,89 @@ function createKirinMesh(x, z) {
 function createTsunadeUltRuptureMesh(radius = 5.5) {
   const grp = new THREE.Group();
   // Ground rupture fracture mesh (1efc_grd01 / 1efc_brk01)
-  const rupture = buildExtractedVfxMeshGroup('common', 0x10b981, radius * 0.022, '1efc_grd01') ||
-                  buildExtractedVfxMeshGroup('common', 0x10b981, radius * 0.022, '1efc_brk01_01');
+  const rupture = buildExtractedVfxMeshGroup('common', 0x10b981, radius * 0.0065, '1efc_grd01') ||
+                  buildExtractedVfxMeshGroup('common', 0x10b981, radius * 0.0065, '1efc_brk01_01');
   if (rupture) {
     rupture.position.y = 0.05;
     grp.add(rupture);
   }
 
-  // Emerald & gold celestial healing & shockwave disc burst
-  const shockTex = loadTex('assets/skills/1efc_shock02.png');
-  const shockRing = new THREE.Mesh(
-    new THREE.RingGeometry(1.0, radius * 1.15, 32),
-    new THREE.MeshBasicMaterial({
-      color: 0x10b981,
-      map: shockTex,
-      side: THREE.DoubleSide,
-      transparent: true,
-      opacity: 0.78,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false
-    })
-  );
-  shockRing.rotation.x = -Math.PI / 2;
-  shockRing.position.y = 0.08;
-  shockRing.userData = { rotSpeed: new THREE.Vector3(0, 0, 12) };
-  grp.add(shockRing);
+  // Authentic APK shockwave & chakra ring meshes (1efc_shock01 + 1efc_ring01)
+  const shockRing = buildExtractedVfxMeshGroup('common', 0x10b981, radius * 0.0068, '1efc_shock01');
+  if (shockRing) {
+    shockRing.position.y = 0.08;
+    shockRing.userData.rotSpeed = new THREE.Vector3(0, 12, 0);
+    grp.add(shockRing);
+  }
 
-  const goldRing = new THREE.Mesh(
-    new THREE.RingGeometry(0.5, radius * 0.75, 32),
-    new THREE.MeshBasicMaterial({
-      color: 0xfbbf24,
-      map: shockTex,
-      side: THREE.DoubleSide,
-      transparent: true,
-      opacity: 0.85,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false
-    })
-  );
-  goldRing.rotation.x = -Math.PI / 2;
-  goldRing.position.y = 0.12;
-  goldRing.userData = { rotSpeed: new THREE.Vector3(0, 0, -16) };
-  grp.add(goldRing);
+  const goldRing = buildExtractedVfxMeshGroup('common', 0xfbbf24, radius * 0.0065, '1efc_ring01');
+  if (goldRing) {
+    goldRing.position.y = 0.12;
+    goldRing.userData.rotSpeed = new THREE.Vector3(0, -16, 0);
+    grp.add(goldRing);
+  }
 
   // Celestial healing chakra pillar burst (1efc_chakra10a / 1efc_chakra02)
-  const pillar = buildExtractedVfxMeshGroup('common', 0x34d399, radius * 0.025, '1efc_chakra10a') ||
-                 buildExtractedVfxMeshGroup('common', 0xfbbf24, radius * 0.025, '1efc_chakra02');
+  const pillar = buildExtractedVfxMeshGroup('common', 0x34d399, radius * 0.0068, '1efc_chakra10a') ||
+                 buildExtractedVfxMeshGroup('common', 0xfbbf24, radius * 0.0068, '1efc_chakra02');
   if (pillar) {
-    pillar.position.y = radius * 0.6;
+    pillar.position.y = 0.1;
     pillar.userData = { rotSpeed: new THREE.Vector3(0, 10, 0), uvScroll: { x: 0, y: 3.2 } };
     grp.add(pillar);
   }
 
-  // Tsutenkyaku ground break stone shards
-  const brkMesh = buildExtractedVfxMeshGroup('common', 0xd97706, radius * 0.018, '1efc_brk01_02');
-  if (brkMesh) {
-    brkMesh.rotation.x = -Math.PI / 2;
-    brkMesh.position.y = 0.15;
-    grp.add(brkMesh);
+  // Tsutenkyaku ground break stone shards (already Y-up in Three.js space)
+  const brkModels = ['1efc_brk01_01', '1efc_brk01_02', '1efc_brk01_03', '1efc_brk01_04'];
+  for (let i = 0; i < brkModels.length; i++) {
+    const brkMesh = buildExtractedVfxMeshGroup('common', 0xd97706, radius * 0.0058, brkModels[i]);
+    if (brkMesh) {
+      brkMesh.position.y = 0.10;
+      brkMesh.rotation.y = (i * Math.PI) / 2;
+      grp.add(brkMesh);
+    }
   }
   return grp;
 }
 
 function createOrochimaruDemonicBarrierMesh(radius = 5.5) {
   const grp = new THREE.Group();
-  // Authentic Storm 1 extracted ground serpents (Sen'nejashu surge - 1orceff1_01)
-  const serpents = buildExtractedVfxMeshGroup('1orc', 0x84cc16, radius * 0.024, '1orceff1_01');
+  // Authentic Storm 1 extracted ground serpents (Sen'nejashu surge - 1orceff1_01..03)
+  const serpents = buildExtractedVfxMeshGroup('1orc', 0x84cc16, radius * 0.0068, '1orceff1_01');
   if (serpents) {
     serpents.position.set(0, 0.08, 0);
     grp.add(serpents);
   }
-  const serpents2 = buildExtractedVfxMeshGroup('1orc', 0xa855f7, radius * 0.020, '1orceff1_02') ||
-                    buildExtractedVfxMeshGroup('1orc', 0x65a30d, radius * 0.020, '1orceff1_03');
+  const serpents2 = buildExtractedVfxMeshGroup('1orc', 0xa855f7, radius * 0.0060, '1orceff1_02');
   if (serpents2) {
-    serpents2.position.set(0, 0.15, radius * 0.2);
+    serpents2.position.set(0, 0.12, radius * 0.2);
     grp.add(serpents2);
   }
-
-  // Dark purple demonic barrier (Rashomon Gate / Edo Tensei)
-  const gateMat = new THREE.MeshBasicMaterial({
-    color: 0x3b0764,
-    transparent: true,
-    opacity: 0.88,
-    side: THREE.DoubleSide
-  });
-
-  const pillarGeo = new THREE.CylinderGeometry(0.55, 0.75, 7.0, 12);
-  const leftPillar = new THREE.Mesh(pillarGeo, gateMat);
-  leftPillar.position.set(-radius * 0.65, 3.5, 0);
-  grp.add(leftPillar);
-
-  const rightPillar = new THREE.Mesh(pillarGeo, gateMat);
-  rightPillar.position.set(radius * 0.65, 3.5, 0);
-  grp.add(rightPillar);
-
-  const lintelGeo = new THREE.BoxGeometry(radius * 1.55, 0.85, 0.95);
-  const lintel = new THREE.Mesh(lintelGeo, gateMat);
-  lintel.position.set(0, 6.8, 0);
-  grp.add(lintel);
-
-  // Demonic barrier face / barrier wall
-  const wall = buildExtractedVfxMeshGroup('common', 0x581c87, radius * 0.028, '1efc_wall01');
-  if (wall) {
-    wall.position.set(0, 3.2, 0);
-    grp.add(wall);
-  } else {
-    const barrierPlane = new THREE.Mesh(
-      new THREE.PlaneGeometry(radius * 1.3, 6.0),
-      new THREE.MeshBasicMaterial({
-        color: 0x7e22ce,
-        transparent: true,
-        opacity: 0.75,
-        side: THREE.DoubleSide,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false
-      })
-    );
-    barrierPlane.position.set(0, 3.2, 0);
-    grp.add(barrierPlane);
+  const serpents3 = buildExtractedVfxMeshGroup('1orc', 0x65a30d, radius * 0.0060, '1orceff1_03');
+  if (serpents3) {
+    serpents3.position.set(0, 0.10, -radius * 0.2);
+    grp.add(serpents3);
   }
 
-  // Dark purple demonic shockwave ring
-  const darkShockTex = loadTex('assets/skills/1efc_shock02.png');
-  const darkDisc = new THREE.Mesh(
-    new THREE.RingGeometry(0.8, radius * 1.2, 32),
-    new THREE.MeshBasicMaterial({
-      color: 0x6b21a8,
-      map: darkShockTex,
-      side: THREE.DoubleSide,
-      transparent: true,
-      opacity: 0.80,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false
-    })
-  );
-  darkDisc.rotation.x = -Math.PI / 2;
-  darkDisc.position.y = 0.06;
-  darkDisc.userData = { rotSpeed: new THREE.Vector3(0, 0, 7) };
-  grp.add(darkDisc);
+  // Authentic APK barrier wall & shockwave ring models (1efc_wall01 + 1efc_shock01 + 1efc_ring01)
+  const wall = buildExtractedVfxMeshGroup('common', 0x581c87, radius * 0.0068, '1efc_wall01') ||
+               buildExtractedVfxMeshGroup('common', 0x7e22ce, radius * 0.0068, '1efc_chakra10a');
+  if (wall) {
+    wall.position.set(0, 0.1, 0);
+    grp.add(wall);
+  }
+
+  const darkShock = buildExtractedVfxMeshGroup('common', 0x6b21a8, radius * 0.0065, '1efc_shock01') ||
+                    buildExtractedVfxMeshGroup('common', 0x6b21a8, radius * 0.0065, '1efc_ring01');
+  if (darkShock) {
+    darkShock.position.y = 0.06;
+    darkShock.userData.rotSpeed = new THREE.Vector3(0, 9, 0);
+    grp.add(darkShock);
+  }
 
   // Purple demonic aura flame (1efc_chakra04)
-  const demonAura = buildExtractedVfxMeshGroup('common', 0x9333ea, radius * 0.022, '1efc_chakra04');
+  const demonAura = buildExtractedVfxMeshGroup('common', 0x9333ea, radius * 0.0062, '1efc_chakra04');
   if (demonAura) {
-    demonAura.position.set(0, 2.5, 0);
+    demonAura.position.set(0, 0.1, 0);
     demonAura.userData = { rotSpeed: new THREE.Vector3(0, 10, 0), uvScroll: { x: 0, y: 2.8 } };
     grp.add(demonAura);
   }
@@ -4075,36 +4350,33 @@ function createOrochimaruDemonicBarrierMesh(radius = 5.5) {
 }
 
 function spawnSmokePuff(x, y, z, radius = 3.5) {
-  for (let i = 0; i < 6; i++) {
-    const smoke = new THREE.Mesh(
-      new THREE.DodecahedronGeometry(radius * (0.35 + Math.random() * 0.35)),
-      new THREE.MeshLambertMaterial({ color: 0xe2e8f0, transparent: true, opacity: 0.75 })
-    );
+  const smokeModels = [
+    ['1nrt', '1nrveff1_smk01'],
+    ['1nrt', '1nrveff1_smk02'],
+    ['1ssk', '1ssveff1_smk01'],
+    ['common', '1efc_smk01']
+  ];
+  for (let i = 0; i < 3; i++) {
+    const [owner, mName] = smokeModels[i % smokeModels.length];
+    const smoke = buildExtractedVfxMeshGroup(owner, 0xe2e8f0, radius * 0.0055, mName) ||
+                  buildExtractedVfxMeshGroup('common', 0xe2e8f0, radius * 0.0055, '1efc_smk01');
+    if (!smoke) continue;
     smoke.position.set(
-      x + (Math.random() - 0.5) * 2.5,
-      y + (Math.random() - 0.5) * 1.8,
-      z + (Math.random() - 0.5) * 2.5
+      x + (Math.random() - 0.5) * 1.6,
+      Math.max(0.08, y * 0.25),
+      z + (Math.random() - 0.5) * 1.6
     );
+    smoke.rotation.y = (i * Math.PI * 2) / 3 + Math.random() * 0.4;
     arenaGroup.add(smoke);
-    vfxList.push({ mesh: smoke, age: 0, duration: 0.55 + Math.random() * 0.25, style: 'smoke' });
+    vfxList.push({ mesh: smoke, age: 0, duration: 0.65 + Math.random() * 0.25, style: 'smoke' });
   }
 }
 
 function spawnGroundCrackDecal(x, z, radius = 2.8) {
-  const crackTex = loadTex('assets/skills/1efc_brk01.png');
-  const crackGeo = new THREE.PlaneGeometry(radius, radius);
-  const crackMat = new THREE.MeshBasicMaterial({
-    map: crackTex,
-    transparent: true,
-    opacity: 0.88,
-    depthWrite: false,
-    polygonOffset: true,
-    polygonOffsetFactor: -1,
-    polygonOffsetUnits: -1
-  });
-  const crackMesh = new THREE.Mesh(crackGeo, crackMat);
-  crackMesh.rotation.x = -Math.PI / 2;
-  crackMesh.rotation.z = Math.random() * Math.PI * 2;
+  const crackMesh = buildExtractedVfxMeshGroup('common', 0xd97706, radius * 0.0065, '1efc_grd01') ||
+                    buildExtractedVfxMeshGroup('common', 0xd97706, radius * 0.0065, '1efc_brk01_01');
+  if (!crackMesh) return;
+  crackMesh.rotation.y = Math.random() * Math.PI * 2;
   crackMesh.position.set(x, 0.045, z);
   arenaGroup.add(crackMesh);
   vfxList.push({
@@ -4116,97 +4388,55 @@ function spawnGroundCrackDecal(x, z, radius = 2.8) {
 }
 
 function spawnHitSparks(x, y, z, colorHex = 0xfde047, intensity = 1) {
-  // P1 JUICE: intensity 0.75 light hit / 1.0 skill / 1.7 KO & ult impact
-  // 0. White radial impact flash (procedural additive sprite)
-  const flashMat = new THREE.SpriteMaterial({
-    map: flashTexture,
-    color: 0xffffff,
-    transparent: true,
-    opacity: 0.9,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false
-  });
-  const flashMesh = new THREE.Sprite(flashMat);
-  flashMesh.position.set(x, y, z);
-  const juiceFs = 3.2 * intensity;
-  flashMesh.scale.set(juiceFs, juiceFs, 1);
-  arenaGroup.add(flashMesh);
-  vfxList.push({ mesh: flashMesh, age: 0, duration: 0.12, style: 'flash' });
+  // 100% APK-extracted impact burst (1efc_hit01 + 1efc_spk01 + 1efc_spk03 + 1efc_ring01)
+  const hitCore = buildExtractedVfxMeshGroup('common', 0xffffff, 0.015 * intensity, '1efc_hit01') ||
+                  buildExtractedVfxMeshGroup('common', 0xffffff, 0.015 * intensity, '1efc_spk01');
+  if (hitCore) {
+    hitCore.position.set(x, y, z);
+    arenaGroup.add(hitCore);
+    vfxList.push({ mesh: hitCore, age: 0, duration: 0.22, style: 'hit_star' });
+  }
 
-  // 1. Central bright starburst flash
-  const starGeo = new THREE.OctahedronGeometry(1.2, 0);
-  const starMat = new THREE.MeshBasicMaterial({
-    color: 0xffffff,
-    transparent: true,
-    opacity: 0.95,
-    wireframe: false,
-    blending: THREE.AdditiveBlending
-  });
-  const starMesh = new THREE.Mesh(starGeo, starMat);
-  starMesh.position.set(x, y, z);
-  starMesh.scale.set(1.4 * intensity, 1.4 * intensity, 1.4 * intensity);
-  arenaGroup.add(starMesh);
-  vfxList.push({ mesh: starMesh, age: 0, duration: 0.18, style: 'hit_star' });
+  spawnVFX(x, y, z, colorHex, 2.2 * intensity, 0.24, 'ring');
 
-  // 2. Cel-shaded impact ring
-  spawnVFX(x, y, z, colorHex, 2.2 * intensity, 0.22, 'ring');
-
-  // 3. Directional spark shards flying outward
-  const shardCount = 6 + Math.round(4 * Math.min(1.7, intensity));
-  for (let i = 0; i < shardCount; i++) {
-    const angle = (i / shardCount) * Math.PI * 2 + (Math.random() - 0.5) * 0.4;
-    const speed = (7.0 + Math.random() * 6.0) * (0.8 + 0.35 * intensity);
-    const shardGeo = new THREE.ConeGeometry(0.12, 0.55, 4);
-    const shardMat = new THREE.MeshBasicMaterial({
-      color: (i % 2 === 0) ? colorHex : 0xffffff,
-      transparent: true,
-      opacity: 0.9,
-      blending: THREE.AdditiveBlending
-    });
-    const shardMesh = new THREE.Mesh(shardGeo, shardMat);
-    shardMesh.position.set(x, y, z);
-    shardMesh.rotation.set(Math.random() * Math.PI, angle, Math.random() * Math.PI);
-    arenaGroup.add(shardMesh);
+  const spkModels = ['1efc_spk01', '1efc_spk02', '1efc_spk03'];
+  for (let i = 0; i < 3; i++) {
+    const spk = buildExtractedVfxMeshGroup('common', (i % 2 === 0) ? colorHex : 0xffffff, 0.012 * intensity, spkModels[i]);
+    if (!spk) continue;
+    spk.position.set(x, y, z);
+    spk.rotation.set((i * Math.PI) / 3, (i * Math.PI) / 2, (i * Math.PI) / 4);
+    arenaGroup.add(spk);
     vfxList.push({
-      mesh: shardMesh,
+      mesh: spk,
       age: 0,
-      duration: 0.24 + Math.random() * 0.1,
-      style: 'spark',
-      vel: {
-        x: Math.cos(angle) * speed,
-        y: (Math.random() - 0.2) * 4.5,
-        z: Math.sin(angle) * speed
-      }
+      duration: 0.26,
+      style: 'extracted',
+      anim: 'spin'
     });
   }
 }
 
 function spawnSoulChakraBurst(x, y, z, colorHex = 0x38bdf8) {
-  // Rising soul chakra motes with heavenly drift
-  const count = 12;
-  for (let i = 0; i < count; i++) {
-    const angle = (i / count) * Math.PI * 2 + (Math.random() - 0.5) * 0.5;
-    const horizSpeed = 0.8 + Math.random() * 1.5;
-    const orbGeo = new THREE.SphereGeometry(0.35 + Math.random() * 0.25, 8, 8);
-    const orbMat = new THREE.MeshBasicMaterial({
-      color: colorHex,
-      transparent: true,
-      opacity: 0.95,
-      blending: THREE.AdditiveBlending
-    });
-    const orb = new THREE.Mesh(orbGeo, orbMat);
-    orb.position.set(x + (Math.random() - 0.5) * 1.2, y + Math.random() * 0.8, z + (Math.random() - 0.5) * 1.2);
+  // 100% APK-extracted rising chakra particles & aura (1efc_ptc01 + 1nrveff1_ptc01 + 1efc_chakra05)
+  const ptcModels = [
+    ['common', '1efc_ptc01'],
+    ['1nrt', '1nrveff1_ptc01'],
+    ['common', '1efc_chakra05']
+  ];
+  for (let i = 0; i < ptcModels.length; i++) {
+    const [owner, mName] = ptcModels[i];
+    const orb = buildExtractedVfxMeshGroup(owner, colorHex, 0.018, mName) ||
+                buildExtractedVfxMeshGroup('common', colorHex, 0.018, '1efc_chakra00');
+    if (!orb) continue;
+    orb.position.set(x, y * 0.5, z);
+    orb.rotation.y = (i * Math.PI * 2) / 3;
     arenaGroup.add(orb);
     vfxList.push({
       mesh: orb,
       age: 0,
-      duration: 1.35 + Math.random() * 0.45,
-      style: 'soul',
-      vel: {
-        x: Math.cos(angle) * horizSpeed,
-        y: 3.2 + Math.random() * 2.8,
-        z: Math.sin(angle) * horizSpeed
-      }
+      duration: 1.35,
+      style: 'extracted',
+      anim: 'rise'
     });
   }
 }
@@ -4239,6 +4469,7 @@ function dealDamage(attacker, target, amount, skillName) {
   const dmg = Math.max(1, Math.round(dmgRaw * HERO_DMG_SCALE * ((HERO_STATS[target.heroId] || HERO_STATS.__d).dr))); // T5 escala global + P2 dano por heroi
   if (TRN.active && attacker.isPlayer && target !== attacker) TRN.recordHit(attacker, target, dmg, skillName); // W-TRN: medição de dano do treino
   if (TRN.active && attacker.isPlayer && target !== attacker) TRN_FLOATT(target, dmg); // W-TRN: numero de dano flutuante
+  if (attacker.isPlayer && target !== attacker) recordPlayerComboHit(target, dmg);
   target.hp = Math.max(0, target.hp - dmg);
 
   // PV3.3: haptics — levou dano (18ms) > acertou (12ms)
@@ -4251,8 +4482,8 @@ function dealDamage(attacker, target, amount, skillName) {
   target.recentAttackers.set(attacker, performance.now());
 
   // Synchronized SFX on damage impact
-  AUTH_SFX.playAt('hit_s', target.x, target.z, { vol: 0.55 }); // W5: impacto posicionado
-  if (dmg >= 180) AUTH_SFX.playAt(AUTH_SFX.pick('ground_hit', 'ground_hit2'), target.x, target.z, { vol: 0.85, min: 260 }); // W5: tombo pesado autêntico
+  AUTH_SFX.playAt('hit_s', target.x, target.z, { vol: 0.7 }); // W8
+  if (dmg >= 180) AUTH_SFX.playAt(AUTH_SFX.pick('ground_hit', 'ground_hit2'), target.x, target.z, { vol: 0.9, min: 260 }); // W8
   window.unitVoice(target, dmg >= 180 ? 'dmg_m' : 'dmg_s'); // W5-F2: voz do herói ao levar dano
 
   // Cel-shaded impact hit spark burst on damage impact
@@ -4435,52 +4666,125 @@ const SKILL_VFX_ANIM = {
 // fd = offset a frente do caster; dx = offset lateral; y = altura; c = tinta; g = grupo do modelo.
 const SKILL_VFX_PHASES = {
   '1nrt': {
-    q: [{ m: '1nrveff1_sonic01_air02', at: 0.55, s: 4.5, y: 1.4, fd: 2.6, c: 0x00d4ff }],
-    w: [{ m: '1nrveff1_ptc01', at: 0.10, s: 2.6, y: 1.6, c: 0xffffff },
-        { m: '1nrveff1_smk01', at: 0.30, s: 3.2, y: 1.2, dx: 1.7, c: 0xe2e8f0 },
-        { m: '1nrveff1_smk01', at: 0.30, s: 3.2, y: 1.2, dx: -1.7, c: 0xe2e8f0 }],
-    e: [{ m: '1nrveff1_smk02', at: 0.05, s: 3.0, y: 1.2, c: 0xe2e8f0 }],
-    r: [{ m: '1nrveff1_chakra03', at: 0.15, s: 5.5, y: 2.2, c: 0xff3b00 },
-        { m: '1nrveff1_ring01', at: 0.80, s: 6.0, y: 0.6, c: 0xffedd5 }]
+    q: [{ m: '1nrveff1_ptc01', at: 0.12, s: 3.4, y: 1.8, fd: 1.2, c: 0xffffff },
+        { m: '1nrveff1_sonic01_dst01', at: 0.32, s: 4.2, y: 0.2, fd: 1.8, c: 0xbae6fd },
+        { m: '1nrveff1_sonic01_air02', at: 0.55, s: 4.8, y: 1.4, fd: 2.6, c: 0x00d4ff },
+        { m: '1nrveff1_ring01', at: 0.72, s: 4.5, y: 1.4, fd: 3.0, c: 0xe0f2fe }],
+    w: [{ m: '1nrveff1_ptc01', at: 0.10, s: 3.0, y: 1.6, c: 0xffffff },
+        { m: '1nrveff1_smk01', at: 0.28, s: 3.6, y: 0.2, dx: 1.8, c: 0xe2e8f0 },
+        { m: '1nrveff1_smk01', at: 0.28, s: 3.6, y: 0.2, dx: -1.8, c: 0xe2e8f0 },
+        { m: '1nrveff1_smk02', at: 0.48, s: 4.0, y: 0.2, fd: 2.4, c: 0xf8fafc }],
+    e: [{ m: '1nrveff1_smk02', at: 0.05, s: 3.6, y: 0.2, c: 0xe2e8f0 }],
+    r: [{ m: '1nrveff1_chakra03', at: 0.15, s: 5.8, y: 1.2, c: 0xff3b00 },
+        { m: '1nrveff1_sonic01_air02', at: 0.45, s: 5.5, y: 1.6, fd: 3.5, c: 0xff6b00 },
+        { m: '1nrveff1_ring01', at: 0.72, s: 6.2, y: 0.6, fd: 4.8, c: 0xffedd5 }]
   },
   '1ssk': {
-    q: [{ m: '1ssveff1_shock01', at: 0.45, s: 3.2, y: 1.8, fd: 1.6, c: 0x60a5fa }],
-    w: [{ m: '1ssveff1_smk01', at: 0.35, s: 2.8, y: 1.6, fd: -1.6, c: 0x94a3b8 }],
-    e: [{ m: '1ssveff1_smk02', at: 0.05, s: 3.0, y: 1.2, c: 0xe2e8f0 }],
-    r: [{ m: '1ssveff1_smk02', at: 0.55, s: 4.5, y: 1.0, c: 0x93c5fd }]
+    q: [{ m: '1ssveff1_shock01', at: 0.22, s: 3.6, y: 1.6, fd: 1.4, c: 0x60a5fa },
+        { m: '1ssveff1_aura01', at: 0.48, s: 4.0, y: 0.4, fd: 2.0, c: 0x93c5fd },
+        { g: 'common', m: '1efc_spk03', at: 0.68, s: 3.8, y: 1.8, fd: 2.4, c: 0xe0f2fe }],
+    w: [{ m: '1ssveff1_smk01', at: 0.20, s: 3.2, y: 0.4, fd: -1.4, c: 0x94a3b8 },
+        { m: '1ssveff1_fire02', at: 0.42, s: 4.2, y: 1.4, fd: 2.8, c: 0xff5500 },
+        { m: '1ssveff1_fire04', at: 0.65, s: 4.5, y: 1.4, fd: 4.2, c: 0xfbbf24 }],
+    e: [{ m: '1ssveff1_smk02', at: 0.05, s: 3.4, y: 0.2, c: 0xe2e8f0 },
+        { m: '1sskeff1_sharin01', at: 0.18, s: 2.8, y: 2.4, c: 0xef4444 }],
+    r: [{ m: '1ssveff1_aura01', at: 0.18, s: 5.2, y: 0.2, c: 0x60a5fa },
+        { m: '1ssveff1_shock01', at: 0.45, s: 6.0, y: 0.6, fd: 4.2, c: 0x93c5fd },
+        { m: '1ssveff1_smk02', at: 0.68, s: 5.0, y: 0.2, fd: 5.0, c: 0xbae6fd }]
   },
   '1skr': {
-    q: [{ m: '1skneff_leg01', at: 0.40, s: 5.0, y: 1.6, fd: 1.8, c: 0xf43f5e }],
-    e: [{ m: 'shatter', at: 0.05, s: 2.6, y: 1.0, c: 0xe2e8f0 }],
-    r: [{ g: 'common', m: '1efc_brk01_02', at: 0.60, s: 8.0, y: 0.4, c: 0xff5c8a }]
+    q: [{ m: '1skneff_fist01', at: 0.20, s: 4.0, y: 2.0, fd: 1.6, c: 0xf43f5e },
+        { m: '1skneff_leg01', at: 0.42, s: 5.2, y: 1.2, fd: 2.2, c: 0xf43f5e },
+        { g: 'common', m: '1efc_brk01_01', at: 0.62, s: 5.5, y: 0.1, fd: 2.8, c: 0xd97706 }],
+    w: [{ g: 'common', m: '1efc_chakra10a', at: 0.18, s: 4.5, y: 0.1, c: 0x4ade80 },
+        { g: 'common', m: '1efc_chakra05', at: 0.48, s: 4.8, y: 0.1, c: 0x86efac }],
+    e: [{ m: 'shatter', at: 0.05, s: 3.2, y: 0.2, c: 0xe2e8f0 }],
+    r: [{ m: '1skneff_fist01', at: 0.25, s: 5.8, y: 2.2, fd: 3.2, c: 0xf43f5e },
+        { m: '1skneff_leg01', at: 0.45, s: 6.2, y: 1.2, fd: 4.5, c: 0xff5c8a },
+        { g: 'common', m: '1efc_brk01_02', at: 0.65, s: 8.0, y: 0.1, fd: 5.5, c: 0xd97706 }]
   },
   '1kks': {
-    q: [{ m: 'raikiri_spark', at: 0.50, s: 2.8, y: 1.8, fd: 1.4, c: 0x38bdf8 }],
-    w: [{ g: 'common', m: '1efc_wtr03', at: 0.35, s: 3.5, y: 1.2, fd: 3.0, c: 0x0ea5e9 }]
+    q: [{ m: 'raikiri_spark', at: 0.25, s: 3.4, y: 1.8, fd: 1.4, c: 0x38bdf8 },
+        { m: '1kmmeff1_blt01', at: 0.52, s: 4.4, y: 1.6, fd: 2.2, c: 0x93c5fd }],
+    w: [{ g: 'common', m: '1efc_wtr01', at: 0.20, s: 4.2, y: 0.2, fd: 2.2, c: 0x0ea5e9 },
+        { g: 'common', m: '1efc_wtr03', at: 0.45, s: 4.6, y: 0.2, fd: 3.6, c: 0x38bdf8 }],
+    e: [{ m: '1kkseff1_sharin01', at: 0.10, s: 2.8, y: 2.4, c: 0xef4444 }],
+    r: [{ m: '1kkseff1_sharin01', at: 0.12, s: 3.8, y: 2.6, c: 0xef4444 },
+        { m: '1kmmeff1_blt01', at: 0.42, s: 6.0, y: 1.8, fd: 4.0, c: 0x38bdf8 },
+        { g: 'common', m: '1efc_wtr02', at: 0.68, s: 6.5, y: 0.2, fd: 5.2, c: 0x0ea5e9 }]
   },
   '1roc': {
-    q: [{ m: 'leaf_flurry', at: 0.35, s: 3.5, y: 1.4, c: 0x4ade80 }],
-    w: [{ m: 'leaf_flurry', at: 0.50, s: 4.2, y: 1.6, c: 0x4ade80 }]
+    q: [{ m: 'leaf_flurry', at: 0.22, s: 4.0, y: 0.2, c: 0x4ade80 },
+        { m: 'whirlwind', at: 0.50, s: 4.5, y: 0.1, c: 0x86efac }],
+    w: [{ m: 'leaf_flurry', at: 0.25, s: 4.2, y: 0.3, c: 0x4ade80 },
+        { m: 'air_tornado', at: 0.52, s: 5.0, y: 0.1, fd: 2.0, c: 0x22c55e }],
+    e: [{ m: 'leaf_flurry', at: 0.08, s: 3.6, y: 0.2, c: 0x4ade80 }],
+    r: [{ g: 'common', m: '1efc_chakra04', at: 0.18, s: 5.2, y: 0.1, c: 0xef4444 },
+        { m: 'air_tornado', at: 0.48, s: 6.2, y: 0.1, fd: 4.5, c: 0x22c55e },
+        { g: 'common', m: '1efc_brk01_02', at: 0.72, s: 6.5, y: 0.1, fd: 5.5, c: 0xd97706 }]
   },
   '1itc': {
-    q: [{ m: 'amaterasu_flame', at: 0.50, s: 3.2, y: 1.4, fd: 2.0, c: 0x450a0a }]
+    q: [{ g: '1ssk', m: '1ssveff1_fire06', at: 0.25, s: 4.2, y: 0.1, fd: 3.0, c: 0x7f1d1d },
+        { m: 'amaterasu_flame', at: 0.52, s: 4.5, y: 1.0, fd: 4.2, c: 0x991b1b }],
+    w: [{ m: 'crow_smoke', at: 0.20, s: 3.8, y: 1.2, c: 0x475569 },
+        { g: '1ssk', m: '1ssveff1_fire03', at: 0.48, s: 4.2, y: 1.6, fd: 2.8, c: 0xef4444 }],
+    e: [{ m: 'crow_smoke', at: 0.08, s: 3.6, y: 1.0, c: 0x334155 }],
+    r: [{ g: '1ssk', m: '1ssveff1_fire01', at: 0.22, s: 5.6, y: 0.1, fd: 4.0, c: 0x991b1b },
+        { g: '1ssk', m: '1ssveff1_fire06', at: 0.52, s: 6.4, y: 0.1, fd: 5.5, c: 0x7f1d1d }]
   },
   '1gar': {
-    q: [{ m: '1gareff1_snd15', at: 0.40, s: 5.0, y: 1.2, c: 0xd97706 }],
-    w: [{ m: '1gareff1_snd03', at: 0.50, s: 4.0, y: 1.0, fd: 2.2, c: 0xd97706 }]
+    q: [{ m: '1gareff1_snd02', at: 0.22, s: 4.6, y: 0.1, fd: 3.0, c: 0xd97706 },
+        { m: '1gareff1_snd15', at: 0.48, s: 5.4, y: 0.1, fd: 4.8, c: 0xb45309 }],
+    w: [{ m: '1gareff1_snd03', at: 0.25, s: 4.4, y: 0.1, c: 0xd97706 },
+        { m: '1gareff1_snd14', at: 0.52, s: 4.8, y: 0.1, c: 0xf59e0b }],
+    e: [{ m: '1gareff1_bd_snd02', at: 0.08, s: 4.0, y: 0.1, c: 0xd97706 }],
+    r: [{ m: '1gareff1_snd07', at: 0.25, s: 6.0, y: 0.1, fd: 3.5, c: 0xd97706 },
+        { m: '1gareff1_snd15', at: 0.55, s: 7.2, y: 0.1, fd: 5.5, c: 0xb45309 }]
+  },
+  '1hnt': {
+    q: [{ m: 'palms_rotation', at: 0.20, s: 4.5, y: 0.1, c: 0xa78bfa },
+        { g: 'common', m: '1efc_wind01', at: 0.50, s: 4.8, y: 0.1, c: 0xc4b5fd }],
+    w: [{ m: 'lion_chakra', at: 0.30, s: 3.8, y: 1.8, fd: 1.8, c: 0x8b5cf6 },
+        { g: 'common', m: '1efc_shock01', at: 0.60, s: 4.4, y: 0.1, fd: 2.6, c: 0xa78bfa }],
+    e: [{ m: 'palms_rotation', at: 0.08, s: 3.6, y: 0.2, c: 0xc4b5fd }],
+    r: [{ m: 'palms_rotation', at: 0.20, s: 5.5, y: 0.1, c: 0x8b5cf6 },
+        { m: 'lion_chakra', at: 0.55, s: 6.0, y: 1.8, fd: 4.5, c: 0xa78bfa }]
   },
   '1nej': {
-    q: [{ m: 'air_palm', at: 0.35, s: 3.0, y: 1.4, fd: 2.0, c: 0x60a5fa }]
+    q: [{ m: 'kaiten_dome', at: 0.25, s: 4.8, y: 0.1, c: 0x60a5fa },
+        { m: 'air_palm', at: 0.55, s: 4.4, y: 1.2, c: 0x93c5fd }],
+    w: [{ m: 'air_palm', at: 0.25, s: 4.2, y: 1.6, fd: 2.4, c: 0x38bdf8 },
+        { g: 'common', m: '1efc_shock01', at: 0.50, s: 4.0, y: 0.1, fd: 3.6, c: 0xbae6fd }],
+    e: [{ m: 'kaiten_dome', at: 0.08, s: 3.6, y: 0.2, c: 0x93c5fd }],
+    r: [{ m: 'kaiten_dome', at: 0.25, s: 6.2, y: 0.1, c: 0x38bdf8 },
+        { g: 'common', m: '1efc_wind02', at: 0.58, s: 6.2, y: 0.1, c: 0x93c5fd }]
   },
   '1jry': {
-    q: [{ m: '1jryeff03', at: 0.50, s: 3.2, y: 1.8, fd: 2.4, c: 0x94a3b8 }]
+    q: [{ m: '1jryeff01', at: 0.25, s: 4.5, y: 1.6, fd: 2.4, c: 0xf97316 },
+        { m: '1jryeff03', at: 0.52, s: 4.8, y: 1.4, fd: 3.8, c: 0xfbbf24 }],
+    w: [{ m: '1jryeff02', at: 0.25, s: 4.2, y: 0.2, c: 0x94a3b8 },
+        { m: '1jryeff03', at: 0.55, s: 4.5, y: 1.2, c: 0xf43f5e }],
+    e: [{ m: '1jryeff02', at: 0.08, s: 3.8, y: 0.2, c: 0xe2e8f0 }],
+    r: [{ m: '1jryeff02', at: 0.18, s: 5.5, y: 0.1, c: 0xe2e8f0 },
+        { m: 'chou_rasengan', at: 0.52, s: 6.2, y: 2.2, fd: 4.5, c: 0xf97316 }]
   },
   '1tnd': {
-    r: [{ g: 'common', m: '1efc_brk01_02', at: 0.50, s: 7.0, y: 0.4, c: 0xfbbf24 }]
+    q: [{ g: 'common', m: '1efc_chakra04', at: 0.22, s: 4.2, y: 0.1, c: 0x10b981 },
+        { g: 'common', m: '1efc_brk01_02', at: 0.52, s: 5.5, y: 0.1, fd: 2.6, c: 0xd97706 }],
+    w: [{ g: 'common', m: '1efc_chakra10a', at: 0.20, s: 4.8, y: 0.1, c: 0x10b981 },
+        { g: 'common', m: '1efc_chakra05', at: 0.50, s: 5.2, y: 0.1, c: 0xfbbf24 }],
+    e: [{ g: 'common', m: '1efc_chakra05', at: 0.08, s: 3.6, y: 0.2, c: 0x34d399 }],
+    r: [{ g: 'common', m: '1efc_grd01', at: 0.30, s: 6.5, y: 0.1, fd: 4.5, c: 0x10b981 },
+        { g: 'common', m: '1efc_brk01_02', at: 0.58, s: 7.5, y: 0.1, fd: 5.5, c: 0xfbbf24 }]
   },
   '1orc': {
-    q: [{ m: '1orceff1_02', at: 0.40, s: 3.6, y: 1.4, fd: 2.4, c: 0xa3e635 }],
-    w: [{ g: 'common', m: '1efc_slash01', at: 0.50, s: 3.5, y: 1.6, fd: 2.0, c: 0xc7d2fe }]
+    q: [{ m: '1orceff1_01', at: 0.20, s: 4.8, y: 0.1, fd: 2.2, c: 0x84cc16 },
+        { m: '1orceff1_02', at: 0.48, s: 4.8, y: 0.1, fd: 3.6, c: 0xa3e635 }],
+    w: [{ g: 'common', m: '1efc_strk01', at: 0.22, s: 4.2, y: 1.6, fd: 2.2, c: 0xa855f7 },
+        { g: 'common', m: '1efc_slash01', at: 0.50, s: 4.5, y: 1.6, fd: 3.4, c: 0xc7d2fe }],
+    e: [{ m: '1orceff1_01', at: 0.08, s: 3.8, y: 0.2, c: 0x84cc16 }],
+    r: [{ m: '1orceff1_01', at: 0.22, s: 6.0, y: 0.1, fd: 4.0, c: 0x84cc16 },
+        { m: '1orceff1_03', at: 0.52, s: 6.0, y: 0.1, fd: 5.2, c: 0xa855f7 }]
   }
 };
 
@@ -4556,7 +4860,7 @@ function executeSkill(unit, slot) {
     if (meleeTarget) {
       // MELEE TAIJUTSU: Authentic Punches and Kicks!
       if (unit.isPlayer) {
-        AUTH_SFX.playAt(hitIdx === 2 ? AUTH_SFX.pick('kick_hit', 'kick_hit2') : AUTH_SFX.pick('punch_hit', 'punch_hit2'), meleeTarget.x, meleeTarget.z, { vol: 0.62 }); // W5: soco/chute autêntico com variação
+        AUTH_SFX.playAt(hitIdx === 2 ? AUTH_SFX.pick('kick_hit', 'kick_hit2') : AUTH_SFX.pick('punch_hit', 'punch_hit2'), meleeTarget.x, meleeTarget.z, { vol: 0.8 }); // W8: soco/chute no patamar do mix
       }
 
       const baseComboDmg = hitIdx === 1 ? 82 : (hitIdx === 2 ? 105 : 150);
@@ -4679,27 +4983,22 @@ function executeSkill(unit, slot) {
   // W-SKL+ TRAIL: rastro autêntico de mão/lâmina (Hinata W, Orochimaru W)
   startSkillTrail(unit, slot);
 
+  const _clipDur = (clipKey, minDur = 0.85) => {
+    const c = (animationsData[unit.heroId] || animationsData['1nrt'] || {})[clipKey];
+    return (c && c.numFrames && c.fps) ? Math.min(1.55, Math.max(minDur, c.numFrames / c.fps)) : minDur;
+  };
+
   // HERO-SPECIFIC SKILL LOGIC & 3D VISUAL EFFECTS (AUTHENTIC STORM 1)
   if (unit.heroId === '1nrt') {
     if (slot === 'q') {
       // Primary: Rasengan Dash (attached to right hand bone 13)
       unit.state = 'jutsu';
-      unit.animDuration = 0.75;
+      unit.animDuration = _clipDur('jutsu', 0.85);
       unit.animTimer = unit.animDuration;
       const rasMesh = createRasenganMesh(1.0, 0x00d4ff);
       rasMesh.position.set(unit.x + dirX * 2.2, 2.5, unit.z + dirZ * 2.2);
       arenaGroup.add(rasMesh);
-      vfxList.push({ mesh: rasMesh, age: 0, duration: 0.75, style: 'compound', bindUnit: unit, bindBoneIdx: 13 });
-
-      // W-VIS: modelo EXTRAIDO do APK ('rasengan', eff1) bound a mao direita
-      // durante TODO o cast (~2.65u, proporcao Storm) — o visual autentico
-      // junto ao casting; procedural vira o core glow interno
-      const rasGrp = buildExtractedVfxMeshGroup(unit.heroId, 0x00d4ff, 0.0105, activeSkillVfxModel || 'rasengan');
-      if (rasGrp) {
-        rasGrp.position.set(unit.x, 2.5, unit.z);
-        arenaGroup.add(rasGrp);
-        vfxList.push({ mesh: rasGrp, age: 0, duration: 0.75, style: 'compound', bindUnit: unit, bindBoneIdx: 13 });
-      }
+      vfxList.push({ mesh: rasMesh, age: 0, duration: unit.animDuration, style: 'compound', bindUnit: unit, bindBoneIdx: 13 });
 
       unit.x = clampArena(unit.x + dirX * 11.5);
       unit.z = clampArena(unit.z + dirZ * 11.5);
@@ -4715,7 +5014,7 @@ function executeSkill(unit, slot) {
     } else if (slot === 'w') {
       // Secondary: Kage Bunshin no Jutsu (Shadow Clones)
       unit.state = 'jutsu2';
-      unit.animDuration = 0.75;
+      unit.animDuration = _clipDur('jutsu2', 0.85);
       unit.animTimer = unit.animDuration;
       spawnSmokePuff(unit.x - dirZ * 2.5, 2.2, unit.z + dirX * 2.5, 3.5);
       spawnSmokePuff(unit.x + dirZ * 2.5, 2.2, unit.z - dirX * 2.5, 3.5);
@@ -4737,21 +5036,12 @@ function executeSkill(unit, slot) {
     if (slot === 'q') {
       // Primary: Chidori (attached to left hand bone 9)
       unit.state = 'jutsu';
-      unit.animDuration = 0.75;
+      unit.animDuration = _clipDur('jutsu', 0.85);
       unit.animTimer = unit.animDuration;
       const chiMesh = createChidoriMesh(0.95);
       chiMesh.position.set(unit.x + dirX * 2.0, 2.5, unit.z + dirZ * 2.0);
       arenaGroup.add(chiMesh);
-      vfxList.push({ mesh: chiMesh, age: 0, duration: 0.7, style: 'compound', bindUnit: unit, bindBoneIdx: 9 });
-
-      // W-VIS-ALL: chidori_spark EXTRAIDO do APK bound na mao esquerda (bone 9)
-      // durante todo o cast (~2.6u) — autentico junto ao procedural core
-      const chiGrp = buildExtractedVfxMeshGroup(unit.heroId, 0x60a5fa, 0.0105, 'chidori_spark');
-      if (chiGrp) {
-        chiGrp.position.set(unit.x + dirX * 2.0, 2.5, unit.z + dirZ * 2.0);
-        arenaGroup.add(chiGrp);
-        vfxList.push({ mesh: chiGrp, age: 0, duration: 0.75, style: 'compound', bindUnit: unit, bindBoneIdx: 9 });
-      }
+      vfxList.push({ mesh: chiMesh, age: 0, duration: unit.animDuration, style: 'compound', bindUnit: unit, bindBoneIdx: 9 });
 
       unit.x = clampArena(unit.x + dirX * 12.5);
       unit.z = clampArena(unit.z + dirZ * 12.5);
@@ -4767,7 +5057,7 @@ function executeSkill(unit, slot) {
     } else if (slot === 'w') {
       // Secondary: Katon: Goukakyuu no Jutsu (Fireball)
       unit.state = 'jutsu2';
-      unit.animDuration = 0.75;
+      unit.animDuration = _clipDur('jutsu2', 0.85);
       unit.animTimer = unit.animDuration;
       const fMesh = createFireballMesh(1.8, 0xff5500);
       fMesh.position.set(unit.x + dirX * 2.2, 2.6, unit.z + dirZ * 2.2);
@@ -4793,7 +5083,7 @@ function executeSkill(unit, slot) {
     if (slot === 'q') {
       // Primary: Oukashou Ground Shatter
       unit.state = 'jutsu';
-      unit.animDuration = 0.75;
+      unit.animDuration = _clipDur('jutsu', 0.85);
       unit.animTimer = unit.animDuration;
       const tx = nearest ? nearest.x : unit.x + dirX * 6;
       const tz = nearest ? nearest.z : unit.z + dirZ * 6;
@@ -4813,9 +5103,17 @@ function executeSkill(unit, slot) {
     } else if (slot === 'w') {
       // Secondary: Ninjutsu Medico (Cura Area)
       unit.state = 'jutsu2';
-      unit.animDuration = 0.75;
+      unit.animDuration = _clipDur('jutsu2', 0.85);
       unit.animTimer = unit.animDuration;
-      spawnVFX(unit.x, 1.5, unit.z, 0x4ade80, 5.0, 0.65, 'ring', unit.heroId);
+      const healPillar = buildExtractedVfxMeshGroup('common', 0x4ade80, 0.015, '1efc_chakra10a') ||
+                         buildExtractedVfxMeshGroup('common', 0x4ade80, 0.015, '1efc_chakra05');
+      if (healPillar) {
+        healPillar.position.set(unit.x, 0.1, unit.z);
+        healPillar.userData = { rotSpeed: new THREE.Vector3(0, 8, 0), uvScroll: { x: 0, y: 2.5 }, baseScale: 1.0 };
+        arenaGroup.add(healPillar);
+        vfxList.push({ mesh: healPillar, age: 0, duration: 1.05, style: 'compound' });
+      }
+      spawnVFX(unit.x, 1.5, unit.z, 0x4ade80, 4.5, 0.65, 'ring', unit.heroId);
       for (const ally of units) {
         if (ally.team === unit.team && ally.deadTimer <= 0) {
           if (Math.hypot(ally.x - unit.x, ally.z - unit.z) <= 12.0) {
@@ -4829,20 +5127,12 @@ function executeSkill(unit, slot) {
     if (slot === 'q') {
       // Primary: Raikiri Lightning Blade (attached to right hand bone 13)
       unit.state = 'jutsu';
-      unit.animDuration = 0.75;
+      unit.animDuration = _clipDur('jutsu', 0.85);
       unit.animTimer = unit.animDuration;
       const rkMesh = createChidoriMesh(0.95, 0x38bdf8);
       rkMesh.position.set(unit.x + dirX * 2.0, 2.5, unit.z + dirZ * 2.0);
       arenaGroup.add(rkMesh);
-      vfxList.push({ mesh: rkMesh, age: 0, duration: 0.75, style: 'compound', bindUnit: unit, bindBoneIdx: 13 });
-
-      // W-VIS-ALL: raikiri_spark EXTRAIDO do APK bound na mao direita (bone 13)
-      const rkGrp = buildExtractedVfxMeshGroup(unit.heroId, 0x38bdf8, 0.0105, 'raikiri_spark');
-      if (rkGrp) {
-        rkGrp.position.set(unit.x + dirX * 2.0, 2.5, unit.z + dirZ * 2.0);
-        arenaGroup.add(rkGrp);
-        vfxList.push({ mesh: rkGrp, age: 0, duration: 0.75, style: 'compound', bindUnit: unit, bindBoneIdx: 13 });
-      }
+      vfxList.push({ mesh: rkMesh, age: 0, duration: unit.animDuration, style: 'compound', bindUnit: unit, bindBoneIdx: 13 });
 
       unit.x = clampArena(unit.x + dirX * 12.0);
       unit.z = clampArena(unit.z + dirZ * 12.0);
@@ -4858,7 +5148,7 @@ function executeSkill(unit, slot) {
     } else if (slot === 'w') {
       // Secondary: Suiton: Suiryuudan no Jutsu (Water Dragon)
       unit.state = 'jutsu2';
-      unit.animDuration = 0.8;
+      unit.animDuration = _clipDur('jutsu2', 0.85);
       unit.animTimer = unit.animDuration;
       const wdMesh = createWaterDragonMesh(2.2);
       wdMesh.position.set(unit.x + dirX * 2.4, 2.6, unit.z + dirZ * 2.4);
@@ -4886,12 +5176,12 @@ function executeSkill(unit, slot) {
     if (slot === 'q') {
       // Primary: Konoha Senpuu (Emerald Cyclone with Leaf Flurry)
       unit.state = 'jutsu';
-      unit.animDuration = 0.75;
+      unit.animDuration = _clipDur('jutsu', 0.85);
       unit.animTimer = unit.animDuration;
       const tMesh = createTornadoMesh(3.2);
       tMesh.position.set(unit.x, 0.1, unit.z);
       arenaGroup.add(tMesh);
-      vfxList.push({ mesh: tMesh, age: 0, duration: 0.75, style: 'compound' });
+      vfxList.push({ mesh: tMesh, age: 0, duration: unit.animDuration, style: 'compound' });
       spawnVFX(unit.x, 1.5, unit.z, 0x22c55e, 3.5, 0.45, 'ring', unit.heroId);
       for (const enemy of units) {
         if (enemy.team !== unit.team && enemy.deadTimer <= 0) {
@@ -4904,7 +5194,7 @@ function executeSkill(unit, slot) {
     } else if (slot === 'w') {
       // Secondary: Omote Renge (Primary Lotus Air Tornado)
       unit.state = 'jutsu2';
-      unit.animDuration = 0.8;
+      unit.animDuration = _clipDur('jutsu2', 0.85);
       unit.animTimer = unit.animDuration;
       const tMesh = createTornadoMesh(3.8);
       tMesh.position.set(unit.x + dirX * 2.2, 0.1, unit.z + dirZ * 2.2);
@@ -4927,7 +5217,7 @@ function executeSkill(unit, slot) {
     if (slot === 'q') {
       // Primary: Amaterasu (Inextinguishable Black Flame Pillar)
       unit.state = 'jutsu';
-      unit.animDuration = 0.75;
+      unit.animDuration = _clipDur('jutsu', 0.85);
       unit.animTimer = unit.animDuration;
       const tx = nearest ? nearest.x : unit.x + dirX * 8;
       const tz = nearest ? nearest.z : unit.z + dirZ * 8;
@@ -4947,7 +5237,7 @@ function executeSkill(unit, slot) {
     } else if (slot === 'w') {
       // Secondary: Katon Goukakyuu + Crow Clone
       unit.state = 'jutsu2';
-      unit.animDuration = 0.75;
+      unit.animDuration = _clipDur('jutsu2', 0.85);
       unit.animTimer = unit.animDuration;
       const fMesh = createFireballMesh(1.8, 0xef4444);
       fMesh.position.set(unit.x + dirX * 2.2, 2.6, unit.z + dirZ * 2.2);
@@ -4973,7 +5263,7 @@ function executeSkill(unit, slot) {
     if (slot === 'q') {
       // Primary: Sabaku Kyuu (Giant Sand Hand Crush)
       unit.state = 'jutsu';
-      unit.animDuration = 0.8;
+      unit.animDuration = _clipDur('jutsu', 0.85);
       unit.animTimer = unit.animDuration;
       const tx = nearest ? nearest.x : unit.x + dirX * 7;
       const tz = nearest ? nearest.z : unit.z + dirZ * 7;
@@ -4994,7 +5284,7 @@ function executeSkill(unit, slot) {
     } else if (slot === 'w') {
       // Secondary: Suna no Tate (Absolute Sand Shield Cocoon)
       unit.state = 'jutsu2';
-      unit.animDuration = 0.85;
+      unit.animDuration = _clipDur('jutsu2', 0.85);
       unit.animTimer = unit.animDuration;
       const shield = createSandShieldMesh(3.0);
       shield.position.set(unit.x, 0.2, unit.z);
@@ -5012,11 +5302,27 @@ function executeSkill(unit, slot) {
     }
   } else if (unit.heroId === '1hnt') {
     if (slot === 'q') {
-      // Primary: Shugohakke Rokujuyonsho
+      // Primary: Shugohakke Rokujuyonsho (Protective 8 Trigrams 64 Palms Dome + Dual Hand Streams)
       unit.state = 'jutsu';
-      unit.animDuration = 0.8;
+      unit.animDuration = _clipDur('jutsu', 0.85);
       unit.animTimer = unit.animDuration;
-      spawnVFX(unit.x, 1.5, unit.z, 0xa78bfa, 4.0, 0.50, 'ring', unit.heroId);
+      const dome = buildExtractedVfxMeshGroup('1hnt', 0xa78bfa, 0.022, 'palms_rotation') ||
+                   buildExtractedVfxMeshGroup('common', 0xa78bfa, 0.022, '1efc_chakra05');
+      if (dome) {
+        dome.position.set(unit.x, 0.1, unit.z);
+        dome.userData = { rotSpeed: new THREE.Vector3(0, 22, 0), uvScroll: { x: 1.8, y: 1.2 } };
+        arenaGroup.add(dome);
+        vfxList.push({ mesh: dome, age: 0, duration: 1.0, style: 'compound' });
+      }
+      const lf1 = createLionFistMesh(0.85);
+      const lf2 = createLionFistMesh(0.85);
+      lf1.position.set(unit.x - dirZ * 1.2, 2.5, unit.z + dirX * 1.2);
+      lf2.position.set(unit.x + dirZ * 1.2, 2.5, unit.z - dirX * 1.2);
+      arenaGroup.add(lf1);
+      arenaGroup.add(lf2);
+      vfxList.push({ mesh: lf1, age: 0, duration: unit.animDuration, style: 'compound', bindUnit: unit, bindBoneIdx: 9 });
+      vfxList.push({ mesh: lf2, age: 0, duration: unit.animDuration, style: 'compound', bindUnit: unit, bindBoneIdx: 13 });
+      spawnVFX(unit.x, 1.5, unit.z, 0xa78bfa, 4.5, 0.55, 'ring', unit.heroId);
       for (const enemy of units) {
         if (enemy.team !== unit.team && enemy.deadTimer <= 0) {
           if (Math.hypot(enemy.x - unit.x, enemy.z - unit.z) <= 9.0) {
@@ -5028,7 +5334,7 @@ function executeSkill(unit, slot) {
     } else if (slot === 'w') {
       // Secondary: Twin Lion Fists (Juho Soshiken bound to dual hands 9 and 13)
       unit.state = 'jutsu2';
-      unit.animDuration = 0.75;
+      unit.animDuration = _clipDur('jutsu2', 0.85);
       unit.animTimer = unit.animDuration;
       const lf1 = createLionFistMesh(0.95);
       const lf2 = createLionFistMesh(0.95);
@@ -5036,22 +5342,8 @@ function executeSkill(unit, slot) {
       lf2.position.set(unit.x + dirZ * 1.4, 2.5, unit.z - dirX * 1.4);
       arenaGroup.add(lf1);
       arenaGroup.add(lf2);
-      vfxList.push({ mesh: lf1, age: 0, duration: 0.75, style: 'compound', bindUnit: unit, bindBoneIdx: 9, directional: true });
-      vfxList.push({ mesh: lf2, age: 0, duration: 0.75, style: 'compound', bindUnit: unit, bindBoneIdx: 13, directional: true });
-
-      // W-VIS-ALL: lion_chakra EXTRAIDO do APK nos dois punhos (bones 9 e 13)
-      const lfGrp1 = buildExtractedVfxMeshGroup(unit.heroId, 0x8b5cf6, 0.008, 'lion_chakra');
-      const lfGrp2 = buildExtractedVfxMeshGroup(unit.heroId, 0x8b5cf6, 0.008, 'lion_chakra');
-      if (lfGrp1) {
-        lfGrp1.position.set(unit.x - dirZ * 1.4, 2.5, unit.z + dirX * 1.4);
-        arenaGroup.add(lfGrp1);
-        vfxList.push({ mesh: lfGrp1, age: 0, duration: 0.75, style: 'compound', bindUnit: unit, bindBoneIdx: 9 });
-      }
-      if (lfGrp2) {
-        lfGrp2.position.set(unit.x + dirZ * 1.4, 2.5, unit.z - dirX * 1.4);
-        arenaGroup.add(lfGrp2);
-        vfxList.push({ mesh: lfGrp2, age: 0, duration: 0.75, style: 'compound', bindUnit: unit, bindBoneIdx: 13 });
-      }
+      vfxList.push({ mesh: lf1, age: 0, duration: unit.animDuration, style: 'compound', bindUnit: unit, bindBoneIdx: 9, directional: true });
+      vfxList.push({ mesh: lf2, age: 0, duration: unit.animDuration, style: 'compound', bindUnit: unit, bindBoneIdx: 13, directional: true });
 
       unit.x = clampArena(unit.x + dirX * 10.5);
       unit.z = clampArena(unit.z + dirZ * 10.5);
@@ -5069,12 +5361,12 @@ function executeSkill(unit, slot) {
     if (slot === 'q') {
       // Primary: Hakkeshou Kaiten (360 Dome)
       unit.state = 'jutsu';
-      unit.animDuration = 0.85;
+      unit.animDuration = _clipDur('jutsu', 0.85);
       unit.animTimer = unit.animDuration;
       const kaiten = createKaitenMesh(3.2);
       kaiten.position.set(unit.x, 2.2, unit.z);
       arenaGroup.add(kaiten);
-      vfxList.push({ mesh: kaiten, age: 0, duration: 0.85, style: 'compound' });
+      vfxList.push({ mesh: kaiten, age: 0, duration: unit.animDuration, style: 'compound' });
       for (const enemy of units) {
         if (enemy.team !== unit.team && enemy.deadTimer <= 0) {
           if (Math.hypot(enemy.x - unit.x, enemy.z - unit.z) <= 9.2) {
@@ -5086,28 +5378,31 @@ function executeSkill(unit, slot) {
     } else if (slot === 'w') {
       // Secondary: Hakke Kuusho (Air Palm)
       unit.state = 'jutsu2';
-      unit.animDuration = 0.75;
+      unit.animDuration = _clipDur('jutsu2', 0.85);
       unit.animTimer = unit.animDuration;
-      const apMesh = buildExtractedVfxMeshGroup('1nej', 0x38bdf8, 0.08, 'air_palm') ||
-                     new THREE.Mesh(new THREE.RingGeometry(1.2, 2.8, 16), new THREE.MeshBasicMaterial({ color: 0x38bdf8, side: THREE.DoubleSide, transparent: true, opacity: 0.85 }));
-      apMesh.position.set(unit.x + dirX * 2.2, 2.6, unit.z + dirZ * 2.2);
-      apMesh.rotation.y = unit.rotY;
-      arenaGroup.add(apMesh);
-      projectiles.push({
-        owner: unit,
-        mesh: apMesh,
-        type: 'fireball',
-        x: apMesh.position.x,
-        z: apMesh.position.z,
-        vx: dirX * 45,
-        vz: dirZ * 45,
-        radius: 3.5,
-        dmg: sk.dmg,
-        skillName: sk.name,
-        color: 0x38bdf8,
-        directional: true,
-        life: 1.2
-      });
+      const apMesh = buildExtractedVfxMeshGroup('1nej', 0x38bdf8, 0.015, 'air_palm') ||
+                     buildExtractedVfxMeshGroup('common', 0x38bdf8, 0.015, '1efc_slash01') ||
+                     buildExtractedVfxMeshGroup('common', 0x38bdf8, 0.015, '1efc_shock01');
+      if (apMesh) {
+        apMesh.position.set(unit.x + dirX * 2.2, 2.6, unit.z + dirZ * 2.2);
+        apMesh.rotation.y = unit.rotY;
+        arenaGroup.add(apMesh);
+        projectiles.push({
+          owner: unit,
+          mesh: apMesh,
+          type: 'fireball',
+          x: apMesh.position.x,
+          z: apMesh.position.z,
+          vx: dirX * 45,
+          vz: dirZ * 45,
+          radius: 3.5,
+          dmg: sk.dmg,
+          skillName: sk.name,
+          color: 0x38bdf8,
+          directional: true,
+          life: 1.2
+        });
+      }
       spawnVFX(unit.x + dirX * 1.5, 2.0, unit.z + dirZ * 1.5, 0x38bdf8, 3.2, 0.40, 'ring', unit.heroId);
       return;
     }
@@ -5115,7 +5410,7 @@ function executeSkill(unit, slot) {
     if (slot === 'q') {
       // Primary: Katon: Gamayu Endan (Flaming Toad Oil Cone Spray)
       unit.state = 'jutsu';
-      unit.animDuration = 0.8;
+      unit.animDuration = _clipDur('jutsu', 0.85);
       unit.animTimer = unit.animDuration;
       const toadFlame = createToadOilFlameMesh(2.2);
       toadFlame.position.set(unit.x + dirX * 2.2, 2.6, unit.z + dirZ * 2.2);
@@ -5141,7 +5436,7 @@ function executeSkill(unit, slot) {
     } else if (slot === 'w') {
       // Secondary: Hari Jizo (Spiky Needle Hair Shield)
       unit.state = 'jutsu2';
-      unit.animDuration = 0.85;
+      unit.animDuration = _clipDur('jutsu2', 0.85);
       unit.animTimer = unit.animDuration;
       const shield = createSandShieldMesh(5.0);
       shield.position.set(unit.x, 0.2, unit.z);
@@ -5162,13 +5457,29 @@ function executeSkill(unit, slot) {
   // STANDARD / FALLBACK SKILL TYPES
   if (sk.type === 'dash_aoe') {
     unit.state = (slot === 'w') ? 'jutsu2' : 'jutsu';
-    unit.animDuration = 0.7;
+    unit.animDuration = _clipDur(unit.state, 0.85);
     unit.animTimer = unit.animDuration;
     for (let step = 1; step <= 4; step++) {
       spawnVFX(unit.x + dirX * step * 2.8, 2.6, unit.z + dirZ * step * 2.8, sk.color, 3.4, 0.42, 'sphere', unit.heroId);
     }
     unit.x = clampArena(unit.x + dirX * 11.5);
     unit.z = clampArena(unit.z + dirZ * 11.5);
+    if (unit.heroId === '1tnd') {
+      const rup = createTsunadeUltRuptureMesh(4.0);
+      rup.position.set(unit.x + dirX * 2.0, 0.1, unit.z + dirZ * 2.0);
+      rup.rotation.y = unit.rotY;
+      arenaGroup.add(rup);
+      vfxList.push({ mesh: rup, age: 0, duration: 1.1, style: 'compound', directional: true });
+    } else if (unit.heroId === '1orc') {
+      const slash = buildExtractedVfxMeshGroup('common', 0xa855f7, 0.016, '1efc_slash01') ||
+                    buildExtractedVfxMeshGroup('common', 0xa3e635, 0.016, '1efc_strk01');
+      if (slash) {
+        slash.position.set(unit.x + dirX * 2.2, 1.8, unit.z + dirZ * 2.2);
+        slash.rotation.y = unit.rotY;
+        arenaGroup.add(slash);
+        vfxList.push({ mesh: slash, age: 0, duration: 0.95, style: 'compound', directional: true });
+      }
+    }
     spawnVFX(unit.x + dirX * 2, 2.6, unit.z + dirZ * 2, sk.color, 6.8, 0.55, 'sphere', unit.heroId);
     for (const enemy of units) {
       if (enemy.team !== unit.team && enemy.deadTimer <= 0) {
@@ -5179,37 +5490,58 @@ function executeSkill(unit, slot) {
     }
   } else if (sk.type === 'fireball') {
     unit.state = (slot === 'w') ? 'jutsu2' : 'jutsu';
-    unit.animDuration = 0.65;
+    unit.animDuration = _clipDur(unit.state, 0.85);
     unit.animTimer = unit.animDuration;
-    let pMesh = buildExtractedVfxMeshGroup(unit.heroId, sk.color, 0.085);
-    if (!pMesh) {
-      pMesh = new THREE.Mesh(
-        new THREE.IcosahedronGeometry(1.8, 1),
-        new THREE.MeshBasicMaterial({ color: sk.color })
-      );
+    let pMesh = buildExtractedVfxMeshGroup(unit.heroId, sk.color, 0.018, activeSkillVfxModel);
+    if (unit.heroId === '1orc' && pMesh) {
+      const s2 = buildExtractedVfxMeshGroup('1orc', 0xa855f7, 0.016, '1orceff1_02');
+      if (s2) pMesh.add(s2);
     }
-    pMesh.position.set(unit.x + dirX * 2.4, 2.8, unit.z + dirZ * 2.4);
-    arenaGroup.add(pMesh);
-    projectiles.push({
-      owner: unit,
-      mesh: pMesh,
-      type: 'fireball',
-      x: pMesh.position.x,
-      z: pMesh.position.z,
-      vx: dirX * 38,
-      vz: dirZ * 38,
-      radius: 4.2,
-      dmg: sk.dmg,
-      skillName: sk.name,
-      color: sk.color,
-      life: 1.35
-    });
+    if (!pMesh) {
+      pMesh = buildExtractedVfxMeshGroup('common', sk.color, 0.018, '1efc_fire03') ||
+              buildExtractedVfxMeshGroup('common', sk.color, 0.018, '1efc_chakra00');
+    }
+    if (pMesh) {
+      pMesh.position.set(unit.x + dirX * 2.4, 2.8, unit.z + dirZ * 2.4);
+      pMesh.rotation.y = unit.rotY;
+      arenaGroup.add(pMesh);
+      projectiles.push({
+        owner: unit,
+        mesh: pMesh,
+        type: 'fireball',
+        x: pMesh.position.x,
+        z: pMesh.position.z,
+        vx: dirX * 38,
+        vz: dirZ * 38,
+        radius: 4.2,
+        dmg: sk.dmg,
+        skillName: sk.name,
+        color: sk.color,
+        directional: true,
+        life: 1.35
+      });
+    }
   } else if (sk.type === 'spin_aoe' || sk.type === 'slam_aoe' || sk.type === 'clone_burst') {
     unit.state = (slot === 'w') ? 'jutsu2' : 'jutsu';
-    unit.animDuration = 0.7;
+    unit.animDuration = _clipDur(unit.state, 0.85);
     unit.animTimer = unit.animDuration;
     const tx = nearest && sk.type === 'slam_aoe' ? nearest.x : unit.x;
     const tz = nearest && sk.type === 'slam_aoe' ? nearest.z : unit.z;
+    if (unit.heroId === '1tnd') {
+      const medPillar = buildExtractedVfxMeshGroup('common', 0x10b981, 0.018, '1efc_chakra10a') ||
+                        buildExtractedVfxMeshGroup('common', 0x14b8a6, 0.018, '1efc_chakra05');
+      if (medPillar) {
+        medPillar.position.set(unit.x, 0.1, unit.z);
+        medPillar.userData = { rotSpeed: new THREE.Vector3(0, 10, 0), uvScroll: { x: 0, y: 2.8 } };
+        arenaGroup.add(medPillar);
+        vfxList.push({ mesh: medPillar, age: 0, duration: 1.05, style: 'compound' });
+      }
+      for (const ally of units) {
+        if (ally.team === unit.team && ally.deadTimer <= 0 && Math.hypot(ally.x - unit.x, ally.z - unit.z) <= 10.0) {
+          ally.hp = Math.min(ally.maxHp, ally.hp + 140);
+        }
+      }
+    }
     spawnVFX(tx, 2.2, tz, sk.color, 9.0, 0.55, 'ring', unit.heroId);
     if (sk.type === 'clone_burst') spawnShadowClones(unit, 3, Math.round(sk.dmg * 0.6)); // SPP: clones 3D de verdade
     spawnVFX(tx, 2.8, tz, sk.color, 7.5, 0.5, 'sphere', unit.heroId);
@@ -5222,7 +5554,7 @@ function executeSkill(unit, slot) {
     }
   } else if (sk.type === 'heal_aoe') {
     unit.state = (slot === 'w') ? 'jutsu2' : 'jutsu';
-    unit.animDuration = 0.65;
+    unit.animDuration = _clipDur(unit.state, 0.85);
     unit.animTimer = unit.animDuration;
     spawnVFX(unit.x, 1.5, unit.z, 0x4ade80, 10.5, 0.65, 'ring', unit.heroId);
     for (const ally of units) {
@@ -5237,15 +5569,14 @@ function executeSkill(unit, slot) {
     AUTH_SFX.playAt('dash', unit.x, unit.z, { vol: 0.5 }); // W5: dash posicionado
     unit.animDuration = 0.35;
     unit.animTimer = unit.animDuration;
-    const extLog = buildExtractedVfxMeshGroup('common', 0x78350f, 0.055, '1efc_log01');
-    const logMesh = extLog || new THREE.Mesh(
-      new THREE.CylinderGeometry(0.65, 0.65, 3.2, 10),
-      new THREE.MeshLambertMaterial({ color: 0x78350f })
-    );
-    logMesh.rotation.z = 0.4;
-    logMesh.position.set(unit.x, 1.8, unit.z);
-    arenaGroup.add(logMesh);
-    vfxList.push({ mesh: logMesh, age: 0, duration: 1.2, style: 'log' });
+    const logMesh = buildExtractedVfxMeshGroup('common', 0xffffff, 0.0085, '1efc_log01') ||
+                    buildExtractedVfxMeshGroup('common', 0xd97706, 0.0085, '1efc_brk01_01');
+    if (logMesh) {
+      logMesh.rotation.z = 0.4;
+      logMesh.position.set(unit.x, 1.8, unit.z);
+      arenaGroup.add(logMesh);
+      vfxList.push({ mesh: logMesh, age: 0, duration: 1.2, style: 'log' });
+    }
     spawnSmokePuff(unit.x, 2.2, unit.z, 4.0);
 
     if (nearest) {
@@ -5281,39 +5612,27 @@ function executeSkill(unit, slot) {
 
     if (unit.heroId === '1nrt') {
       // W-VIS: giant_rasengan EXTRAIDO do APK bound a mao (forma na mao e explode,
-      // ~5.5u) — fallback procedural plantado se o extraido nao existir
-      const giantGrp = buildExtractedVfxMeshGroup(unit.heroId, 0xff3b00, 0.019, activeSkillVfxModel || 'giant_rasengan');
+      // ~5.5u)
+      const giantGrp = buildExtractedVfxMeshGroup(unit.heroId, 0xff3b00, 0.017, activeSkillVfxModel || 'giant_rasengan');
       if (giantGrp) {
         giantGrp.position.set(ux, 2.8, uz);
         arenaGroup.add(giantGrp);
         vfxList.push({ mesh: giantGrp, age: 0, duration: 1.25, style: 'compound', bindUnit: unit, bindBoneIdx: 13 });
-      } else {
-        const giantRas = createRasenganMesh(2.2, 0xff3b00);
-        giantRas.position.set(ux, 2.8, uz);
-        arenaGroup.add(giantRas);
-        vfxList.push({ mesh: giantRas, age: 0, duration: 1.25, style: 'compound' });
       }
+      const giantRas = createRasenganMesh(2.2, 0xff3b00);
+      giantRas.position.set(ux, 2.8, uz);
+      arenaGroup.add(giantRas);
+      vfxList.push({ mesh: giantRas, age: 0, duration: 1.25, style: 'compound' });
 
-      // Authentic Kyuubi awakening explosion ground shockwave disc with 1efc_shock02.png
-      const shockTex = loadTex('assets/skills/1efc_shock02.png');
-      const shockRing = new THREE.Mesh(
-        new THREE.RingGeometry(1.0, 6.5, 32),
-        new THREE.MeshBasicMaterial({
-          color: 0xff3b00,
-          map: shockTex,
-          side: THREE.DoubleSide,
-          transparent: true,
-          opacity: 0.60,
-          blending: THREE.AdditiveBlending,
-          depthWrite: false,
-          wireframe: false
-        })
-      );
-      shockRing.rotation.x = -Math.PI / 2;
-      shockRing.position.set(ux, 0.15, uz);
-      shockRing.userData = { rotSpeed: new THREE.Vector3(0, 0, 14) };
-      arenaGroup.add(shockRing);
-      vfxList.push({ mesh: shockRing, age: 0, duration: 1.25, style: 'compound' });
+      // Authentic Kyuubi awakening explosion ground shockwave from APK (1nrveff1_ring01 / 1efc_shock01)
+      const shockRing = buildExtractedVfxMeshGroup('1nrt', 0xff3b00, 0.026, '1nrveff1_ring01') ||
+                        buildExtractedVfxMeshGroup('common', 0xff3b00, 0.026, '1efc_shock01');
+      if (shockRing) {
+        shockRing.position.set(ux, 0.15, uz);
+        shockRing.userData = { rotSpeed: new THREE.Vector3(0, 14, 0) };
+        arenaGroup.add(shockRing);
+        vfxList.push({ mesh: shockRing, age: 0, duration: 1.25, style: 'compound' });
+      }
     } else if (unit.heroId === '1ssk') {
       const kirin = createKirinMesh(ux, uz);
       kirin.rotation.y = unit.rotY;
@@ -5383,7 +5702,7 @@ function executeSkill(unit, slot) {
     } else if (unit.heroId === '1jry') {
       const giantRas = createRasenganMesh(2.4, 0xef4444);
       // W-VIS-ALL: chou_rasengan EXTRAIDO do APK bound a mao direita (~4.75u)
-      const chouGrp = buildExtractedVfxMeshGroup(unit.heroId, 0xf43f5e, 0.019, 'chou_rasengan');
+      const chouGrp = buildExtractedVfxMeshGroup(unit.heroId, 0xf43f5e, 0.017, 'chou_rasengan');
       if (chouGrp) {
         chouGrp.position.set(unit.x + dirX * 2.0, 2.8, unit.z + dirZ * 2.0);
         arenaGroup.add(chouGrp);
@@ -5404,10 +5723,10 @@ function executeSkill(unit, slot) {
       // heal_chakra burst centered on Tsunade (Souzou Saisei)
       const healChakraGrp = new THREE.Group();
       healChakraGrp.position.set(unit.x, 0.1, unit.z);
-      const healPillar = buildExtractedVfxMeshGroup('common', 0x10b981, 0.065, '1efc_chakra05') ||
-                         buildExtractedVfxMeshGroup('common', 0x34d399, 0.065, '1efc_chakra00');
+      const healPillar = buildExtractedVfxMeshGroup('common', 0x10b981, 0.020, '1efc_chakra05') ||
+                         buildExtractedVfxMeshGroup('common', 0x34d399, 0.020, '1efc_chakra00');
       if (healPillar) {
-        healPillar.position.y = 2.0;
+        healPillar.position.y = 0.2;
         healPillar.userData = { rotSpeed: new THREE.Vector3(0, 8, 0) };
         healChakraGrp.add(healPillar);
       }
@@ -5865,14 +6184,14 @@ function updateMatch(dt, elapsed) {
       const r1 = u.auraMesh.getObjectByName('groundRing1');
       const r2 = u.auraMesh.getObjectByName('groundRing2');
       if (r1) {
-        const s1 = 1 + (Math.sin(elapsed * 7) * 0.25 + 0.25);
+        const s1 = 1 + (Math.sin(elapsed * 7) * 0.15 + 0.15);
         r1.scale.set(s1, s1, s1);
-        if (r1.material) r1.material.opacity = 0.4 + 0.4 * Math.sin(elapsed * 7);
+        setVfxGroupOpacity(r1, 0.45 + 0.35 * Math.sin(elapsed * 7));
       }
       if (r2) {
-        const s2 = 1 + (Math.cos(elapsed * 6) * 0.3 + 0.3);
+        const s2 = 1 + (Math.cos(elapsed * 6) * 0.18 + 0.18);
         r2.scale.set(s2, s2, s2);
-        if (r2.material) r2.material.opacity = 0.3 + 0.35 * Math.cos(elapsed * 6);
+        setVfxGroupOpacity(r2, 0.38 + 0.32 * Math.cos(elapsed * 6));
       }
       if (u.awakenedTimer <= 0) { u.auraMesh.visible = false; AUTH_SFX.playAt('awake_off', u.x, u.z, { vol: 0.7, min: 1500 }); } // W5: fim do awakening
     }
@@ -5892,7 +6211,7 @@ function updateMatch(dt, elapsed) {
         for (const p of u.pendingVfxPhases) {
           if (!p.done && frac >= p.at) {
             p.done = true;
-            const grp = buildExtractedVfxMeshGroup(p.g || u.heroId, p.c || 0xffffff, (p.s || 3) * 0.004, p.m);
+            const grp = buildExtractedVfxMeshGroup(p.g || u.heroId, p.c || 0xffffff, (p.s || 3.5) * 0.0032, p.m);
             if (grp) {
               const fx = Math.sin(u.rotY), fz = Math.cos(u.rotY);
               const fd = p.fd || 0, dx = p.dx || 0;
@@ -5900,7 +6219,7 @@ function updateMatch(dt, elapsed) {
               grp.rotation.y = u.rotY;
               grp.userData.rotSpeed = new THREE.Vector3(0, 4, 0);
               arenaGroup.add(grp);
-              vfxList.push({ mesh: grp, age: 0, duration: p.dur || 0.7, style: 'compound', directional: true, bindUnit: u });
+              vfxList.push({ mesh: grp, age: 0, duration: p.dur || 0.85, style: 'compound', directional: true, bindUnit: u });
             }
           }
         }
@@ -6077,8 +6396,11 @@ function updateMatch(dt, elapsed) {
     }
 
     if (v.style === 'extracted') {
-      v.mesh.rotation.y += dt * 8;
-      v.mesh.scale.multiplyScalar(1 + dt * 1.4);
+      v.mesh.rotation.y += dt * 7;
+      const bs = v.mesh.userData.baseScale || 1.0;
+      const s = bs * (1 + t * 0.35);
+      v.mesh.scale.set(s, s, s);
+      setVfxGroupOpacity(v.mesh, Math.max(0, 1 - t * t));
     } else if (v.style === 'compound') {
       // Directional jutsu (dragons, hands, fists, cones) keep the caster's facing;
       // only radially symmetric effects get the global yaw spin.
@@ -6087,16 +6409,26 @@ function updateMatch(dt, elapsed) {
       } else {
         v.mesh.rotation.y += dt * 4;
       }
-      if (v.mesh.scale) v.mesh.scale.multiplyScalar(1 + dt * 0.35);
+      if (v.mesh.scale && v.bindBoneIdx === undefined) {
+        const bs = v.mesh.userData.baseScale || 1.0;
+        const s = bs * (1 + t * 0.16);
+        v.mesh.scale.set(s, s, s);
+      }
+      const fade = t > 0.65 ? Math.max(0, 1 - (t - 0.65) / 0.35) : 1.0;
+      setVfxGroupOpacity(v.mesh, fade);
     } else if (v.style === 'smoke') {
-      v.mesh.position.y += dt * 2.2;
-      v.mesh.scale.multiplyScalar(1 + dt * 1.8);
-      if (v.mesh.material) v.mesh.material.opacity = Math.max(0, (1 - t) * 0.75);
+      v.mesh.position.y += dt * 1.8;
+      const bs = v.mesh.userData.baseScale || 1.0;
+      const s = bs * (1 + t * 0.55);
+      v.mesh.scale.set(s, s, s);
+      setVfxGroupOpacity(v.mesh, Math.max(0, (1 - t) * 0.78));
     } else if (v.style === 'hit_star') {
       v.mesh.rotation.x += dt * 12;
       v.mesh.rotation.y += dt * 16;
-      v.mesh.scale.multiplyScalar(Math.max(0.01, 1 - dt * 4.0));
-      if (v.mesh.material) v.mesh.material.opacity = Math.max(0, 1 - t);
+      const bs = v.mesh.userData.baseScale || 1.0;
+      const s = Math.max(0.05, bs * (1 - t * 0.75));
+      v.mesh.scale.set(s, s, s);
+      setVfxGroupOpacity(v.mesh, Math.max(0, 1 - t));
     } else if (v.style === 'flash') {
       // P1 JUICE: white radial impact flash — explosive pop, instant fade
       const pop = 1 + t * 9;
@@ -6109,9 +6441,7 @@ function updateMatch(dt, elapsed) {
         v.mesh.position.z += v.vel.z * dt;
       }
       v.mesh.scale.multiplyScalar(Math.max(0.01, 1 - dt * 2.5));
-      if (v.mesh.material && v.mesh.material.opacity !== undefined) {
-        v.mesh.material.opacity = Math.max(0, 1 - t);
-      }
+      setVfxGroupOpacity(v.mesh, Math.max(0, 1 - t));
     } else if (v.style === 'soul') {
       if (v.vel) {
         v.mesh.position.x += v.vel.x * dt;
@@ -6119,19 +6449,17 @@ function updateMatch(dt, elapsed) {
         v.mesh.position.z += v.vel.z * dt;
       }
       v.mesh.scale.multiplyScalar(Math.max(0.01, 1 - dt * 0.45));
-      if (v.mesh.material && v.mesh.material.opacity !== undefined) {
-        v.mesh.material.opacity = Math.max(0, (1 - t) * 0.95);
-      }
+      setVfxGroupOpacity(v.mesh, Math.max(0, (1 - t) * 0.95));
     } else if (v.style === 'decal') {
-      if (v.mesh.material) {
-        const fade = v.age > 2.0 ? Math.max(0, 1.0 - (v.age - 2.0) / 1.5) : 1.0;
-        v.mesh.material.opacity = fade * 0.88;
-      }
+      const fade = v.age > 2.0 ? Math.max(0, 1.0 - (v.age - 2.0) / 1.5) : 1.0;
+      setVfxGroupOpacity(v.mesh, fade * 0.88);
     } else if (v.style !== 'log') {
-      v.mesh.scale.setScalar(1 + t * 0.85);
-      if (v.mesh.material && v.mesh.material.opacity !== undefined) {
-        v.mesh.material.opacity = Math.max(0, (1 - t) * 0.85);
-      }
+      const bs = v.mesh.userData.baseScale || 1.0;
+      v.mesh.scale.setScalar(bs * (1 + t * 0.45));
+      setVfxGroupOpacity(v.mesh, Math.max(0, (1 - t) * 0.85));
+    } else {
+      const fade = t > 0.72 ? Math.max(0, 1 - (t - 0.72) / 0.28) : 1.0;
+      setVfxGroupOpacity(v.mesh, fade);
     }
     if (v.age >= v.duration) {
       arenaGroup.remove(v.mesh);
@@ -6158,8 +6486,14 @@ function updatePlayerUnit(u, dt) {
     u.auraMesh.rotation.y += dt * 6;
     const r1 = u.auraMesh.getObjectByName('groundRing1');
     const r2 = u.auraMesh.getObjectByName('groundRing2');
-    if (r1) r1.scale.setScalar(1 + (Math.sin(performance.now() * 0.01) * 0.25 + 0.25));
-    if (r2) r2.scale.setScalar(1 + (Math.cos(performance.now() * 0.009) * 0.3 + 0.3));
+    if (r1) {
+      r1.scale.setScalar(1 + (Math.sin(performance.now() * 0.01) * 0.15 + 0.15));
+      setVfxGroupOpacity(r1, 0.55 + 0.30 * Math.sin(performance.now() * 0.01));
+    }
+    if (r2) {
+      r2.scale.setScalar(1 + (Math.cos(performance.now() * 0.009) * 0.18 + 0.18));
+      setVfxGroupOpacity(r2, 0.45 + 0.30 * Math.cos(performance.now() * 0.009));
+    }
     return;
   } else if (u.awakenedTimer <= 0) {
     u.auraMesh.visible = false;
@@ -6431,32 +6765,115 @@ function updateCameraAndHUD() {
     camera.lookAt(player.x + fx * 2.0, 1.75, player.z + fz * 2.0);
   }
 
-  // Update Player HUD Bars
-  const hpPct = Math.round((player.hp / player.maxHp) * 100);
-  const ckPct = Math.round((player.chakra / player.maxChakra) * 100);
+  // Update Player HUD Bars & Storm Ghost Trails
+  const hpPct = Math.max(0, Math.min(100, Math.round((player.hp / player.maxHp) * 100)));
+  const ckPct = Math.max(0, Math.min(100, Math.round((player.chakra / player.maxChakra) * 100)));
   document.getElementById('hud-hp-fill').style.width = `${hpPct}%`;
+  const hpGhostEl = document.getElementById('hud-hp-ghost');
+  if (hpGhostEl) hpGhostEl.style.width = `${hpPct}%`;
   document.getElementById('hud-hp-text').textContent = `VIDA ${Math.ceil(player.hp)} / ${player.maxHp}`;
   document.getElementById('hud-ck-fill').style.width = `${ckPct}%`;
+  const ckGhostEl = document.getElementById('hud-ck-ghost');
+  if (ckGhostEl) ckGhostEl.style.width = `${ckPct}%`;
   document.getElementById('hud-ck-text').textContent = `CHAKRA ${Math.floor(player.chakra)} / ${player.maxChakra}`;
   document.getElementById('hud-player-lvl').textContent = `Nv.${player.level}`;
-  document.getElementById('hud-kda').textContent = `ABATES: ${player.kills}  |  MORTES: ${player.deaths}`;
-  document.getElementById('hud-awakening-state').classList.toggle('hidden', player.awakenedTimer <= 0);
+  document.getElementById('hud-kda').textContent = `ABATES: ${player.kills}  |  MORTES: ${player.deaths}  |  ASSIST: ${player.assists || 0}`;
+
+  const hpGaugeEl = document.getElementById('hud-hp-gauge');
+  if (hpGaugeEl) hpGaugeEl.classList.toggle('low-hp', hpPct <= 30 && player.deadTimer <= 0);
+
+  const isAwake = player.awakenedTimer > 0;
+  const awakeEl = document.getElementById('hud-awakening-state');
+  if (awakeEl) {
+    awakeEl.classList.toggle('hidden', !isAwake);
+    if (isAwake) awakeEl.textContent = `覚醒 DESPERTAR · ${Math.ceil(player.awakenedTimer)}s`;
+  }
+  const deckEl = document.querySelector('.player-command-deck');
+  if (deckEl) deckEl.classList.toggle('is-awakened', isAwake);
+  const avatarRingEl = document.querySelector('.player-avatar-ring');
+  if (avatarRingEl) avatarRingEl.classList.toggle('is-awakened', isAwake);
+
+  // Team Momentum Tug-of-War Bar
+  const momBlueEl = document.getElementById('score-momentum-blue');
+  if (momBlueEl) {
+    const totalScore = Math.max(0, scoreBlue) + Math.max(0, scoreRed);
+    const blueRatio = totalScore > 0 ? Math.round((Math.max(0, scoreBlue) / totalScore) * 100) : 50;
+    momBlueEl.style.width = `${Math.max(12, Math.min(88, blueRatio))}%`;
+  }
+
+  // Live Hit Combo Counter Decay
+  if (hudComboState.timer > 0) {
+    hudComboState.timer = Math.max(0, hudComboState.timer - 0.016);
+    if (hudComboState.timer <= 0) {
+      hudComboState.hits = 0;
+      hudComboState.dmg = 0;
+      const comboEl = document.getElementById('hud-combo-counter');
+      if (comboEl) comboEl.classList.add('hidden');
+    }
+  }
+
+  // Target Lock-On Enemy Fighter Bar (nearest enemy within 28u or recently attacked target)
+  const targetFrameEl = document.getElementById('hud-target-frame');
+  if (targetFrameEl) {
+    let lockedEnemy = null;
+    if (hudComboState.lastTarget && hudComboState.lastTarget.deadTimer <= 0 && (performance.now() - hudComboState.lastTargetTime) < 3500) {
+      lockedEnemy = hudComboState.lastTarget;
+    } else {
+      lockedEnemy = findNearestEnemy(player, 28);
+    }
+    if (lockedEnemy && lockedEnemy.deadTimer <= 0 && player.deadTimer <= 0) {
+      targetFrameEl.classList.remove('hidden');
+      const tPortrait = document.getElementById('hud-target-portrait');
+      if (tPortrait && tPortrait.getAttribute('src') !== lockedEnemy.portrait) tPortrait.src = lockedEnemy.portrait;
+      const tName = document.getElementById('hud-target-name');
+      if (tName) tName.textContent = (lockedEnemy.name || 'INIMIGO').toUpperCase();
+      const tLvl = document.getElementById('hud-target-lvl');
+      if (tLvl) tLvl.textContent = `Nv.${lockedEnemy.level || 1}`;
+      const distM = Math.round(Math.hypot(lockedEnemy.x - player.x, lockedEnemy.z - player.z));
+      const tDist = document.getElementById('hud-target-dist');
+      if (tDist) tDist.textContent = `${distM}m`;
+      const tHpPct = Math.max(0, Math.min(100, Math.round((lockedEnemy.hp / lockedEnemy.maxHp) * 100)));
+      const tFill = document.getElementById('hud-target-hp-fill');
+      if (tFill) tFill.style.width = `${tHpPct}%`;
+      const tGhost = document.getElementById('hud-target-hp-ghost');
+      if (tGhost) tGhost.style.width = `${tHpPct}%`;
+      const tText = document.getElementById('hud-target-hp-text');
+      if (tText) tText.textContent = `${Math.ceil(lockedEnemy.hp)} / ${lockedEnemy.maxHp}`;
+    } else {
+      targetFrameEl.classList.add('hidden');
+    }
+  }
 
   for (const slot of ['atk', 'q', 'w', 'e', 'r']) {
     const cdEl = document.getElementById(`cd-${slot}`);
+    const slotBtn = document.getElementById(`slot-${slot}`);
     if (!cdEl) continue;
     const rem = player.cds[slot];
-    const maxCd = (player.kit && player.kit[slot] && player.kit[slot].cd) ? player.kit[slot].cd : 1;
-    if (rem > 0.05) {
+    const sk = player.kit ? player.kit[slot] : null;
+    const maxCd = (sk && sk.cd) ? sk.cd : 1;
+    const cost = (sk && sk.cost) ? sk.cost : 0;
+    const hasChakra = player.chakra >= cost;
+    const onCd = rem > 0.05;
+    if (onCd) {
       const pct = Math.min(100, Math.max(0, (rem / maxCd) * 100));
       cdEl.style.display = 'flex';
-      cdEl.style.background = `conic-gradient(rgba(0,0,0,0.78) ${pct.toFixed(1)}%, transparent 0%)`;
+      cdEl.style.background = `conic-gradient(rgba(3, 6, 14, 0.84) ${pct.toFixed(1)}%, rgba(3, 6, 14, 0.18) 0%)`;
       cdEl.textContent = rem.toFixed(1) + 's';
     } else {
       cdEl.style.display = 'none';
       cdEl.style.background = 'none';
       cdEl.textContent = '';
     }
+    if (slotBtn) {
+      slotBtn.classList.toggle('on-cd', onCd);
+      slotBtn.classList.toggle('no-chakra', !onCd && !hasChakra);
+      slotBtn.classList.toggle('is-ready', !onCd && hasChakra);
+      if (slot === 'r') slotBtn.classList.toggle('ult-ready', !onCd && hasChakra);
+    }
+  }
+  const slotCEl = document.getElementById('slot-c');
+  if (slotCEl) {
+    slotCEl.classList.toggle('is-charging', player.state === 'charge');
   }
 
   // PV4: espelha o CD dos slots nos botoes touch (mesma fonte de verdade #cd-*)
@@ -6470,12 +6887,17 @@ function updateCameraAndHUD() {
     }
   }
 
-  // Synchronize 5v5 Top Team Mini-Portraits (Alive dot & Respawn Countdown)
+  // Synchronize 5v5 Top Team Mini-Portraits (Alive dot, Micro-HP & Respawn Countdown)
   for (const u of units) {
     const topIcon = document.getElementById(`top-icon-${u.id}`);
     if (!topIcon) continue;
     const cdEl = document.getElementById(`respawn-cd-${u.id}`);
     const aliveDot = topIcon.querySelector('.alive-dot');
+    const hpEl = document.getElementById(`top-hp-${u.id}`);
+    const uHpPct = Math.max(0, Math.min(100, Math.round((u.hp / u.maxHp) * 100)));
+    if (hpEl) hpEl.style.width = `${u.deadTimer > 0 ? 0 : uHpPct}%`;
+    topIcon.classList.toggle('is-awakened', u.awakenedTimer > 0 && u.deadTimer <= 0);
+    topIcon.classList.toggle('low-hp', uHpPct <= 30 && u.deadTimer <= 0);
     if (u.deadTimer > 0) {
       if (!topIcon.classList.contains('dead')) topIcon.classList.add('dead');
       if (aliveDot) aliveDot.style.display = 'none';
@@ -6512,6 +6934,8 @@ function updateCameraAndHUD() {
     u.labelEl.style.top = `${sy}px`;
     if (u.deadTimer <= 0) {
       u.labelEl.classList.toggle('shielded', u.spawnShield > 0); // SPAWN GUARD
+      u.labelEl.classList.toggle('awakened', u.awakenedTimer > 0);
+      u.labelEl.classList.toggle('low-hp', (u.hp / u.maxHp) <= 0.30);
       const hpFill = u.labelEl.querySelector('.u-hp-fill');
       if (hpFill) hpFill.style.width = `${(u.hp / u.maxHp) * 100}%`;
       const ckFill = u.labelEl.querySelector('.u-ck-fill');
@@ -6527,17 +6951,37 @@ function drawMinimap() {
   if (!mCanvas) return;
   const ctx = mCanvas.getContext('2d');
   const w = mCanvas.width, h = mCanvas.height;
-  ctx.fillStyle = '#14261c';
+  const cx = w / 2, cy = h / 2;
+
+  // Tactical Radar Background Gradient
+  const bgGrad = ctx.createRadialGradient(cx, cy, 8, cx, cy, w * 0.72);
+  bgGrad.addColorStop(0, '#13241d');
+  bgGrad.addColorStop(0.65, '#0b1614');
+  bgGrad.addColorStop(1, '#060a0d');
+  ctx.fillStyle = bgGrad;
   ctx.fillRect(0, 0, w, h);
 
+  // Subtle Tactical Radar Rings & Crosshair
+  ctx.strokeStyle = 'rgba(201, 162, 39, 0.14)';
+  ctx.lineWidth = 1;
+  for (const r of [w * 0.22, w * 0.42]) {
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  ctx.beginPath();
+  ctx.moveTo(cx, 6); ctx.lineTo(cx, h - 6);
+  ctx.moveTo(6, cy); ctx.lineTo(w - 6, cy);
+  ctx.stroke();
+
   const rad = ARENA.radius || 88;
-  const toMapX = (val) => THREE.MathUtils.clamp(((val + rad) / (rad * 2)) * w, 4, w - 4);
-  const toMapZ = (val) => THREE.MathUtils.clamp(((val + rad) / (rad * 2)) * h, 4, h - 4);
+  const toMapX = (val) => THREE.MathUtils.clamp(((val + rad) / (rad * 2)) * w, 5, w - 5);
+  const toMapZ = (val) => THREE.MathUtils.clamp(((val + rad) / (rad * 2)) * h, 5, h - 5);
 
   // River diagonal (sd00a and sd04a have river; sd01b and sd03b do not)
   if (ARENA.id === 'sd00a' || ARENA.id === 'sd04a') {
-    ctx.strokeStyle = '#0284c7';
-    ctx.lineWidth = 10;
+    ctx.strokeStyle = 'rgba(14, 165, 233, 0.42)';
+    ctx.lineWidth = 9;
     ctx.beginPath();
     ctx.moveTo(0, h);
     ctx.lineTo(w, 0);
@@ -6548,46 +6992,75 @@ function drawMinimap() {
   const bpR = basePos('red');
 
   // Main Lane connecting bases
-  ctx.strokeStyle = '#785a3c';
-  ctx.lineWidth = 8;
+  ctx.strokeStyle = 'rgba(180, 130, 75, 0.28)';
+  ctx.lineWidth = 6;
   ctx.beginPath();
   ctx.moveTo(toMapX(bpB.x), toMapZ(bpB.z));
   ctx.lineTo(toMapX(bpR.x), toMapZ(bpR.z));
   ctx.stroke();
 
-  // Base Sanctuaries
-  ctx.fillStyle = '#3b82f6';
-  ctx.beginPath();
-  ctx.arc(toMapX(bpB.x), toMapZ(bpB.z), 5.5, 0, Math.PI * 2);
-  ctx.fill();
+  // Base Sanctuaries with outer rings
+  const drawBaseBlip = (bx, bz, fill, stroke) => {
+    ctx.fillStyle = fill;
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(bx, bz, 5.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  };
+  drawBaseBlip(toMapX(bpB.x), toMapZ(bpB.z), 'rgba(59, 130, 246, 0.35)', '#60a5fa');
+  drawBaseBlip(toMapX(bpR.x), toMapZ(bpR.z), 'rgba(239, 68, 68, 0.35)', '#f87171');
 
-  ctx.fillStyle = '#ef4444';
-  ctx.beginPath();
-  ctx.arc(toMapX(bpR.x), toMapZ(bpR.z), 5.5, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Central Shrine
+  // Central Shrine Orb
   if (shrineOrb && shrineOrb.visible) {
     ctx.fillStyle = '#fde047';
+    ctx.shadowColor = '#f59e0b';
+    ctx.shadowBlur = 8;
     ctx.beginPath();
-    ctx.arc(w / 2, h / 2, 4.5, 0, Math.PI * 2);
+    ctx.arc(cx, cy, 4.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  }
+
+  // Player Camera Vision Cone (FOV)
+  const playerUnit = units.find(u => u.isPlayer);
+  if (playerUnit && playerUnit.deadTimer <= 0) {
+    const px = toMapX(playerUnit.x);
+    const pz = toMapZ(playerUnit.z);
+    const viewYaw = cameraMode === 'thirdperson' ? tpCamYaw : Math.PI;
+    const coneAngle = Math.atan2(Math.sin(viewYaw), Math.cos(viewYaw));
+    const fovHalf = 0.48;
+    const coneLen = 24;
+    ctx.fillStyle = 'rgba(74, 222, 128, 0.16)';
+    ctx.beginPath();
+    ctx.moveTo(px, pz);
+    ctx.lineTo(px + Math.sin(coneAngle - fovHalf) * coneLen, pz + Math.cos(coneAngle - fovHalf) * coneLen);
+    ctx.lineTo(px + Math.sin(coneAngle + fovHalf) * coneLen, pz + Math.cos(coneAngle + fovHalf) * coneLen);
+    ctx.closePath();
     ctx.fill();
   }
 
-  // Units
+  // Units (Dead X markers + Living Blips)
   for (const u of units) {
-    if (u.deadTimer > 0) continue;
     const mx = toMapX(u.x);
     const mz = toMapZ(u.z);
-    ctx.fillStyle = u.isPlayer ? '#22c55e' : (u.team === 'blue' ? '#3b82f6' : '#ef4444');
-    ctx.beginPath();
-    ctx.arc(mx, mz, u.isPlayer ? 5 : 3.8, 0, Math.PI * 2);
-    ctx.fill();
-    if (u.isPlayer) {
-      ctx.strokeStyle = '#fff';
+    if (u.deadTimer > 0) {
+      ctx.strokeStyle = u.team === 'blue' ? 'rgba(96, 165, 250, 0.45)' : 'rgba(248, 113, 113, 0.45)';
       ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(mx - 2.5, mz - 2.5); ctx.lineTo(mx + 2.5, mz + 2.5);
+      ctx.moveTo(mx + 2.5, mz - 2.5); ctx.lineTo(mx - 2.5, mz + 2.5);
       ctx.stroke();
+      continue;
     }
+    ctx.fillStyle = u.isPlayer ? '#4ade80' : (u.team === 'blue' ? '#3b82f6' : '#ef4444');
+    ctx.beginPath();
+    ctx.arc(mx, mz, u.isPlayer ? 4.8 : 3.6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = u.isPlayer ? '#ffffff' : (u.awakenedTimer > 0 ? '#fde047' : 'rgba(0,0,0,0.85)');
+    ctx.lineWidth = u.isPlayer ? 1.8 : 1.2;
+    ctx.stroke();
   }
 }
 
@@ -6703,7 +7176,7 @@ async function init() {
       rightMouseDown = true;
     } else if (e.button === 0) {
       // Filter out clicks on UI buttons/drawer/cards
-      if (e.target && e.target.closest && e.target.closest('button, #controls-drawer, .controls-cheat-sheet, .hud-top-bar, .moba-ability-btn, .skill-slot, .roster-card, .btn')) {
+      if (e.target && e.target.closest && e.target.closest('button, #mode-picker, .mode-chip, .arena-chip, #controls-drawer, .controls-cheat-sheet, .hud-top-bar, .moba-ability-btn, .skill-slot, .roster-card, .btn')) {
         return;
       }
       mouseDown = true;
@@ -6757,13 +7230,16 @@ async function init() {
 
   // PV1.1: seletor de modo (#mode-picker) — decisao #1: 3v3 default
   document.querySelectorAll('#mode-picker .mode-chip').forEach(ch => {
-    ch.addEventListener('click', () => {
+    ch.addEventListener('click', (e) => {
+      e.stopPropagation();
       if (ch.disabled) return;
-      selectedModeId = ch.dataset.mode;
-      document.querySelectorAll('#mode-picker .mode-chip').forEach(c => c.classList.toggle('selected', c === ch));
+      selectLobbyMode(ch.dataset.mode);
+      sfx.init();
       sfx.click();
+      try { AUTH_SFX.play('menu_slct', { vol: 0.65 }); } catch (err) {}
     });
   });
+  selectLobbyMode(selectedModeId);
 
   document.getElementById('btn-back-lobby').addEventListener('click', () => {
     returnToLobby();
@@ -6960,6 +7436,8 @@ Object.defineProperty(window, 'camera', { get: () => camera });
 Object.defineProperty(window, 'units', { get: () => units });
 Object.defineProperty(window, 'matchActive', { get: () => matchActive });
 Object.defineProperty(window, 'selectedHeroId', { get: () => selectedHeroId });
+Object.defineProperty(window, 'selectedModeId', { get: () => selectedModeId, set: (v) => { selectLobbyMode(v); } });
+window.selectLobbyMode = selectLobbyMode;
 Object.defineProperty(window, 'lobbyHeroMesh', { get: () => lobbyHeroMesh });
 window.__HITSTUN = { normal: 0.35, heavy: 0.60, source: 'APK storm: dmg0f media 21f, hsta0 36f' }; // telemetria E2E (W-HS)
 window.__HAND_VFX = () => vfxList.filter(v => v.style === 'compound' && v.bindUnit).length; // telemetria E2E (W-VIS)

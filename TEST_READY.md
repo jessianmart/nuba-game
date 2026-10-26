@@ -653,3 +653,12 @@ ode --check do game.js (como .mjs) -> OK.
   4. Servidor :8080 caindo no meio da bateria deixa a suite booting numa pagina morta
      ("Failed to start 5v5 match") — conferir `curl :8080` antes de rodar.
 - Novos `.bak`: test_e2e_suite.py.bak_pv1_6 / .bak_pv1_6fix.
+
+
+## W8 — Mix Equalizado
+- Probe `tools/probe_w8_mix.py`: C1 musica battle vol=0.3025 | C2 voz unitVoice v=0.92 (sem
+  clamp) | C3 skill perto v=0.9 (<0.99 headroom) | C4 menu vol=0.385 | C5 zero console -> 5/5.
+- Bateria: suite 51/51. Verify vermelho APENAS por 404 de `combo_digit_5..9.png` (HUD MOBA do
+  pipeline paralelo so embarcou 0-4) — nao e do mix W8.
+- Pitfall: probe mocka `window.__camera = {position:{x,z}}` (playAt le cam.position).
+
